@@ -6,7 +6,7 @@ import (
 	"io"
 	"os"
 
-	"github.com/kolesa-team/go-webp/encoder"
+	"github.com/kolesa-team/go-webp/encoder" // なぜかエラーでハイライトされるが、動作は問題ない
 	"github.com/kolesa-team/go-webp/webp"
 )
 

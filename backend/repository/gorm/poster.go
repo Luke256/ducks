@@ -11,11 +11,6 @@ import (
 )
 
 func (r *GormRepository) RegisterPoster(festivalID uuid.UUID, posterName, description, imageID string) (uuid.UUID, error) {
-	_, err := r.GetPosterByFestivalIDAndPosterName(festivalID, posterName)
-	if err == nil {
-		return uuid.Nil, repository.ErrAlreadyExists
-	}
-	
 	posterID, err := uuid.NewV7()
 	if err != nil {
 		return uuid.Nil, err

@@ -19,14 +19,6 @@ func TestRegisterPoster(t *testing.T) {
 
 		assert.NotEqual(t, uuid.Nil, posterID)
 	})
-
-	t.Run("Register Duplicate Poster Name", func(t *testing.T) {
-		_, err := repo.RegisterPoster(fID, "PosterReg_Dup", "desc", "img-dup")
-		assert.NoError(t, err)
-		_, err = repo.RegisterPoster(fID, "PosterReg_Dup", "desc2", "img-dup2")
-		assert.Error(t, err)
-		assert.Equal(t, repository.ErrAlreadyExists, err)
-	})
 }
 
 func TestGetPostersByFestivalID(t *testing.T) {
