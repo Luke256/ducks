@@ -1,12 +1,15 @@
 package main
 
 import (
-	"os"
 	"log/slog"
+	"os"
 
 	repository "github.com/Luke256/ducks/repository/gorm"
 	"github.com/Luke256/ducks/router"
 	"github.com/Luke256/ducks/router/v1"
+	"github.com/Luke256/ducks/service/festival"
+	"github.com/Luke256/ducks/service/poster"
+	"github.com/Luke256/ducks/utils/storage/s3"
 
 	dsnConfig "github.com/go-sql-driver/mysql"
 	"github.com/joho/godotenv"
@@ -59,7 +62,16 @@ func setup() *router.Router {
 		panic(err)
 	}
 
-	v1Handler := v1.NewHandler(repo)
+	storage, err := s3.NewS3Storage("03781cae-f780-4c94-8832-d6cc22c5463c-ducks")
+	if err != nil {
+		slog.Error("failed to create s3 storage:", slog.String("error", err.Error()))
+		panic(err)
+	}
+
+	festivalManager := festival.NewManagerImpl(repo)
+	posterManager := poster.NewManagerImpl(repo, storage)
+
+	v1Handler := v1.NewHandler(repo, festivalManager, posterManager)
 
 	router := router.NewRouter(e, v1Handler, repo)
 

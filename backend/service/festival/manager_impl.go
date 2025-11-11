@@ -11,7 +11,7 @@ type FestivalImpl struct {
 	repo repository.FestivalRepository
 }
 
-func NewFestivalManager(repo repository.FestivalRepository) *FestivalImpl {
+func NewManagerImpl(repo repository.FestivalRepository) *FestivalImpl {
 	return &FestivalImpl{
 		repo: repo,
 	}

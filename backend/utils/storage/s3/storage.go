@@ -101,44 +101,44 @@ func (s *S3Storage) UploadFile(fileHeader *multipart.FileHeader) (string, error)
 	return fileName, nil
 }
 
-func (s *S3Storage) DownloadFile(fileName string) (io.ReadSeekCloser, error) {
-	downloader := manager.NewDownloader(s.client)
+// func (s *S3Storage) DownloadFile(fileName string) (io.ReadSeekCloser, error) {
+// 	downloader := manager.NewDownloader(s.client)
 
-	// ローカルにキャッシュがあればそれを返す
-	cachedFilePath := filepath.Join(os.TempDir(), fileName)
-	if _, err := os.Stat(cachedFilePath); err == nil {
-		cachedFile, err := os.Open(cachedFilePath)
+// 	// ローカルにキャッシュがあればそれを返す
+// 	cachedFilePath := filepath.Join(os.TempDir(), fileName)
+// 	if _, err := os.Stat(cachedFilePath); err == nil {
+// 		cachedFile, err := os.Open(cachedFilePath)
 		
-		if err != nil {
-			return nil, err
-		}
-		return cachedFile, nil
-	}
+// 		if err != nil {
+// 			return nil, err
+// 		}
+// 		return cachedFile, nil
+// 	}
 
-	downloadFile, err := os.Create(filepath.Join(os.TempDir(), fileName))
-	if err != nil {
-		return nil, err
-	}
+// 	downloadFile, err := os.Create(filepath.Join(os.TempDir(), fileName))
+// 	if err != nil {
+// 		return nil, err
+// 	}
 
-	_, err = downloader.Download(
-		context.TODO(),
-		downloadFile,
-		&s3.GetObjectInput{
-			Bucket: aws.String(s.bucketName),
-			Key:    aws.String(fileName),
-		},
-	)
-	if err != nil {
-		return nil, err
-	}
+// 	_, err = downloader.Download(
+// 		context.TODO(),
+// 		downloadFile,
+// 		&s3.GetObjectInput{
+// 			Bucket: aws.String(s.bucketName),
+// 			Key:    aws.String(fileName),
+// 		},
+// 	)
+// 	if err != nil {
+// 		return nil, err
+// 	}
 
-	_, err = downloadFile.Seek(0, 0)
-	if err != nil {
-		return nil, err
-	}
+// 	_, err = downloadFile.Seek(0, 0)
+// 	if err != nil {
+// 		return nil, err
+// 	}
 
-	return downloadFile, nil
-}
+// 	return downloadFile, nil
+// }
 
 func (s *S3Storage) DeleteFile(fileName string) error {
 	_, err := s.client.DeleteObject(context.TODO(), &s3.DeleteObjectInput{
