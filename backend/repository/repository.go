@@ -3,7 +3,8 @@ package repository
 import "errors"
 
 var (
-	ErrNotFound = errors.New("poster not found")
+	ErrNotFound = errors.New("record not found")
+	ErrAlreadyExists = errors.New("record already exists")
 )
 
 type Repository interface {

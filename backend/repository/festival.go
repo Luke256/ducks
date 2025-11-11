@@ -7,7 +7,7 @@ import (
 
 type FestivalRepository interface {
 	// RegisterFestival イベントを登録します
-	RegisterFestival(name string, description string) (string, error)
+	RegisterFestival(name string, description string) (uuid.UUID, error)
 
 	// GetFestivalByID イベントIDからイベントを取得します
 	GetFestivalByID(festivalID uuid.UUID) (model.Festival, error)

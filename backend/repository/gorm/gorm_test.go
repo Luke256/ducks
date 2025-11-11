@@ -2,11 +2,12 @@ package gorm
 
 import (
 	"fmt"
-	"os"
 	"testing"
 
 	"github.com/Luke256/ducks/migration"
+	"github.com/Luke256/ducks/utils"
 	driverMysql "github.com/go-sql-driver/mysql"
+	"github.com/google/uuid"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
 )
@@ -14,6 +15,7 @@ import (
 const (
 	dbPrefix = "ducks-test-"
 	common = "common"
+	s1 = "s1"
 )
 
 var (
@@ -22,12 +24,12 @@ var (
 
 // 前処理
 func TestMain(m *testing.M) {
-	dbUser := os.Getenv("NS_MARIADB_USERNAME")
-	dbPassword := os.Getenv("NS_MARIADB_PASSWORD")
-	dbHost := os.Getenv("NS_MARIADB_HOST")
-	dbPort := os.Getenv("NS_MARIADB_PORT")
+	dbUser := utils.GetEnvOrDefault("NS_MARIADB_USERNAME", "root")
+	dbPassword := utils.GetEnvOrDefault("NS_MARIADB_PASSWORD", "password")
+	dbHost := utils.GetEnvOrDefault("NS_MARIADB_HOST", "localhost")
+	dbPort := utils.GetEnvOrDefault("NS_MARIADB_PORT", "3307")
 	dbs := []string{
-		common,
+		common, s1,
 	}
 	config := &driverMysql.Config{
 		User:                 dbUser,
@@ -90,4 +92,25 @@ func setup(t *testing.T, dbKey string) *GormRepository {
 		t.Fatalf("repository %s not found", dbKey)
 	}
 	return repo
+}
+
+func mustCreateFestival(t *testing.T, repo *GormRepository, name string, description string) uuid.UUID {
+	t.Helper()
+
+	id, err := repo.RegisterFestival(name, description)
+	if err != nil {
+		t.Fatalf("failed to register festival: %v", err)
+	}
+	return id
+}
+
+func mustCreatePoster(t *testing.T, repo *GormRepository, festivalID uuid.UUID, posterName string, description string, imageID string) uuid.UUID {
+	t.Helper()
+
+	id, err := repo.RegisterPoster(festivalID, posterName, description, imageID)
+	if err != nil {
+		t.Fatalf("failed to register poster: %v", err)
+	}
+
+	return id
 }

@@ -10,13 +10,19 @@ import (
 	"gorm.io/gorm"
 )
 
-func (r *GormRepository) RegisterPoster(posterName string, description string, imageID string) (string, error) {
-	festivalID, err := uuid.NewV7()
+func (r *GormRepository) RegisterPoster(festivalID uuid.UUID, posterName, description, imageID string) (uuid.UUID, error) {
+	_, err := r.GetPosterByFestivalIDAndPosterName(festivalID, posterName)
+	if err == nil {
+		return uuid.Nil, repository.ErrAlreadyExists
+	}
+	
+	posterID, err := uuid.NewV7()
 	if err != nil {
-		return "", err
+		return uuid.Nil, err
 	}
 
 	var poster = model.Poster{
+		ID:          posterID,
 		FestivalID:  festivalID,
 		PosterName:  posterName,
 		Description: description,
@@ -26,10 +32,10 @@ func (r *GormRepository) RegisterPoster(posterName string, description string, i
 
 	ctx := context.Background()
 	if err := gorm.G[model.Poster](r.db).Create(ctx, &poster); err != nil {
-		return "", wrapGormError(err)
+		return uuid.Nil, wrapGormError(err)
 	}
 
-	return poster.ID.String(), nil
+	return poster.ID, nil
 }
 
 func (r *GormRepository) GetPostersByFestivalID(festivalID uuid.UUID) ([]model.Poster, error) {
@@ -67,20 +73,26 @@ func (r *GormRepository) GetPosterByFestivalIDAndPosterName(festivalID uuid.UUID
 	return poster, nil
 }
 
-func (r *GormRepository) Updateposter(posterName string, description string) error {
+func (r *GormRepository) UpdatePoster(posterID uuid.UUID, posterName, description string) error {
 	ctx := context.Background()
-	_, err := gorm.G[model.Poster](r.db).
-		Where(&model.Poster{PosterName: posterName}).
-		Select("Description").
-		Updates(ctx, model.Poster{Description: description})
+	rows, err := gorm.G[model.Poster](r.db).
+		Where(&model.Poster{ID: posterID}).
+		Select("PosterName", "Description").
+		Updates(ctx, model.Poster{PosterName: posterName, Description: description})
+	if rows == 0 {
+		return repository.ErrNotFound
+	}
 	return wrapGormError(err)
 }
 
 func (r *GormRepository) UpdatePosterStatus(posterID uuid.UUID, status string) error {
 	ctx := context.Background()
-	_, err := gorm.G[model.Poster](r.db).
+	rows, err := gorm.G[model.Poster](r.db).
 		Where(&model.Poster{ID: posterID}).
 		Updates(ctx, model.Poster{Status: status})
+	if rows == 0 {
+		return repository.ErrNotFound
+	}
 	return wrapGormError(err)
 }
 
