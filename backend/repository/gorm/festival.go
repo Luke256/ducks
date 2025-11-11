@@ -8,10 +8,10 @@ import (
 	"gorm.io/gorm"
 )
 
-func (r *GormRepository) RegisterFestival(name string, description string) (uuid.UUID, error) {
+func (r *GormRepository) RegisterFestival(name string, description string) (model.Festival, error) {
 	festivalID, err := uuid.NewV7()
 	if err != nil {
-		return uuid.Nil, wrapGormError(err)
+		return model.Festival{}, wrapGormError(err)
 	}
 
 	festival := model.Festival{
@@ -23,10 +23,10 @@ func (r *GormRepository) RegisterFestival(name string, description string) (uuid
 	ctx := context.Background()
 
 	if err := gorm.G[model.Festival](r.db).Create(ctx, &festival); err != nil {
-		return uuid.Nil, wrapGormError(err)
+		return model.Festival{}, wrapGormError(err)
 	}
 
-	return festival.ID, nil
+	return festival, nil
 }
 
 func (r *GormRepository) GetFestivalByID(festivalID uuid.UUID) (model.Festival, error) {

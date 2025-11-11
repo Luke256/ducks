@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/Luke256/ducks/migration"
+	"github.com/Luke256/ducks/model"
 	"github.com/Luke256/ducks/utils"
 	driverMysql "github.com/go-sql-driver/mysql"
 	"github.com/google/uuid"
@@ -94,23 +95,23 @@ func setup(t *testing.T, dbKey string) *GormRepository {
 	return repo
 }
 
-func mustCreateFestival(t *testing.T, repo *GormRepository, name string, description string) uuid.UUID {
+func mustCreateFestival(t *testing.T, repo *GormRepository, name string, description string) model.Festival {
 	t.Helper()
 
-	id, err := repo.RegisterFestival(name, description)
+	festival, err := repo.RegisterFestival(name, description)
 	if err != nil {
 		t.Fatalf("failed to register festival: %v", err)
 	}
-	return id
+	return festival
 }
 
-func mustCreatePoster(t *testing.T, repo *GormRepository, festivalID uuid.UUID, posterName string, description string, imageID string) uuid.UUID {
+func mustCreatePoster(t *testing.T, repo *GormRepository, festivalID uuid.UUID, posterName string, description string, imageID string) model.Poster {
 	t.Helper()
 
-	id, err := repo.RegisterPoster(festivalID, posterName, description, imageID)
+	poster, err := repo.RegisterPoster(festivalID, posterName, description, imageID)
 	if err != nil {
 		t.Fatalf("failed to register poster: %v", err)
 	}
 
-	return id
+	return poster
 }

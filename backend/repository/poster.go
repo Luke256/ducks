@@ -15,7 +15,7 @@ const (
 type ImageRepository interface {
 	// RegisterPoster ポスターを登録します
 	// 登録に成功した場合、ポスターIDを返します
-	RegisterPoster(festivalID uuid.UUID, posterName, description, imageID string) (uuid.UUID, error)
+	RegisterPoster(festivalID uuid.UUID, posterName, description, imageID string) (model.Poster, error)
 
 	// GetPostersByFestivalID イベントIDからポスター一覧を取得します
 	GetPostersByFestivalID(festivalID uuid.UUID) ([]model.Poster, error)

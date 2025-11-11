@@ -10,10 +10,10 @@ import (
 	"gorm.io/gorm"
 )
 
-func (r *GormRepository) RegisterPoster(festivalID uuid.UUID, posterName, description, imageID string) (uuid.UUID, error) {
+func (r *GormRepository) RegisterPoster(festivalID uuid.UUID, posterName, description, imageID string) (model.Poster, error) {
 	posterID, err := uuid.NewV7()
 	if err != nil {
-		return uuid.Nil, err
+		return model.Poster{}, err
 	}
 
 	var poster = model.Poster{
@@ -27,10 +27,10 @@ func (r *GormRepository) RegisterPoster(festivalID uuid.UUID, posterName, descri
 
 	ctx := context.Background()
 	if err := gorm.G[model.Poster](r.db).Create(ctx, &poster); err != nil {
-		return uuid.Nil, wrapGormError(err)
+		return model.Poster{}, wrapGormError(err)
 	}
 
-	return poster.ID, nil
+	return poster, nil
 }
 
 func (r *GormRepository) GetPostersByFestivalID(festivalID uuid.UUID) ([]model.Poster, error) {

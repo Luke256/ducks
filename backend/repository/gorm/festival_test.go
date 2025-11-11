@@ -19,10 +19,10 @@ func TestRegisterFestival(t *testing.T) {
 func TestGetFestivalByID(t *testing.T) {
 	repo := setup(t, common)
 
-	festivalID := mustCreateFestival(t, repo, "Sample Fest", "Sample Description")
+	festival := mustCreateFestival(t, repo, "Sample Fest", "Sample Description")
 
 	t.Run("Get Existing Festival", func(t *testing.T) {
-		festival, err := repo.GetFestivalByID(festivalID)
+		festival, err := repo.GetFestivalByID(festival.ID)
 		assert.NoError(t, err)
 		assert.Equal(t, "Sample Fest", festival.Name)
 		assert.Equal(t, "Sample Description", festival.Description)
@@ -47,10 +47,10 @@ func TestGetAllFestivals(t *testing.T) {
 	foundFest1 := false
 	foundFest2 := false
 	for _, fest := range festivals {
-		if fest.ID == festival1 {
+		if fest.ID == festival1.ID {
 			foundFest1 = true
 		}
-		if fest.ID == festival2 {
+		if fest.ID == festival2.ID {
 			foundFest2 = true
 		}
 	}
@@ -61,12 +61,12 @@ func TestGetAllFestivals(t *testing.T) {
 func TestUpdateFestival(t *testing.T) {
 	repo := setup(t, common)
 
-	festivalID := mustCreateFestival(t, repo, "Old Fest", "Old Description")
+	festival := mustCreateFestival(t, repo, "Old Fest", "Old Description")
 
 	t.Run("Update Festival", func(t *testing.T) {
-		err := repo.UpdateFestival(festivalID, "New Fest", "New Description")
+		err := repo.UpdateFestival(festival.ID, "New Fest", "New Description")
 		assert.NoError(t, err)
-		updatedFestival, err := repo.GetFestivalByID(festivalID)
+		updatedFestival, err := repo.GetFestivalByID(festival.ID)
 		assert.NoError(t, err)
 		assert.Equal(t, "New Fest", updatedFestival.Name)
 		assert.Equal(t, "New Description", updatedFestival.Description)
@@ -82,12 +82,12 @@ func TestUpdateFestival(t *testing.T) {
 func TestDeleteFestival(t *testing.T) {
 	repo := setup(t, common)
 
-	festivalID := mustCreateFestival(t, repo, "Delete Fest", "To be deleted")
+	festival := mustCreateFestival(t, repo, "Delete Fest", "To be deleted")
 
 	t.Run("Delete Existing Festival", func(t *testing.T) {
-		err := repo.DeleteFestival(festivalID)
+		err := repo.DeleteFestival(festival.ID)
 		assert.NoError(t, err)
-		_, err = repo.GetFestivalByID(festivalID)
+		_, err = repo.GetFestivalByID(festival.ID)
 		assert.ErrorIs(t, err, repository.ErrNotFound)
 	})
 
