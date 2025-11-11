@@ -2,6 +2,7 @@ package gorm
 
 import (
 	"fmt"
+	"os"
 	"testing"
 
 	"github.com/Luke256/ducks/migration"
@@ -85,6 +86,7 @@ func TestMain(m *testing.M) {
 
 		db.Close()
 	}
+	os.Exit(0)
 }
 
 func setup(t *testing.T, dbKey string) *GormRepository {

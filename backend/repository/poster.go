@@ -6,13 +6,7 @@ import (
 	"github.com/google/uuid"
 )
 
-const (
-	PosterStatusUnCollected = "uncollected"
-	PosterStatusCollected   = "collected"
-	PosterStatusLost        = "lost"
-)
-
-type ImageRepository interface {
+type PosterRepository interface {
 	// RegisterPoster ポスターを登録します
 	// 登録に成功した場合、ポスターIDを返します
 	RegisterPoster(festivalID uuid.UUID, posterName, description, imageID string) (model.Poster, error)

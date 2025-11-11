@@ -22,7 +22,7 @@ func (r *GormRepository) RegisterPoster(festivalID uuid.UUID, posterName, descri
 		PosterName:  posterName,
 		Description: description,
 		ImageID:     imageID,
-		Status:      repository.PosterStatusUnCollected,
+		Status:      "uncollected",
 	}
 
 	ctx := context.Background()

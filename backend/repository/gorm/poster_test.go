@@ -115,16 +115,16 @@ func TestUpdatePosterStatus(t *testing.T) {
 	poster := mustCreatePoster(t, repo, festival.ID, "PosterStatus", "status-desc", "status-img")
 
 	t.Run("Update Poster Status", func(t *testing.T) {
-		err := repo.UpdatePosterStatus(poster.ID, repository.PosterStatusCollected)
+		err := repo.UpdatePosterStatus(poster.ID, "collected")
 		assert.NoError(t, err)
 		p, err := repo.GetPosterByID(poster.ID)
 		assert.NoError(t, err)
-		assert.Equal(t, repository.PosterStatusCollected, p.Status)
+		assert.Equal(t, "collected", p.Status)
 	})
 
 	t.Run("Update Non-Existent Poster Status", func(t *testing.T) {
 		nonExistentID := uuid.New()
-		err := repo.UpdatePosterStatus(nonExistentID, repository.PosterStatusLost)
+		err := repo.UpdatePosterStatus(nonExistentID, "lost")
 		assert.Equal(t, repository.ErrNotFound, err)
 	})
 }

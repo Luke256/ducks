@@ -157,3 +157,8 @@ func (s *S3Storage) DeleteFile(fileName string) error {
 	}
 	return nil
 }
+
+func (s *S3Storage) GetFileURL(fileName string) string {
+	endpoint := os.Getenv("STORAGE_ENDPOINT")
+	return fmt.Sprintf("%s/%s/%s", endpoint, s.bucketName, fileName)
+}
