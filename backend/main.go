@@ -53,7 +53,11 @@ func setup() *router.Router {
 		panic(err)
 	}
 
-	repo := repository.NewGormRepository(db)
+	repo, _, err := repository.NewGormRepository(db, true)
+	if err != nil {
+		slog.Error("failed to create repository:", slog.String("error", err.Error()))
+		panic(err)
+	}
 
 	v1Handler := v1.NewHandler(repo)
 

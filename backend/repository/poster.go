@@ -1,8 +1,6 @@
 package repository
 
 import (
-	"errors"
-
 	"github.com/Luke256/ducks/model"
 
 	"github.com/google/uuid"
@@ -14,14 +12,10 @@ const (
 	PosterStatusLost        = "lost"
 )
 
-var (
-	ErrPosterNotFound = errors.New("poster not found")
-)
-
 type ImageRepository interface {
 	// RegisterPoster ポスターを登録します
 	// 登録に成功した場合、ポスターIDを返します
-	RegisterPoster(festivalID uuid.UUID, posterName string, description string, imageID string) (string, error)
+	RegisterPoster(posterName string, description string, imageID string) (string, error)
 
 	// GetPostersByFestivalID イベントIDからポスター一覧を取得します
 	GetPostersByFestivalID(festivalID uuid.UUID) ([]model.Poster, error)
@@ -31,6 +25,9 @@ type ImageRepository interface {
 
 	// GetPosterByFestivalIDAndPosterName イベントIDとポスター名からポスターを取得します
 	GetPosterByFestivalIDAndPosterName(festivalID uuid.UUID, posterName string) (model.Poster, error)
+
+	// UpdatePoster ポスター情報を更新します
+	Updateposter(posterName string, description string) error
 
 	// UpdatePosterStatus ポスターのステータスを更新します
 	UpdatePosterStatus(posterID uuid.UUID, status string) error
