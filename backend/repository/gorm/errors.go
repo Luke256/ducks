@@ -7,7 +7,7 @@ import (
 
 func wrapGormError(err error) error {
 	if err == gorm.ErrRecordNotFound {
-		return repository.ErrPosterNotFound
+		return repository.ErrNotFound
 	}
 
 	return err
