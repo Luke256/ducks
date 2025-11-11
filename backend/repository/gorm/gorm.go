@@ -5,11 +5,11 @@ import (
 )
 
 type GormRepository struct {
-	DB *gorm.DB
+	db *gorm.DB
 }
 
 func NewGormRepository(db *gorm.DB) *GormRepository {
 	return &GormRepository{
-		DB: db,
+		db: db,
 	}
 }

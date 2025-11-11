@@ -49,12 +49,13 @@ func setup() *router.Router {
 		DSN: DSNConfig.FormatDSN(),
 	}))
 	if err != nil {
-		e.Logger.Fatal("failed to connect database:", err)
+		slog.Error("failed to connect database:", slog.String("error", err.Error()))
+		panic(err)
 	}
 
 	repo := repository.NewGormRepository(db)
 
-	v1Handler := v1.NewHandler(&repo)
+	v1Handler := v1.NewHandler(repo)
 
 	router := router.NewRouter(e, v1Handler, repo)
 
