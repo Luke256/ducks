@@ -6,8 +6,7 @@ import (
 	"io"
 	"os"
 
-	"github.com/kolesa-team/go-webp/encoder" // なぜかエラーでハイライトされるが、動作は問題ない
-	"github.com/kolesa-team/go-webp/webp"
+	"github.com/gen2brain/webp"
 )
 
 var ErrInvalidImage = fmt.Errorf("invalid image format")
@@ -27,11 +26,10 @@ func CompressImage(src io.ReadSeekCloser) (*os.File, string, error) {
 		return nil, "", err
 	}
 
-	options, err := encoder.NewLossyEncoderOptions(encoder.PresetDefault, 75)
-	if err != nil {
-		return nil, "", err
+	options := webp.Options{
+		Lossless: false,
+		Quality:  75,
 	}
-
 	if err := webp.Encode(tmpFile, srcImage, options); err != nil {
 		return nil, "", err
 	}
