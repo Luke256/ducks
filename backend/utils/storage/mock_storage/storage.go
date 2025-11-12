@@ -1,6 +1,10 @@
 package mockstorage
 
-import "mime/multipart"
+import (
+	"mime/multipart"
+
+	"github.com/google/uuid"
+)
 
 // MockStorage は Storage インターフェースのモック実装
 // S3を使わず、ローカルファイルシステムに保存します
@@ -9,7 +13,7 @@ type MockStorage struct {}
 
 
 func (s *MockStorage) UploadFile(fileHeader *multipart.FileHeader) (string, error) {
-	return fileHeader.Filename, nil
+	return uuid.NewString(), nil
 }
 
 func (s *MockStorage) DeleteFile(fileName string) error {

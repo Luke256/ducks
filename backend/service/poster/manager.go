@@ -8,9 +8,9 @@ import (
 )
 
 const (
-	PosterStatusUnCollected = iota
-	PosterStatusCollected   
-	PosterStatusLost        
+	PosterStatusUnCollected = "uncollected"
+	PosterStatusCollected   = "collected"
+	PosterStatusLost        = "lost"
 )
 
 var (
@@ -24,8 +24,8 @@ type Poster struct {
 	FestivalID  uuid.UUID `json:"festival_id"`
 	Description string    `json:"description"`
 	ImageURL    string    `json:"image_url"`
+	Status      string    `json:"status"`
 }
-
 
 type Manager interface {
 	// Create ポスターを作成します
@@ -44,7 +44,7 @@ type Manager interface {
 	Edit(id uuid.UUID, name, description string) error
 
 	// ChangeStatus 指定されたIDのポスターのステータスを変更します
-	ChangeStatus(id uuid.UUID, status int) error
+	ChangeStatus(id uuid.UUID, status string) error
 
 	// Delete 指定されたIDのポスターを削除します
 	Delete(id uuid.UUID) error

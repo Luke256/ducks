@@ -9,14 +9,6 @@ import (
 	"github.com/google/uuid"
 )
 
-var (
-	posterStatusMap = map[int]string{
-		PosterStatusUnCollected: "uncollected",
-		PosterStatusCollected:   "collected",
-		PosterStatusLost:        "lost",
-	}
-)
-
 type ManagerImpl struct {
 	repo    repository.PosterRepository
 	storage storage.Storage
@@ -52,6 +44,7 @@ func (m *ManagerImpl) Create(name string, festivalID uuid.UUID, description stri
 		FestivalID:  poster.FestivalID,
 		Description: poster.Description,
 		ImageURL:    m.storage.GetFileURL(poster.ImageID),
+		Status:      poster.Status,
 	}, nil
 }
 
@@ -72,6 +65,7 @@ func (m *ManagerImpl) Get(id uuid.UUID) (Poster, error) {
 		FestivalID:  poster.FestivalID,
 		Description: poster.Description,
 		ImageURL:    m.storage.GetFileURL(poster.ImageID),
+		Status:      poster.Status,
 	}, nil
 }
 
@@ -94,6 +88,7 @@ func (m *ManagerImpl) GetByFestival(festivalID uuid.UUID) ([]Poster, error) {
 			FestivalID:  p.FestivalID,
 			Description: p.Description,
 			ImageURL:    m.storage.GetFileURL(p.ImageID),
+			Status:      p.Status,
 		}
 	}
 
@@ -117,6 +112,7 @@ func (m *ManagerImpl) GetByName(festivalID uuid.UUID, name string) (Poster, erro
 		FestivalID:  poster.FestivalID,
 		Description: poster.Description,
 		ImageURL:    m.storage.GetFileURL(poster.ImageID),
+		Status:      poster.Status,
 	}, nil
 }
 
@@ -133,8 +129,8 @@ func (m *ManagerImpl) Edit(id uuid.UUID, name, description string) error {
 	return nil
 }
 
-func (m *ManagerImpl) ChangeStatus(id uuid.UUID, status int) error {
-	err := m.repo.UpdatePosterStatus(id, posterStatusMap[status])
+func (m *ManagerImpl) ChangeStatus(id uuid.UUID, status string) error {
+	err := m.repo.UpdatePosterStatus(id, status)
 	if err != nil {
 		switch err {
 		case repository.ErrNotFound:
