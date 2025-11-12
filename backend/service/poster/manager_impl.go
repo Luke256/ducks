@@ -152,7 +152,23 @@ func (m *ManagerImpl) ChangeStatus(id uuid.UUID, status string) error {
 }
 
 func (m *ManagerImpl) Delete(id uuid.UUID) error {
-	err := m.repo.DeletePoster(id)
+	// delete poster image from storage
+	poster, err := m.repo.GetPosterByID(id)
+	if err != nil {
+		switch err {
+		case repository.ErrNotFound:
+			return ErrNotFound
+		default:
+			return fmt.Errorf("failed to get poster by ID: %w", err)
+		}
+	}
+	
+	err = m.storage.DeleteFile(poster.ImageID)
+	if err != nil {
+		return fmt.Errorf("failed to delete poster image from storage: %w", err)
+	}
+
+	err = m.repo.DeletePoster(id)
 	if err != nil {
 		switch err {
 		case repository.ErrNotFound:
