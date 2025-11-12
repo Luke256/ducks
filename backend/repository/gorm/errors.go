@@ -6,9 +6,10 @@ import (
 )
 
 func wrapGormError(err error) error {
-	if err == gorm.ErrRecordNotFound {
+	switch err {
+	case gorm.ErrRecordNotFound:
 		return repository.ErrNotFound
+	default:
+		return err
 	}
-
-	return err
 }

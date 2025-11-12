@@ -10,11 +10,11 @@ import (
 )
 
 type ManagerImpl struct {
-	repo    repository.PosterRepository
+	repo    repository.Repository
 	storage storage.Storage
 }
 
-func NewManagerImpl(repo repository.PosterRepository, storage storage.Storage) *ManagerImpl {
+func NewManagerImpl(repo repository.Repository, storage storage.Storage) *ManagerImpl {
 	return &ManagerImpl{repo: repo, storage: storage}
 }
 
@@ -27,10 +27,19 @@ func (m *ManagerImpl) Create(name string, festivalID uuid.UUID, description stri
 	// duplicate check
 	_, err = m.repo.GetPosterByFestivalIDAndPosterName(festivalID, name)
 	if err == nil {
-		return Poster{}, repository.ErrAlreadyExists
+		return Poster{}, ErrAlreadyExists
 	}
 	if err != repository.ErrNotFound {
 		return Poster{}, fmt.Errorf("failed to check duplicate poster: %w", err)
+	}
+
+	// festival existence check
+	_, err = m.repo.GetFestivalByID(festivalID)
+	if err != nil {
+		if err == repository.ErrNotFound {
+			return Poster{}, ErrNotFound
+		}
+		return Poster{}, fmt.Errorf("failed to check festival existence: %w", err)
 	}
 
 	poster, err := m.repo.RegisterPoster(festivalID, name, description, imageID)
