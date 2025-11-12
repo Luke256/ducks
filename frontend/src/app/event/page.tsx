@@ -87,11 +87,13 @@ export default function EventPage() {
                 </div>
 
                 {formOpen && (
-                    <div className="mt-8 p-4">
-                        <Form action={submitAction}>
+                    <div className="mt-8">
+                        <Form action={submitAction} className="mt-4">
+                            <label htmlFor="name" className="block mb-2 font-bold text-gray-700">イベント名</label>
                             <input type="text" name="name" placeholder="イベント名" className="w-full mb-4 p-2 border border-gray-300 rounded" required />
+                            <label htmlFor="description" className="block mb-2 font-bold text-gray-700">イベントの概要</label>
                             <textarea name="description" placeholder="イベントの概要" className="w-full mb-4 p-2 border border-gray-300 rounded"></textarea>
-                            <button type="submit" className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors">
+                            <button type="submit" className="px-4 py-2 bg-blue-600 text-white hover:bg-blue-700 transition-colors w-full hover:cursor-pointer">
                                 作成
                             </button>
                         </Form>
