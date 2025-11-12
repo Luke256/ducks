@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/Luke256/ducks/model"
+	"github.com/Luke256/ducks/repository"
 	"github.com/google/uuid"
 	"gorm.io/gorm"
 )
@@ -33,7 +34,7 @@ func (r *GormRepository) GetFestivalByID(festivalID uuid.UUID) (model.Festival, 
 	ctx := context.Background()
 
 	festival, err := gorm.G[model.Festival](r.db).
-		Where(&model.Festival{ID: festivalID}).
+		Where(&model.Festival{ID: festivalID}, "ID").
 		First(ctx)
 	if err != nil {
 		return model.Festival{}, wrapGormError(err)
@@ -55,7 +56,7 @@ func (r *GormRepository) UpdateFestival(festivalID uuid.UUID, name string, descr
 	ctx := context.Background()
 
 	rows, err := gorm.G[model.Festival](r.db).
-		Where(&model.Festival{ID: festivalID}).
+		Where(&model.Festival{ID: festivalID}, "ID").
 		Select("Name", "Description").
 		Updates(ctx, model.Festival{
 			ID:          festivalID,
@@ -67,7 +68,7 @@ func (r *GormRepository) UpdateFestival(festivalID uuid.UUID, name string, descr
 	}
 
 	if rows == 0 {
-		return gorm.ErrRecordNotFound
+		return repository.ErrNotFound
 	}
 
 	return nil
@@ -77,14 +78,14 @@ func (r *GormRepository) DeleteFestival(festivalID uuid.UUID) error {
 	ctx := context.Background()
 
 	rows, err := gorm.G[model.Festival](r.db).
-		Where(&model.Festival{ID: festivalID}).
+		Where(&model.Festival{ID: festivalID}, "ID").
 		Delete(ctx)
 	if err != nil {
 		return wrapGormError(err)
 	}
 
 	if rows == 0 {
-		return gorm.ErrRecordNotFound
+		return repository.ErrNotFound
 	}
 
 	return nil

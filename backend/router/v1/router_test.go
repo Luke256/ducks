@@ -2,9 +2,11 @@ package v1
 
 import (
 	"fmt"
+	"net/http"
 	"net/http/httptest"
 	"os"
 	"testing"
+	"time"
 
 	"github.com/Luke256/ducks/migration"
 	"github.com/Luke256/ducks/repository"
@@ -13,6 +15,8 @@ import (
 	"github.com/Luke256/ducks/service/poster"
 	"github.com/Luke256/ducks/utils"
 	mockstorage "github.com/Luke256/ducks/utils/storage/mock_storage"
+	"github.com/gavv/httpexpect/v2"
+	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
 
 	driverMysql "github.com/go-sql-driver/mysql"
@@ -122,4 +126,50 @@ type env struct {
 	FM      festival.Manager
 	PM      poster.Manager
 	Storage *mockstorage.MockStorage
+}
+
+func (env *env) R(t *testing.T) *httpexpect.Expect {
+	t.Helper()
+	return httpexpect.WithConfig(httpexpect.Config{
+		BaseURL:  env.Server.URL,
+		Reporter: httpexpect.NewAssertReporter(t),
+		Printers: []httpexpect.Printer{
+			httpexpect.NewCurlPrinter(t),
+			httpexpect.NewDebugPrinter(t, true),
+		},
+		Client: &http.Client{
+			Jar:     nil, // クッキーは保持しない
+			Timeout: time.Second * 30,
+			CheckRedirect: func(_ *http.Request, _ []*http.Request) error {
+				return http.ErrUseLastResponse // リダイレクトを自動処理しない
+			},
+		},
+	})
+}
+
+func setup(t *testing.T, dbKey string) *env {
+	t.Helper()
+	env, ok := envs[dbKey]
+	if !ok {
+		t.Fatalf("invalid db key: %s", dbKey)
+	}
+	return env
+}
+
+func (e *env) mustCreateFestival(t *testing.T, name string, description string) festival.Festival {
+	t.Helper()
+	festival, err := e.FM.Create(name, description)
+	if err != nil {
+		t.Fatalf("failed to create festival: %v", err)
+	}
+	return festival
+}
+
+func (e *env) mustCreatePoster(t *testing.T, festivalID uuid.UUID, name string, description string) poster.Poster {
+	t.Helper()
+	poster, err := e.PM.Create(name, festivalID, description, nil)
+	if err != nil {
+		t.Fatalf("failed to create poster: %v", err)
+	}
+	return poster
 }

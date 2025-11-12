@@ -33,7 +33,12 @@ func (f *FestivalImpl) Create(name, description string) (Festival, error) {
 func (f *FestivalImpl) Get(id uuid.UUID) (Festival, error) {
 	festival, err := f.repo.GetFestivalByID(id)
 	if err != nil {
-		return Festival{}, err
+		switch err {
+		case repository.ErrNotFound:
+			return Festival{}, ErrNotFound
+		default:
+			return Festival{}, fmt.Errorf("failed to get festival: %w", err)
+		}
 	}
 
 	return Festival{

@@ -36,7 +36,7 @@ func (r *GormRepository) RegisterPoster(festivalID uuid.UUID, posterName, descri
 func (r *GormRepository) GetPostersByFestivalID(festivalID uuid.UUID) ([]model.Poster, error) {
 	ctx := context.Background()
 	posters, err := gorm.G[model.Poster](r.db).
-		Where(&model.Poster{FestivalID: festivalID}).
+		Where(&model.Poster{FestivalID: festivalID}, "FestivalID").
 		Find(ctx)
 	if err != nil {
 		return nil, wrapGormError(err)
@@ -48,7 +48,7 @@ func (r *GormRepository) GetPosterByID(posterID uuid.UUID) (model.Poster, error)
 	ctx := context.Background()
 
 	poster, err := gorm.G[model.Poster](r.db).
-		Where(&model.Poster{ID: posterID}).
+		Where(&model.Poster{ID: posterID}, "ID").
 		First(ctx)
 	if err != nil {
 		return model.Poster{}, wrapGormError(err)
@@ -60,7 +60,7 @@ func (r *GormRepository) GetPosterByID(posterID uuid.UUID) (model.Poster, error)
 func (r *GormRepository) GetPosterByFestivalIDAndPosterName(festivalID uuid.UUID, posterName string) (model.Poster, error) {
 	ctx := context.Background()
 	poster, err := gorm.G[model.Poster](r.db).
-		Where(&model.Poster{FestivalID: festivalID, PosterName: posterName}).
+		Where(&model.Poster{FestivalID: festivalID, PosterName: posterName}, "FestivalID", "PosterName").
 		First(ctx)
 	if err != nil {
 		return model.Poster{}, wrapGormError(err)
@@ -71,7 +71,7 @@ func (r *GormRepository) GetPosterByFestivalIDAndPosterName(festivalID uuid.UUID
 func (r *GormRepository) UpdatePoster(posterID uuid.UUID, posterName, description string) error {
 	ctx := context.Background()
 	rows, err := gorm.G[model.Poster](r.db).
-		Where(&model.Poster{ID: posterID}).
+		Where(&model.Poster{ID: posterID}, "ID").
 		Select("PosterName", "Description").
 		Updates(ctx, model.Poster{PosterName: posterName, Description: description})
 	if rows == 0 {
@@ -83,7 +83,7 @@ func (r *GormRepository) UpdatePoster(posterID uuid.UUID, posterName, descriptio
 func (r *GormRepository) UpdatePosterStatus(posterID uuid.UUID, status string) error {
 	ctx := context.Background()
 	rows, err := gorm.G[model.Poster](r.db).
-		Where(&model.Poster{ID: posterID}).
+		Where(&model.Poster{ID: posterID}, "ID").
 		Updates(ctx, model.Poster{Status: status})
 	if rows == 0 {
 		return repository.ErrNotFound
@@ -94,7 +94,7 @@ func (r *GormRepository) UpdatePosterStatus(posterID uuid.UUID, status string) e
 func (r *GormRepository) DeletePoster(posterID uuid.UUID) error {
 	ctx := context.Background()
 	rowsAffected, err := gorm.G[model.Poster](r.db).
-		Where(&model.Poster{ID: posterID}).
+		Where(&model.Poster{ID: posterID}, "ID").
 		Delete(ctx)
 	if rowsAffected == 0 {
 		return repository.ErrNotFound

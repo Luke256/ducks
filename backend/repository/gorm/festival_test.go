@@ -33,6 +33,12 @@ func TestGetFestivalByID(t *testing.T) {
 		_, err := repo.GetFestivalByID(nonExistentID)
 		assert.Equal(t, repository.ErrNotFound, err)
 	})
+
+	t.Run("Get Zero UUID Festival", func(t *testing.T) {
+		zeroID := uuid.Nil
+		_, err := repo.GetFestivalByID(zeroID)
+		assert.Equal(t, repository.ErrNotFound, err)
+	})
 }
 
 func TestGetAllFestivals(t *testing.T) {

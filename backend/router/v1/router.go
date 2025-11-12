@@ -22,5 +22,11 @@ func NewHandler(r repository.Repository, fm festival.Manager, pm poster.Manager)
 }
 
 func (r *Handler) Setup(g *echo.Group) {
-	
+	// Festivals
+	festivals := g.Group("/festivals")
+	festivals.POST("", r.CreateFestival)
+	festivals.GET("", r.ListFestivals)
+	festivals.GET("/:id", r.GetFestival)
+	festivals.PUT("/:id", r.EditFestival)
+	festivals.DELETE("/:id", r.DeleteFestival)
 }
