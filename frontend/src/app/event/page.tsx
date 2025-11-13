@@ -46,6 +46,7 @@ export default function EventPage() {
         await createEvent({ name, description });
         const updatedEvents = await fetchEvents();
         setEvents(updatedEvents);
+        setFormOpen(false);
     }
 
     return (
@@ -78,7 +79,7 @@ export default function EventPage() {
                 <div className="border border-gray-300 mt-8"></div>
                 <div className="mt-4">
                     <button
-                        className="px-4 py-2 font-bold text-blue-950 hover:bg-blue-950/10 bg-blue-950/2 w-full hover:cursor-pointer transition-colors"
+                        className="px-4 py-2 font-bold text-blue-950 hover:bg-blue-950/10 bg-blue-950/5 w-full hover:cursor-pointer transition-colors"
                         onClick={() => setFormOpen(!formOpen)}
                     >
                         新しいイベントを作成

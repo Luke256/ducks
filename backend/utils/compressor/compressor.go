@@ -3,7 +3,11 @@ package compressor
 import (
 	"fmt"
 	"image"
+	_ "image/gif"
+	_ "image/jpeg"
+	_ "image/png"
 	"io"
+	"log/slog"
 	"os"
 
 	"github.com/gen2brain/webp"
@@ -15,6 +19,7 @@ var ErrInvalidImage = fmt.Errorf("invalid image format")
 func CompressImage(src io.ReadSeekCloser) (*os.File, string, error) {
 	srcImage, _, err := image.Decode(src)
 	if err != nil {
+		slog.Error("Failed to decode image", "error", err)
 		if err == image.ErrFormat {
 			return nil, "", ErrInvalidImage
 		}

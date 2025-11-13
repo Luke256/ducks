@@ -77,6 +77,8 @@ func (s *S3Storage) UploadFile(fileHeader *multipart.FileHeader) (string, error)
 	_, err = uploader.Upload(context.TODO(), &s3.PutObjectInput{
 		Bucket: aws.String(s.bucketName),
 		Key:    aws.String(fileName),
+		Body:   compressedImage,
+		ContentType: aws.String("image/" + format),
 	})
 	if err != nil {
 		return "", err

@@ -96,7 +96,7 @@ func (h *Handler) RegisterPoster(c echo.Context) error {
 			return c.String(409, "Poster already exists")
 		default:
 			slog.Error("Failed to register poster", "error", err)
-			return c.String(500, "Failed to register poster: "+err.Error())
+			return c.String(500, "Failed to register poster: "+ err.Error())
 		}
 	}
 
