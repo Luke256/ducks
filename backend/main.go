@@ -84,7 +84,7 @@ func setup() *router.Router {
 	festivalManager := festival.NewManagerImpl(repo)
 	posterManager := poster.NewManagerImpl(repo, storage)
 
-	v1Handler := v1.NewHandler(repo, festivalManager, posterManager)
+	v1Handler := v1.NewHandler(repo, festivalManager, posterManager, storage)
 
 	router := router.NewRouter(e, v1Handler, repo)
 

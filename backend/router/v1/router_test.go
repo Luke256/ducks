@@ -98,6 +98,7 @@ func TestMain(m *testing.M) {
 			repo,
 			env.FM,
 			env.PM,
+			env.Storage,
 		)
 		handlers.Setup(e.Group("/api"))
 		env.Server = httptest.NewServer(e)

@@ -1,6 +1,7 @@
 package mockstorage
 
 import (
+	"io"
 	"mime/multipart"
 
 	"github.com/google/uuid"
@@ -14,6 +15,10 @@ type MockStorage struct {}
 
 func (s *MockStorage) UploadFile(fileHeader *multipart.FileHeader) (string, error) {
 	return uuid.NewString(), nil
+}
+
+func (s *MockStorage) DownloadFile(fileName string) (io.ReadSeekCloser, error) {
+	return nil, nil
 }
 
 func (s *MockStorage) DeleteFile(fileName string) error {

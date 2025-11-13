@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"log/slog"
 	"mime/multipart"
 	"os"
 	"path/filepath"
@@ -103,6 +104,48 @@ func (s *S3Storage) UploadFile(fileHeader *multipart.FileHeader) (string, error)
 	return fileName, nil
 }
 
+func (s *S3Storage) DownloadFile(fileName string) (io.ReadSeekCloser, error) {
+	downloader := manager.NewDownloader(s.client)
+
+	// ローカルにキャッシュがあればそれを返す
+	cachedFilePath := filepath.Join(os.TempDir(), fileName)
+	if _, err := os.Stat(cachedFilePath); err == nil {
+		cachedFile, err := os.Open(cachedFilePath)
+		
+		if err != nil {
+			return nil, err
+		}
+		slog.Info("Using cached file", "file_name", fileName)
+		return cachedFile, nil
+	}
+	slog.Info("Downloading file from S3", "file_name", fileName)
+
+	downloadFile, err := os.Create(filepath.Join(os.TempDir(), fileName))
+	if err != nil {
+		return nil, err
+	}
+
+	_, err = downloader.Download(
+		context.TODO(),
+		downloadFile,
+		&s3.GetObjectInput{
+			Bucket: aws.String(s.bucketName),
+			Key:    aws.String(fileName),
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	_, err = downloadFile.Seek(0, 0)
+	if err != nil {
+		return nil, err
+	}
+
+	slog.Info("File downloaded and cached", "file_name", fileName)
+	return downloadFile, nil
+}
+
 func (s *S3Storage) DeleteFile(fileName string) error {
 	_, err := s.client.DeleteObject(context.TODO(), &s3.DeleteObjectInput{
 		Bucket: aws.String(s.bucketName),
@@ -122,6 +165,6 @@ func (s *S3Storage) DeleteFile(fileName string) error {
 }
 
 func (s *S3Storage) GetFileURL(fileName string) string {
-	endpoint := os.Getenv("STORAGE_ENDPOINT")
-	return fmt.Sprintf("%s/%s/%s", endpoint, s.bucketName, fileName)
+	endpoint := os.Getenv("API_ENDPOINT")
+	return fmt.Sprintf("%s/api/v1/images/%s", endpoint, fileName)
 }

@@ -32,8 +32,12 @@ export default function PosterPage() {
       setPosters([]);
       return;
     }
-    getPosters(currentFestival.id).then((data) => setPosters(data));
+    getPosters(currentFestival.id).then((data) => {
+      setPosters(data)
+    });
   }, [currentFestival]);
+
+  console.log(posters);
 
   return (
     <main className="min-h-screen p-12">
@@ -59,7 +63,7 @@ export default function PosterPage() {
           <div className="mb-8 grid grid-cols-1 gap-4 sm:grid-cols-2">
             {posters.map((poster: any) => (
               <div key={poster.id} className="border border-gray-300 p-4">
-                {/* <img src={poster.imageUrl} alt={poster.name} className="mb-2 w-full h-auto"/> */}
+                <img src={poster.image_url} alt={poster.name} className="mb-2 w-full h-auto" />
                 <h2 className="text-lg font-bold text-black">{poster.name}</h2>
                 <p className="text-gray-700">{poster.description}</p>
               </div>
