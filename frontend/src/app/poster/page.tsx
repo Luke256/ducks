@@ -7,11 +7,12 @@ import Link from "next/link";
 import { useFestivalList } from "@/hooks/festivalHook";
 import { usePosterList } from "@/hooks/posterHook";
 import { useState } from "react";
+import { useSessionStorage } from "@/hooks/sessStorage";
 
 
 export default function PosterPage() {
   const { data: festivals } = useFestivalList();
-  const [currentFestivalId, setCurrentFestivalId] = useState("");
+  const [currentFestivalId, setCurrentFestivalId] = useSessionStorage("currentFestivalId", "");
   const { data: posters, mutate: mutatePosters } = usePosterList(currentFestivalId);
   const [filterStatus, setFilterStatus] = useState("");
   const [filterName, setFilterName] = useState("");
@@ -30,7 +31,7 @@ export default function PosterPage() {
         <h1 className="mb-4 text-2xl font-bold text-black">ポスター</h1>
         <select className="mb-4 p-2 border border-gray-300 hover:cursor-pointer" onChange={(e) => {
           setCurrentFestivalId(e.target.value);
-        }}>
+        }} value={currentFestivalId}>
           <option value="">イベントを選択</option>
           {festivals && festivals.map((festival: Festival) => (
             <option key={festival.id} value={festival.id}>
