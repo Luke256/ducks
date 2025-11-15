@@ -193,6 +193,7 @@ func (h *Handler) EditPoster(c echo.Context) error {
 func (h *Handler) UpdatePosterStatus(c echo.Context) error {
 	var req UpdatePosterStatusRequest
 	if err := c.Bind(&req); err != nil {
+		slog.Error("Failed to bind update poster status request", "error", err)
 		return c.String(400, "Invalid request")
 	}
 

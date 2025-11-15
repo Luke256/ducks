@@ -6,7 +6,7 @@ import (
 
 	repository "github.com/Luke256/ducks/repository/gorm"
 	"github.com/Luke256/ducks/router"
-	"github.com/Luke256/ducks/router/v1"
+	v1 "github.com/Luke256/ducks/router/v1"
 	"github.com/Luke256/ducks/service/festival"
 	"github.com/Luke256/ducks/service/poster"
 	"github.com/Luke256/ducks/utils/storage/s3"
@@ -14,6 +14,7 @@ import (
 	dsnConfig "github.com/go-sql-driver/mysql"
 	"github.com/joho/godotenv"
 	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v4/middleware"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
 )
@@ -40,17 +41,11 @@ func setup() *router.Router {
 	e := echo.New()
 
 	// address CORS
-	e.Use(func(next echo.HandlerFunc) echo.HandlerFunc {
-		return func(c echo.Context) error {
-			c.Response().Header().Set("Access-Control-Allow-Origin", "*")
-			c.Response().Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
-			c.Response().Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
-			if c.Request().Method == "OPTIONS" {
-				return c.NoContent(204)
-			}
-			return next(c)
-		}
-	})
+	e.Use(middleware.CORSWithConfig(middleware.CORSConfig{
+		AllowOrigins: []string{"http://localhost:3000"},
+		AllowHeaders: []string{echo.HeaderOrigin, echo.HeaderContentType, echo.HeaderAccept, echo.HeaderAuthorization},
+		AllowMethods: []string{echo.GET, echo.HEAD, echo.PUT, echo.PATCH, echo.POST, echo.DELETE},
+	}))
 
 	DSNConfig := dsnConfig.Config{
 		User:                 dbUser,

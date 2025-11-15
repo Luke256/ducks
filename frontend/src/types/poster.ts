@@ -4,7 +4,8 @@ type Poster = {
     name: string;
     festivalId: string;
     description: string;
-    imageUrl: string;
+    image_url: string;
+    status: string;
 }
 
 export type { Poster };

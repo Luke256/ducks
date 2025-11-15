@@ -2,6 +2,7 @@
 
 import { Festival } from "@/types/festival";
 import { useEffect, useState } from "react";
+import StatusPicker from "./statusPicker";
 
 const getFestivals = async () => {
   const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/festivals`, {
@@ -24,7 +25,10 @@ export default function PosterPage() {
   const [currentFestival, setCurrentFestival] = useState<Festival | null>(null);
 
   useEffect(() => {
-    getFestivals().then((data) => setFestivals(data));
+    getFestivals().then((data) => {
+      setFestivals(data)
+    });
+
   }, []);
 
   useEffect(() => {
@@ -60,15 +64,36 @@ export default function PosterPage() {
           <p className="mb-4 text-gray-500">このイベントにはまだポスターがありません。</p>
         )}
         {currentFestival && posters.length > 0 && (
-          <div className="mb-8 grid grid-cols-1 gap-4 sm:grid-cols-2">
-            {posters.map((poster: any) => (
-              <div key={poster.id} className="border border-gray-300 p-4">
-                <img src={poster.image_url} alt={poster.name} className="mb-2 w-full h-auto" />
-                <h2 className="text-lg font-bold text-black">{poster.name}</h2>
-                <p className="text-gray-700">{poster.description}</p>
-              </div>
-            ))}
-          </div>
+          <table className="mb-8 w-full">
+            <thead>
+              <tr>
+                <th className="">ポスター名</th>
+                <th className="">説明</th>
+                <th className="">ステータス</th>
+              </tr>
+            </thead>
+            <tbody>
+              {posters.map((poster: any) => (
+                <tr key={poster.id}>
+                  <td className="border-t border-gray-300 p-2">{poster.name}</td>
+                  <td className="border-t border-gray-300 p-2">{poster.description}</td>
+                  {/* <td className="border-t border-gray-300 p-2">{poster.status}</td> */}
+                  <td className="border-t border-gray-300 p-2">
+                    <StatusPicker status={poster.status} onChange={async (newStatus: string) => {
+                      await fetch(`${process.env.NEXT_PUBLIC_API_URL}/posters/${poster.id}/status`, {
+                        method: "PATCH",
+                        body: JSON.stringify({ status: newStatus }),
+                        headers: { "Content-Type": "application/json" }
+                      }
+                      );
+                      const updatedPosters = await getPosters(currentFestival.id);
+                      setPosters(updatedPosters);
+                    }} />
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         )}
 
         {/* create poster for the festival */}
