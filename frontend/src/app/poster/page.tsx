@@ -6,9 +6,15 @@ import { LaunchTwoTone, RefreshTwoTone } from "@mui/icons-material";
 import Link from "next/link";
 import { useFestivalList } from "@/hooks/festivalHook";
 import { usePosterList } from "@/hooks/posterHook";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useSessionStorage } from "@/hooks/sessStorage";
+import { Poster, PosterStatusLabels } from "@/types/poster";
 
+const posterItemBg = {
+  "uncollected": "bg-yellow-100",
+  "collected": "bg-green-100",
+  "lost": "bg-red-100"
+}
 
 export default function PosterPage() {
   const { data: festivals } = useFestivalList();
@@ -16,6 +22,7 @@ export default function PosterPage() {
   const { data: posters, mutate: mutatePosters } = usePosterList(currentFestivalId);
   const [filterStatus, setFilterStatus] = useState("");
   const [filterName, setFilterName] = useState("");
+  const imagePreview = useRef<HTMLImageElement>(null);
 
   let filteredPosters = posters;
   if (filterStatus) {
@@ -55,9 +62,11 @@ export default function PosterPage() {
                 setFilterStatus(e.target.value);
               }}>
                 <option value="">すべてのステータス</option>
-                <option value="uncollected">未回収</option>
-                <option value="collected">回収済み</option>
-                <option value="lost">消失</option>
+                {Object.entries(PosterStatusLabels).map(([key, label]) => (
+                  <option key={key} value={key}>
+                    {label}
+                  </option>
+                ))}
               </select>
 
               <button className="mb-4 px-4 py-2 bg-gray-500 text-white hover:bg-gray-600 hover:cursor-pointer" onClick={async () => {
@@ -78,8 +87,8 @@ export default function PosterPage() {
                 </tr>
               </thead>
               <tbody>
-                {filteredPosters.map((poster: any) => (
-                  <tr key={poster.id}>
+                {filteredPosters.map((poster: Poster) => (
+                  <tr key={poster.id} className={posterItemBg[poster.status]}>
                     <td className="border-t border-gray-300 p-2 text-center">{poster.name}</td>
                     <td className="border-t border-gray-300 p-2 text-center">{poster.description}</td>
                     <td className="border-t border-gray-300 p-2 text-center">
@@ -122,13 +131,33 @@ export default function PosterPage() {
                 body: form,
               });
               await mutatePosters();
+              imagePreview.current!.src = "";
             }}>
               <h2 className="mb-2 text-xl font-bold text-black">新しいポスターを作成</h2>
               <input type="text" name="name" placeholder="ポスター名" required className="mb-2 p-2 border border-gray-300 w-full" />
               <textarea name="description" placeholder="説明" required className="mb-2 p-2 border border-gray-300 w-full"></textarea>
-              <input type="file" name="image" accept="image/*" required className="mb-2" />
+              {/* <input class="cursor-pointer bg-neutral-secondary-medium border border-default-medium text-heading text-sm rounded-base focus:ring-brand focus:border-brand block w-full shadow-xs placeholder:text-body" id="file_input" type="file"> */}
+              <input type="file" name="image" accept="image/*" required
+                className="p-2 border border-gray-300 w-full mb-2 hover:cursor-pointer"
+                onChange={
+                  (e) => {
+                    const file = e.target.files?.[0];
+                    if (file && imagePreview.current) {
+                      imagePreview.current.src = URL.createObjectURL(file);
+                      imagePreview.current.hidden = false;
+                    }
+                    else {
+                      if (imagePreview.current) {
+                        imagePreview.current.src = "";
+                        imagePreview.current.hidden = true;
+                      }
+                    }
+                  }
+                } />
               <br />
-              <button type="submit" className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600">作成</button>
+              <img ref={imagePreview} className="mb-4 max-h-48 object-contain" alt="プレビュー画像" hidden />
+              <br />
+              <button type="submit" className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 hover:cursor-pointer">作成</button>
             </form>
           </div>
         )}
