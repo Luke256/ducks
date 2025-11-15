@@ -23,6 +23,8 @@ export default function PosterPage() {
   const [festivals, setFestivals] = useState([]);
   const [posters, setPosters] = useState([]);
   const [currentFestival, setCurrentFestival] = useState<Festival | null>(null);
+  const [filterStatus, setFilterStatus] = useState("");
+  const [filterName, setFilterName] = useState("");
 
   useEffect(() => {
     getFestivals().then((data) => {
@@ -41,7 +43,13 @@ export default function PosterPage() {
     });
   }, [currentFestival]);
 
-  console.log(posters);
+  let filteredPosters = posters;
+  if (filterStatus) {
+    filteredPosters = filteredPosters.filter((poster: any) => poster.status === filterStatus);
+  }
+  if (filterName) {
+    filteredPosters = filteredPosters.filter((poster: any) => poster.name.includes(filterName));
+  }
 
   return (
     <main className="min-h-screen p-12">
@@ -64,36 +72,52 @@ export default function PosterPage() {
           <p className="mb-4 text-gray-500">このイベントにはまだポスターがありません。</p>
         )}
         {currentFestival && posters.length > 0 && (
-          <table className="mb-8 w-full">
-            <thead>
-              <tr>
-                <th className="">ポスター名</th>
-                <th className="">説明</th>
-                <th className="">ステータス</th>
-              </tr>
-            </thead>
-            <tbody>
-              {posters.map((poster: any) => (
-                <tr key={poster.id}>
-                  <td className="border-t border-gray-300 p-2">{poster.name}</td>
-                  <td className="border-t border-gray-300 p-2">{poster.description}</td>
-                  {/* <td className="border-t border-gray-300 p-2">{poster.status}</td> */}
-                  <td className="border-t border-gray-300 p-2">
-                    <StatusPicker status={poster.status} onChange={async (newStatus: string) => {
-                      await fetch(`${process.env.NEXT_PUBLIC_API_URL}/posters/${poster.id}/status`, {
-                        method: "PATCH",
-                        body: JSON.stringify({ status: newStatus }),
-                        headers: { "Content-Type": "application/json" }
-                      }
-                      );
-                      const updatedPosters = await getPosters(currentFestival.id);
-                      setPosters(updatedPosters);
-                    }} />
-                  </td>
+          <div>
+            <div className="mb-4 flex flex-col md:flex-row md:items-center md:space-x-4">
+              <input type="text" placeholder="ポスター名" className="mb-4 p-2 border border-gray-300 w-full" onChange={(e) => {
+                setFilterName(e.target.value);
+              }} />
+
+              <select className="mb-4 p-2 border border-gray-300 hover:cursor-pointer" onChange={(e) => {
+                setFilterStatus(e.target.value);
+              }}>
+                <option value="">すべてのステータス</option>
+                <option value="uncollected">未回収</option>
+                <option value="collected">回収済み</option>
+                <option value="lost">消失</option>
+              </select>
+            </div>
+
+            <table className="mb-8 w-full">
+              <thead>
+                <tr>
+                  <th className="">ポスター名</th>
+                  <th className="">説明</th>
+                  <th className="">ステータス</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {filteredPosters.map((poster: any) => (
+                  <tr key={poster.id}>
+                    <td className="border-t border-gray-300 p-2">{poster.name}</td>
+                    <td className="border-t border-gray-300 p-2">{poster.description}</td>
+                    <td className="border-t border-gray-300 p-2">
+                      <StatusPicker status={poster.status} onChange={async (newStatus: string) => {
+                        await fetch(`${process.env.NEXT_PUBLIC_API_URL}/posters/${poster.id}/status`, {
+                          method: "PATCH",
+                          body: JSON.stringify({ status: newStatus }),
+                          headers: { "Content-Type": "application/json" }
+                        }
+                        );
+                        const updatedPosters = await getPosters(currentFestival.id);
+                        setPosters(updatedPosters);
+                      }} />
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         )}
 
         {/* create poster for the festival */}
