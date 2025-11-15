@@ -44,6 +44,7 @@ func (m *ManagerImpl) Create(name string, festivalID uuid.UUID, description stri
 
 	poster, err := m.repo.RegisterPoster(festivalID, name, description, imageID)
 	if err != nil {
+		_ = m.storage.DeleteFile(imageID)
 		return Poster{}, fmt.Errorf("failed to register poster: %w", err)
 	}
 
