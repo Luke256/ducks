@@ -35,6 +35,7 @@ func setup() *router.Router {
 	dbHost := os.Getenv("NS_MARIADB_HOSTNAME")
 	dbPort := os.Getenv("NS_MARIADB_PORT")
 	dbName := os.Getenv("NS_MARIADB_DATABASE")
+	bucketName := os.Getenv("S3_BUCKET_NAME")
 
 	e := echo.New()
 
@@ -75,7 +76,7 @@ func setup() *router.Router {
 		panic(err)
 	}
 
-	storage, err := s3.NewS3Storage("03781cae-f780-4c94-8832-d6cc22c5463c-ducks")
+	storage, err := s3.NewS3Storage(bucketName)
 	if err != nil {
 		slog.Error("failed to create s3 storage:", slog.String("error", err.Error()))
 		panic(err)
