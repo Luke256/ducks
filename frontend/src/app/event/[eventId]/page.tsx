@@ -16,8 +16,8 @@ export default async function EventDetailPage({ params }: Readonly<{
     const event = await getEvent(eventId);
 
     return (
-        <main className="min-h-screen max-w-7xl mx-auto">
-            <div className="max-w-3xl bg-white p-8">
+        <main className="max-w-7xl mx-auto">
+            <div className="max-w-3xl bg-white md:p-8">
                 <h1 className="mb-4 text-2xl font-bold text-black">
                     イベント詳細: {event.name}
                 </h1>

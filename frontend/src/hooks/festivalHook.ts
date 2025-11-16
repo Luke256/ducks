@@ -7,6 +7,9 @@ const useFestival = (festivalId: string) => {
     const { data, error, isLoading } = useSWR(
         `${process.env.NEXT_PUBLIC_API_URL}/festivals/${festivalId}`,
         async (url: string) => {
+            if (!festivalId) {
+                return null;
+            }
             const res = await fetch(url);
             if (!res.ok) {
                 throw new Error("Failed to fetch festival data");

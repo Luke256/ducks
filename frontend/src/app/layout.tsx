@@ -31,7 +31,7 @@ export default function RootLayout({
       >
         <Sidebar />
         <div className="px-4 pb-14 pt-4 md:ml-64 md:px-10 md:pt-10 md:pb-10">{children}</div>
-        <ToastContainer aria-label={undefined} position="bottom-left" />
+        <ToastContainer aria-label={undefined}/>
       </body>
     </html>
   );

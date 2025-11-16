@@ -10,6 +10,7 @@ import { useRef, useState } from "react";
 import { useSessionStorage } from "@/hooks/sessStorage";
 import { Poster, PosterStatusLabels } from "@/types/poster";
 import { toast } from "react-toastify";
+import { useRouter } from "next/navigation";
 
 const posterItemBg = {
   "uncollected": "bg-yellow-100",
@@ -23,7 +24,7 @@ export default function PosterPage() {
   const { data: posters, mutate: mutatePosters } = usePosterList(currentFestivalId);
   const [filterStatus, setFilterStatus] = useState("");
   const [filterName, setFilterName] = useState("");
-  const imagePreview = useRef<HTMLImageElement>(null);
+  const router = useRouter();
 
   let filteredPosters = posters;
   if (filterStatus) {
@@ -34,8 +35,8 @@ export default function PosterPage() {
   }
 
   return (
-    <main className="min-h-screen">
-      <div className="max-w-3xl bg-white p-8">
+    <main>
+      <div className="max-w-3xl bg-white md:p-8">
         <h1 className="mb-4 text-2xl font-bold text-black">ポスター</h1>
         <select className="mb-4 p-2 border border-gray-300 hover:cursor-pointer" onChange={(e) => {
           setCurrentFestivalId(e.target.value);
@@ -47,7 +48,7 @@ export default function PosterPage() {
             </option>
           ))}
         </select>
-        <Link href="/poster/new" className="mb-4 ml-2 px-4 py-2 bg-blue-500 text-white hover:bg-blue-600 hover:cursor-pointer">新しいポスターを作成</Link>
+        <Link href="/poster/new" className="mb-4 ml-2 px-4 py-2 inline-block bg-blue-500 text-white hover:bg-blue-600 hover:cursor-pointer">新しいポスターを作成</Link>
 
         {/* display posters for the festival */}
         {currentFestivalId && (!posters || posters.length === 0) && (
@@ -56,11 +57,11 @@ export default function PosterPage() {
         {currentFestivalId && posters && posters.length > 0 && (
           <div>
             <div className="mb-4 flex flex-col md:flex-row md:items-center md:space-x-4">
-              <input type="text" placeholder="ポスター名" className="mb-4 p-2 border border-gray-300 w-full" onChange={(e) => {
+              <input type="text" placeholder="ポスター名" className="p-2 border border-gray-300 w-full" onChange={(e) => {
                 setFilterName(e.target.value);
               }} />
 
-              <select className="mb-4 p-2 border border-gray-300 hover:cursor-pointer" onChange={(e) => {
+              <select className="p-2 border border-gray-300 hover:cursor-pointer" onChange={(e) => {
                 setFilterStatus(e.target.value);
               }}>
                 <option value="">すべてのステータス</option>
@@ -70,14 +71,11 @@ export default function PosterPage() {
                   </option>
                 ))}
               </select>
-
-              <button className="mb-4 px-4 py-2 bg-gray-500 text-white hover:bg-gray-600 hover:cursor-pointer" onClick={async () => {
-                // Refresh posters
-                await mutatePosters();
-              }}>
-                <RefreshTwoTone />
-              </button>
             </div>
+
+            <button className="mb-4 px-4 py-2 bg-gray-500 text-white hover:bg-gray-600 hover:cursor-pointer" onClick={async () => { await mutatePosters(); }}>
+              <RefreshTwoTone />
+            </button>
 
             <table className="mb-8 w-full">
               <thead>
@@ -91,8 +89,8 @@ export default function PosterPage() {
               <tbody>
                 {filteredPosters.map((poster: Poster) => (
                   <tr key={poster.id} className={posterItemBg[poster.status]}>
-                    <td className="border-t border-gray-300 p-2 text-center">{poster.name}</td>
-                    <td className="border-t border-gray-300 p-2 text-center">{poster.description}</td>
+                    <td className="border-t border-gray-300 p-2 text-center" onClick={() => router.push(`/poster/detail/${poster.id}`)}>{poster.name}</td>
+                    <td className="border-t border-gray-300 p-2 text-center" onClick={() => router.push(`/poster/detail/${poster.id}`)}>{poster.description}</td>
                     <td className="border-t border-gray-300 p-2 text-center">
                       <StatusPicker status={poster.status} onChange={async (newStatus: string) => {
                         const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/posters/${poster.id}/status`, {

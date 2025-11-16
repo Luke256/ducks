@@ -11,13 +11,12 @@ const usePoster = (posterId: string): {
     isValidating: boolean;
     mutate: () => Promise<void>;
 } => {
-    if (!posterId) {
-        return { data: null, error: null, isLoading: false, isValidating: false, mutate: async () => { } };
-    }
-
     const { data, error, isLoading, isValidating, mutate } = useSWR(
         `${process.env.NEXT_PUBLIC_API_URL}/posters/${posterId}`,
         async (url: string) => {
+            if (!posterId) {
+                return null;
+            }
             const res = await fetch(url);
             if (!res.ok) {
                 throw new Error("Failed to fetch poster data");
