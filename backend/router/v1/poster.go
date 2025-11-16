@@ -25,7 +25,7 @@ func (r RegisterPosterRequest) Validate() error {
 	return validation.ValidateStruct(&r,
 		validation.Field(&r.FestivalID, validation.Required),
 		validation.Field(&r.PosterName, validation.Required, validation.Length(1, 64)),
-		validation.Field(&r.Description, validation.Length(0, 1024)),
+		validation.Field(&r.Description, validation.Required, validation.Length(1, 1024)),
 	)
 }
 
@@ -39,7 +39,7 @@ func (r EditPosterRequest) Validate() error {
 	return validation.ValidateStruct(&r,
 		validation.Field(&r.ID, validation.Required),
 		validation.Field(&r.PosterName, validation.Required, validation.Length(1, 64)),
-		validation.Field(&r.Description, validation.Length(0, 1024)),
+		validation.Field(&r.Description, validation.Required, validation.Length(1, 1024)),
 	)
 }
 

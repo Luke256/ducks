@@ -249,7 +249,7 @@ func TestUpdatePoster(t *testing.T) {
 		e.PUT("/api/posters/{posterID}", poster.ID.String()).
 			WithJSON(map[string]any{
 				"name":        "Updated Poster Name",
-				"description": "",
+				"description": "Updated description.",
 			}).
 			Expect().
 			Status(204)
@@ -262,7 +262,7 @@ func TestUpdatePoster(t *testing.T) {
 		resp.Value("id").IsEqual(poster.ID.String())
 		resp.Value("festival_id").IsEqual(fes.ID.String())
 		resp.Value("name").IsEqual("Updated Poster Name")
-		resp.Value("description").IsEqual("")
+		resp.Value("description").IsEqual("Updated description.")
 		resp.Value("image_url").IsEqual(poster.ImageURL)
 		resp.Value("status").IsEqual(poster.Status)
 	})
@@ -275,6 +275,37 @@ func TestUpdatePoster(t *testing.T) {
 			}).
 			Expect().
 			Status(404)
+	})
+
+	t.Run("empty name", func(t *testing.T) {
+		e.PUT("/api/posters/{posterID}", poster.ID.String()).
+			WithJSON(map[string]any{
+				"name":        "",
+				"description": "Description",
+			}).
+			Expect().
+			Status(400)
+	})
+
+	t.Run("too long name", func(t *testing.T) {
+		longName := strings.Repeat("b", 65)
+		e.PUT("/api/posters/{posterID}", poster.ID.String()).
+			WithJSON(map[string]any{
+				"name":        longName,
+				"description": "Description",
+			}).
+			Expect().
+			Status(400)
+	})
+
+	t.Run("empty description", func(t *testing.T) {
+		e.PUT("/api/posters/{posterID}", poster.ID.String()).
+			WithJSON(map[string]any{
+				"name":        "Name",
+				"description": "",
+			}).
+			Expect().
+			Status(400)
 	})
 }
 
