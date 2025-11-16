@@ -3,16 +3,25 @@
 import { useFestivalList } from "@/hooks/festivalHook";
 import { useSessionStorage } from "@/hooks/sessStorage";
 import { Festival } from "@/types/festival";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { FormEvent, useRef } from "react";
+import { FormEvent, useEffect, useState } from "react";
 import { toast } from "react-toastify";
 
 const NewPosterPage = () => {
     const { data: festivals } = useFestivalList();
     const [currentFestivalId, setCurrentFestivalId] = useSessionStorage("currentFestivalId", "");
-    const imagePreview = useRef<HTMLImageElement>(null);
+    const [previewSrc, setPreviewSrc] = useState<string | null>(null);
 
     const router = useRouter();
+
+    useEffect(() => {
+        return () => {
+            if (previewSrc) {
+                URL.revokeObjectURL(previewSrc);
+            }
+        };
+    }, [previewSrc]);
 
     const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
         event.preventDefault();
@@ -41,11 +50,6 @@ const NewPosterPage = () => {
 
         if (res.ok) {
             toast.update(uploadToastId, { render: "ポスターが作成されました", type: "success", isLoading: false, autoClose: 3000 });
-            formElement.reset();
-            if (imagePreview.current) {
-                imagePreview.current.src = "";
-                imagePreview.current.hidden = true;
-            }
             router.push("/poster");
             return;
         }
@@ -86,20 +90,35 @@ const NewPosterPage = () => {
                             onChange={
                                 (e) => {
                                     const file = e.target.files?.[0];
-                                    if (file && imagePreview.current) {
-                                        imagePreview.current.src = URL.createObjectURL(file);
-                                        imagePreview.current.hidden = false;
+                                    if (file) {
+                                        const objectUrl = URL.createObjectURL(file);
+                                        setPreviewSrc((prev) => {
+                                            if (prev) {
+                                                URL.revokeObjectURL(prev);
+                                            }
+                                            return objectUrl;
+                                        });
                                     }
                                     else {
-                                        if (imagePreview.current) {
-                                            imagePreview.current.src = "";
-                                            imagePreview.current.hidden = true;
-                                        }
+                                        setPreviewSrc((prev) => {
+                                            if (prev) {
+                                                URL.revokeObjectURL(prev);
+                                            }
+                                            return null;
+                                        });
                                     }
                                 }
                             } />
                         <br />
-                        <img ref={imagePreview} className="mb-4 max-h-48 object-contain" alt="プレビュー画像" hidden />
+                        {previewSrc && (
+                            <Image
+                                src={previewSrc}
+                                alt="プレビュー画像"
+                                width={400}
+                                height={300}
+                                className="mb-4 max-h-48 object-contain"
+                            />
+                        )}
                         <br />
                         <button type="submit" className="px-4 py-2 bg-blue-500 text-white hover:bg-blue-600 hover:cursor-pointer">作成</button>
                     </form>

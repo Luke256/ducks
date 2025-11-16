@@ -6,6 +6,7 @@ import { useState } from "react";
 import { toast } from 'react-toastify';
 import StatusPicker from "../../statusPicker";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 
 export default function PosterDetail({ params }: Readonly<{
     params: { posterId: string };
@@ -116,7 +117,7 @@ export default function PosterDetail({ params }: Readonly<{
                         )
                         }
                         {poster.image_url ? (
-                            <img src={poster.image_url} alt={poster.name} className="max-w-xs m-auto" />
+                            <Image src={poster.image_url} alt={poster.name} className="max-w-xs m-auto" width={400} height={400} />
                         ) : (
                             <p>画像がありません。</p>
                         )}
@@ -126,7 +127,7 @@ export default function PosterDetail({ params }: Readonly<{
                         <button
                             className="ml-2 mb-4 px-4 py-2 bg-green-500 text-white hover:cursor-pointer"
                             onClick={
-                                async (_) => {
+                                async () => {
                                     if (editedName == poster.name && editedStatus == poster.description) {
                                         setEditMode(false);
                                         return;

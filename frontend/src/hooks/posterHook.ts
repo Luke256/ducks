@@ -6,7 +6,7 @@ import useSWR from "swr"
 // IDでポスターを取得するカスタムフック
 const usePoster = (posterId: string): {
     data: Poster | null;
-    error: any;
+    error: Error | null;
     isLoading: boolean;
     isValidating: boolean;
     mutate: () => Promise<void>;

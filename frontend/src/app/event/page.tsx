@@ -4,6 +4,7 @@ import { KeyboardArrowDown, KeyboardArrowUp } from "@mui/icons-material";
 import { useEffect, useState } from "react";
 import Form from "next/form"
 import { redirect } from "next/navigation";
+import { Festival } from "@/types/festival";
 
 type FestivalCreateFormData = {
     name: string;
@@ -35,7 +36,6 @@ export default function EventPage() {
 
     useEffect(() => {
         fetchEvents().then((data) => setEvents(data));
-        console.log(events);
     }, []);
 
 
@@ -61,7 +61,7 @@ export default function EventPage() {
                         </tr>
                     </thead>
                     <tbody>
-                        {events.map((event: any) => (
+                        {events.map((event: Festival) => (
                             <tr
                                 key={event.id}
                                 onClick={() => redirect(`/event/${event.id}`)}

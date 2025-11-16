@@ -6,7 +6,7 @@ import { LaunchTwoTone, RefreshTwoTone } from "@mui/icons-material";
 import Link from "next/link";
 import { useFestivalList } from "@/hooks/festivalHook";
 import { usePosterList } from "@/hooks/posterHook";
-import { useRef, useState } from "react";
+import { useState } from "react";
 import { useSessionStorage } from "@/hooks/sessStorage";
 import { Poster, PosterStatusLabels } from "@/types/poster";
 import { toast } from "react-toastify";
@@ -28,10 +28,10 @@ export default function PosterPage() {
 
   let filteredPosters = posters;
   if (filterStatus) {
-    filteredPosters = filteredPosters.filter((poster: any) => poster.status === filterStatus);
+    filteredPosters = filteredPosters.filter((poster: Poster) => poster.status === filterStatus);
   }
   if (filterName) {
-    filteredPosters = filteredPosters.filter((poster: any) => poster.name.includes(filterName));
+    filteredPosters = filteredPosters.filter((poster: Poster) => poster.name.includes(filterName));
   }
 
   return (
