@@ -9,6 +9,7 @@ import { usePosterList } from "@/hooks/posterHook";
 import { useRef, useState } from "react";
 import { useSessionStorage } from "@/hooks/sessStorage";
 import { Poster, PosterStatusLabels } from "@/types/poster";
+import { toast } from "react-toastify";
 
 const posterItemBg = {
   "uncollected": "bg-yellow-100",
@@ -23,7 +24,6 @@ export default function PosterPage() {
   const [filterStatus, setFilterStatus] = useState("");
   const [filterName, setFilterName] = useState("");
   const imagePreview = useRef<HTMLImageElement>(null);
-  const uploadError = useRef<HTMLLabelElement>(null);
 
   let filteredPosters = posters;
   if (filterStatus) {
@@ -94,12 +94,17 @@ export default function PosterPage() {
                     <td className="border-t border-gray-300 p-2 text-center">{poster.description}</td>
                     <td className="border-t border-gray-300 p-2 text-center">
                       <StatusPicker status={poster.status} onChange={async (newStatus: string) => {
-                        await fetch(`${process.env.NEXT_PUBLIC_API_URL}/posters/${poster.id}/status`, {
+                        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/posters/${poster.id}/status`, {
                           method: "PATCH",
                           body: JSON.stringify({ status: newStatus }),
                           headers: { "Content-Type": "application/json" }
                         }
                         );
+                        if (res.ok) {
+                          toast.success("ポスターのステータスが更新されました");
+                        } else {
+                          toast.error(`ポスターのステータスの更新に失敗しました: ${res.statusText}`);
+                        }
                         await mutatePosters();
                       }} />
                     </td>
@@ -127,14 +132,15 @@ export default function PosterPage() {
               form.append("description", description);
               form.append("image", imageFile);
               form.append("festival_id", currentFestivalId);
+              const uploadToastId = toast.loading("ポスターを作成中...");
               const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/posters`, {
                 method: "POST",
                 body: form,
               });
-              if (!res.ok) {
-                if (uploadError.current) {
-                  uploadError.current.textContent = `Error uploading poster: ${await res.text()}`;
-                }
+              if (res.ok) {
+                toast.update(uploadToastId, { render: "ポスターが作成されました", type: "success", isLoading: false, autoClose: 3000 });
+              } else {
+                toast.update(uploadToastId, { render: `ポスターの作成に失敗しました: ${res.statusText}`, type: "error", isLoading: false, autoClose: 5000 });
               }
               await mutatePosters();
               imagePreview.current!.src = "";
@@ -164,8 +170,6 @@ export default function PosterPage() {
               <img ref={imagePreview} className="mb-4 max-h-48 object-contain" alt="プレビュー画像" hidden />
               <br />
               <button type="submit" className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 hover:cursor-pointer">作成</button>
-              <br />
-              <label className="text-red-500 mt-2" ref={uploadError}></label>
             </form>
           </div>
         )}

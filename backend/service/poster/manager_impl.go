@@ -27,15 +27,18 @@ func (m *ManagerImpl) Create(name string, festivalID uuid.UUID, description stri
 	// duplicate check
 	_, err = m.repo.GetPosterByFestivalIDAndPosterName(festivalID, name)
 	if err == nil {
+		_ = m.storage.DeleteFile(imageID)
 		return Poster{}, ErrAlreadyExists
 	}
 	if err != repository.ErrNotFound {
+		_ = m.storage.DeleteFile(imageID)
 		return Poster{}, fmt.Errorf("failed to check duplicate poster: %w", err)
 	}
 
 	// festival existence check
 	_, err = m.repo.GetFestivalByID(festivalID)
 	if err != nil {
+		_ = m.storage.DeleteFile(imageID)
 		if err == repository.ErrNotFound {
 			return Poster{}, ErrNotFound
 		}

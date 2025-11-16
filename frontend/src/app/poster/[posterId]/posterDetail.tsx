@@ -2,8 +2,8 @@
 
 import { useFestival } from "@/hooks/festivalHook";
 import { usePoster } from "@/hooks/posterHook";
-import { PosterStatusLabels } from "@/types/poster";
 import { useState } from "react";
+import { ToastContainer, ToastOptions, toast } from 'react-toastify';
 import StatusPicker from "../statusPicker";
 
 export default function PosterDetail({ params }: Readonly<{
@@ -44,6 +44,7 @@ export default function PosterDetail({ params }: Readonly<{
                                         setEditMode(false);
                                         return;
                                     }
+                                    const updateToastId = toast.loading("ポスターを更新中...");
                                     const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/posters/${poster.id}`, {
                                         method: "PUT",
                                         headers: {
@@ -55,8 +56,11 @@ export default function PosterDetail({ params }: Readonly<{
                                         }),
                                     });
 
-                                    if (!res.ok) {
-                                        console.error("Failed to update poster");
+                                    if (res.ok) {
+                                        toast.update(updateToastId, { render: "ポスターが更新されました", type: "success", isLoading: false, autoClose: 3000 });
+                                    }
+                                    else {
+                                        toast.update(updateToastId, { render: `ポスターの更新に失敗しました: ${res.statusText}`, type: "error", isLoading: false, autoClose: 5000 });
                                     }
                                     setEditMode(false);
                                     await mutatePoster();
@@ -95,12 +99,17 @@ export default function PosterDetail({ params }: Readonly<{
                     <div className="mt-4">
                         <h3 className="text-xl font-semibold">ステータス</h3>
                         <StatusPicker status={poster.status} onChange={async (newStatus: string) => {
-                            await fetch(`${process.env.NEXT_PUBLIC_API_URL}/posters/${poster.id}/status`, {
+                            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/posters/${poster.id}/status`, {
                                 method: "PATCH",
                                 body: JSON.stringify({ status: newStatus }),
                                 headers: { "Content-Type": "application/json" }
                             }
                             );
+                            if (res.ok) {
+                              toast.success("ポスターのステータスが更新されました");
+                            } else {
+                              toast.error(`ポスターのステータスの更新に失敗しました: ${res.statusText}`);
+                            }
                             await mutatePoster();
                         }} />
                     </div>
