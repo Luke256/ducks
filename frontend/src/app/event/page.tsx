@@ -50,7 +50,7 @@ export default function EventPage() {
     }
 
     return (
-        <main className="min-h-screen p-12 max-w-7xl mx-auto">
+        <main className="min-h-screen max-w-7xl mx-auto">
             <div className="max-w-3xl bg-white p-8">
                 <h1 className="mb-4 text-2xl font-bold text-black">イベント管理</h1>
                 <table className="min-w-full table-auto border-collapse">

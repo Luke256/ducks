@@ -6,7 +6,7 @@ export default async function PosterDetailPage({ params }: Readonly<{
     const { posterId } = await params;
 
     return (
-        <main className="min-h-screen p-12">
+        <main className="min-h-screen">
             {/* Additional poster details would go here */}
 
             <PosterDetail params={{ posterId }} />

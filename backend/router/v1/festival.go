@@ -1,14 +1,11 @@
 package v1
 
 import (
-	"fmt"
-
 	"github.com/Luke256/ducks/router/utils/herror"
 	"github.com/Luke256/ducks/service/festival"
 	"github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
-	// "github.com/go-ozzo/ozzo-validation/v4/is"
 )
 
 type CreateFestivalRequest struct {
@@ -81,7 +78,6 @@ func (h *Handler) GetFestival(c echo.Context) error {
 			return herror.InternalServerError("failed to get festival")
 		}
 	}
-	fmt.Println(fest)
 	return c.JSON(200, fest)
 }
 

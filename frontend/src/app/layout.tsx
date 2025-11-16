@@ -30,8 +30,8 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased bg-white`}
       >
         <Sidebar />
-        <div className="ml-64">{children}</div>
-        <ToastContainer aria-label={undefined} position="bottom-left"/>
+        <div className="px-4 pb-14 pt-4 md:ml-64 md:px-10 md:pt-10 md:pb-10">{children}</div>
+        <ToastContainer aria-label={undefined} position="bottom-left" />
       </body>
     </html>
   );

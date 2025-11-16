@@ -34,7 +34,7 @@ export default function PosterPage() {
   }
 
   return (
-    <main className="min-h-screen p-12">
+    <main className="min-h-screen">
       <div className="max-w-3xl bg-white p-8">
         <h1 className="mb-4 text-2xl font-bold text-black">ポスター</h1>
         <select className="mb-4 p-2 border border-gray-300 hover:cursor-pointer" onChange={(e) => {
@@ -47,6 +47,7 @@ export default function PosterPage() {
             </option>
           ))}
         </select>
+        <Link href="/poster/new" className="mb-4 ml-2 px-4 py-2 bg-blue-500 text-white hover:bg-blue-600 hover:cursor-pointer">新しいポスターを作成</Link>
 
         {/* display posters for the festival */}
         {currentFestivalId && (!posters || posters.length === 0) && (
@@ -109,7 +110,7 @@ export default function PosterPage() {
                       }} />
                     </td>
                     <td className="border-t border-gray-300 p-2 text-center">
-                      <Link href={`/poster/${poster.id}`}>
+                      <Link href={`/poster/detail/${poster.id}`}>
                         <LaunchTwoTone className="hover:cursor-pointer" />
                       </Link>
                     </td>
@@ -117,60 +118,6 @@ export default function PosterPage() {
                 ))}
               </tbody>
             </table>
-          </div>
-        )}
-
-        {/* create poster for the festival */}
-        {currentFestivalId && (
-          <div className="mb-4">
-            <form action={async (formData: FormData) => {
-              const name = formData.get("name") as string;
-              const description = formData.get("description") as string;
-              const imageFile = formData.get("image") as File;
-              const form = new FormData();
-              form.append("name", name);
-              form.append("description", description);
-              form.append("image", imageFile);
-              form.append("festival_id", currentFestivalId);
-              const uploadToastId = toast.loading("ポスターを作成中...");
-              const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/posters`, {
-                method: "POST",
-                body: form,
-              });
-              if (res.ok) {
-                toast.update(uploadToastId, { render: "ポスターが作成されました", type: "success", isLoading: false, autoClose: 3000 });
-              } else {
-                toast.update(uploadToastId, { render: `ポスターの作成に失敗しました: ${res.statusText}`, type: "error", isLoading: false, autoClose: 5000 });
-              }
-              await mutatePosters();
-              imagePreview.current!.src = "";
-              imagePreview.current!.hidden = true;
-            }}>
-              <h2 className="mb-2 text-xl font-bold text-black">新しいポスターを作成</h2>
-              <input type="text" name="name" placeholder="ポスター名" required className="mb-2 p-2 border border-gray-300 w-full" />
-              <textarea name="description" placeholder="説明" required className="mb-2 p-2 border border-gray-300 w-full"></textarea>
-              <input type="file" name="image" accept="image/*" required
-                className="p-2 border border-gray-300 w-full mb-2 hover:cursor-pointer"
-                onChange={
-                  (e) => {
-                    const file = e.target.files?.[0];
-                    if (file && imagePreview.current) {
-                      imagePreview.current.src = URL.createObjectURL(file);
-                      imagePreview.current.hidden = false;
-                    }
-                    else {
-                      if (imagePreview.current) {
-                        imagePreview.current.src = "";
-                        imagePreview.current.hidden = true;
-                      }
-                    }
-                  }
-                } />
-              <br />
-              <img ref={imagePreview} className="mb-4 max-h-48 object-contain" alt="プレビュー画像" hidden />
-              <br />
-              <button type="submit" className="px-4 py-2 bg-blue-500 text-white hover:bg-blue-600 hover:cursor-pointer">作成</button>
-            </form>
           </div>
         )}
       </div>
