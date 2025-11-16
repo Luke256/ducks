@@ -31,7 +31,7 @@ func main() {
 }
 
 func setup() *router.Router {
-	dbUser := os.Getenv("NS_MARIADB_USERNAME")
+	dbUser := os.Getenv("NS_MARIADB_USER")
 	dbPassword := os.Getenv("NS_MARIADB_PASSWORD")
 	dbHost := os.Getenv("NS_MARIADB_HOSTNAME")
 	dbPort := os.Getenv("NS_MARIADB_PORT")
@@ -40,12 +40,6 @@ func setup() *router.Router {
 
 	if dbUser == "" || dbPassword == "" || dbHost == "" || dbPort == "" || dbName == "" || bucketName == "" {
 		slog.Error("environment variables are not set properly")
-		slog.Error("DB_USER:", slog.String("value", dbUser))
-		slog.Error("DB_PASSWORD:", slog.String("value", dbPassword))
-		slog.Error("DB_HOST:", slog.String("value", dbHost))
-		slog.Error("DB_PORT:", slog.String("value", dbPort))
-		slog.Error("DB_NAME:", slog.String("value", dbName))
-		slog.Error("BUCKET_NAME:", slog.String("value", bucketName))
 		panic("environment variables are not set properly")
 	}
 
