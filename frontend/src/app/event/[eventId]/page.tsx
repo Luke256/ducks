@@ -6,7 +6,6 @@ const getEvent = async (eventId: string): Promise<Festival> => {
     const endpoint = `${process.env.NEXT_PUBLIC_API_URL}/festivals/${eventId}`;
     const res = await fetch(endpoint);
     const data = await res.json();
-    console.log("Fetched event data:", data);
     return data;
 }
 
