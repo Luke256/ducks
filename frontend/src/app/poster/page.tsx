@@ -23,6 +23,7 @@ export default function PosterPage() {
   const [filterStatus, setFilterStatus] = useState("");
   const [filterName, setFilterName] = useState("");
   const imagePreview = useRef<HTMLImageElement>(null);
+  const uploadError = useRef<HTMLLabelElement>(null);
 
   let filteredPosters = posters;
   if (filterStatus) {
@@ -126,17 +127,22 @@ export default function PosterPage() {
               form.append("description", description);
               form.append("image", imageFile);
               form.append("festival_id", currentFestivalId);
-              await fetch(`${process.env.NEXT_PUBLIC_API_URL}/posters`, {
+              const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/posters`, {
                 method: "POST",
                 body: form,
               });
+              if (!res.ok) {
+                if (uploadError.current) {
+                  uploadError.current.textContent = `Error uploading poster: ${await res.text()}`;
+                }
+              }
               await mutatePosters();
               imagePreview.current!.src = "";
+              imagePreview.current!.hidden = true;
             }}>
               <h2 className="mb-2 text-xl font-bold text-black">新しいポスターを作成</h2>
               <input type="text" name="name" placeholder="ポスター名" required className="mb-2 p-2 border border-gray-300 w-full" />
               <textarea name="description" placeholder="説明" required className="mb-2 p-2 border border-gray-300 w-full"></textarea>
-              {/* <input class="cursor-pointer bg-neutral-secondary-medium border border-default-medium text-heading text-sm rounded-base focus:ring-brand focus:border-brand block w-full shadow-xs placeholder:text-body" id="file_input" type="file"> */}
               <input type="file" name="image" accept="image/*" required
                 className="p-2 border border-gray-300 w-full mb-2 hover:cursor-pointer"
                 onChange={
@@ -158,6 +164,8 @@ export default function PosterPage() {
               <img ref={imagePreview} className="mb-4 max-h-48 object-contain" alt="プレビュー画像" hidden />
               <br />
               <button type="submit" className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 hover:cursor-pointer">作成</button>
+              <br />
+              <label className="text-red-500 mt-2" ref={uploadError}></label>
             </form>
           </div>
         )}
