@@ -1,5 +1,6 @@
 import { Festival } from "@/types/festival";
 import EditFestivalClient from "./EditFestivalClient";
+import { Metadata } from "next";
 
 const getEvent = async (eventId: string): Promise<Festival> => {
     const endpoint = `${process.env.NEXT_PUBLIC_API_URL}/festivals/${eventId}`;
@@ -7,6 +8,18 @@ const getEvent = async (eventId: string): Promise<Festival> => {
     const data = await res.json();
     console.log("Fetched event data:", data);
     return data;
+}
+
+export async function generateMetadata({ params }: Readonly<{
+    params: Promise<{ eventId: string }>;
+}>): Promise<Metadata> {
+    const { eventId } = await params;
+    const event = await getEvent(eventId);
+
+    return {
+        title: `イベント詳細: ${event.name}`,
+        description: `イベント「${event.name}」の詳細ページ`,
+    };
 }
 
 export default async function EventDetailPage({ params }: Readonly<{
