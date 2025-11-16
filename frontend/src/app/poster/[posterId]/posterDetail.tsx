@@ -3,8 +3,9 @@
 import { useFestival } from "@/hooks/festivalHook";
 import { usePoster } from "@/hooks/posterHook";
 import { useState } from "react";
-import { ToastContainer, ToastOptions, toast } from 'react-toastify';
+import { toast } from 'react-toastify';
 import StatusPicker from "../statusPicker";
+import { useRouter } from "next/navigation";
 
 export default function PosterDetail({ params }: Readonly<{
     params: { posterId: string };
@@ -14,6 +15,7 @@ export default function PosterDetail({ params }: Readonly<{
     const [editMode, setEditMode] = useState(false);
     const [editedName, setEditedName] = useState("");
     const [editedStatus, setEditedStatus] = useState("");
+    const router = useRouter();
 
     const { data: poster, error, isLoading, mutate: mutatePoster } = usePoster(posterId);
     const { data: festival, error: festivalError, isLoading: festivalLoading } = useFestival(poster ? poster.festival_id : "");
@@ -134,6 +136,23 @@ export default function PosterDetail({ params }: Readonly<{
                             <p>画像がありません。</p>
                         )}
                     </div>
+                    <button className="mt-4 px-4 py-2 bg-red-500 text-white hover:cursor-pointer" onClick={async () => {
+                        if (!confirm("本当にこのポスターを削除しますか？")) {
+                            return;
+                        }
+
+                        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/posters/${poster.id}`, {
+                            method: "DELETE",
+                        });
+                        if (res.ok) {
+                            toast.success("ポスターが削除されました");
+                            router.push("/poster");
+                        } else {
+                            toast.error(`ポスターの削除に失敗しました: ${res.statusText}`);
+                        }
+                    }}>
+                        ポスターを削除
+                    </button>
                 </div>
             )}
         </div>

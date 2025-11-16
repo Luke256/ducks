@@ -16,6 +16,7 @@ func (h *Handler) GetImage(c echo.Context) error {
 		slog.Error("failed to download image", "error", err, "image_id", imageID)
 		return herror.NotFound()
 	}
+	defer file.Close()
 
 	c.Response().Header().Set(echo.HeaderCacheControl, "max-age=31536000, immutable")
 

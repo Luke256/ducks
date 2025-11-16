@@ -169,7 +169,7 @@ export default function PosterPage() {
               <br />
               <img ref={imagePreview} className="mb-4 max-h-48 object-contain" alt="プレビュー画像" hidden />
               <br />
-              <button type="submit" className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 hover:cursor-pointer">作成</button>
+              <button type="submit" className="px-4 py-2 bg-blue-500 text-white hover:bg-blue-600 hover:cursor-pointer">作成</button>
             </form>
           </div>
         )}
