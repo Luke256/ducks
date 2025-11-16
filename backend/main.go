@@ -38,6 +38,11 @@ func setup() *router.Router {
 	dbName := os.Getenv("NS_MARIADB_DATABASE")
 	bucketName := os.Getenv("S3_BUCKET_NAME")
 
+	if dbUser == "" || dbPassword == "" || dbHost == "" || dbPort == "" || dbName == "" || bucketName == "" {
+		slog.Error("environment variables are not set properly")
+		panic("environment variables are not set properly")
+	}
+
 	e := echo.New()
 
 	// address CORS
