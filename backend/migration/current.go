@@ -16,9 +16,10 @@ func Migrations() []*gormigrate.Migration {
 // AllTables 最新のスキーマの全テーブルモデル
 //
 // 最新のスキーマの全テーブルのモデル構造体を記述すること
-func AllTables() []interface{} {
-	return []interface{}{
+func AllTables() []any {
+	return []any{
 		&model.Poster{},
 		&model.Festival{},
+		&model.Stock{},
 	}
 }
