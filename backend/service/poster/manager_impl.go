@@ -19,27 +19,29 @@ func NewManagerImpl(repo repository.Repository, storage storage.Storage) *Manage
 	return &ManagerImpl{repo: repo, storage: storage}
 }
 
-func (m *ManagerImpl) Create(name string, festivalID uuid.UUID, description string, image *multipart.FileHeader) (Poster, error) {
+func (m *ManagerImpl) Create(name string, festivalID uuid.UUID, description string, image *multipart.FileHeader) (_ Poster, err error) {
 	imageID, err := m.storage.UploadFile(image)
 	if err != nil {
 		return Poster{}, fmt.Errorf("failed to upload image: %w", err)
 	}
+	defer func() {
+		if err != nil {
+			_ = m.storage.DeleteFile(imageID)
+		}
+	}()
 
 	// duplicate check
 	_, err = m.repo.GetPosterByFestivalIDAndPosterName(festivalID, name)
 	if err == nil {
-		_ = m.storage.DeleteFile(imageID)
 		return Poster{}, ErrAlreadyExists
 	}
 	if err != repository.ErrNotFound {
-		_ = m.storage.DeleteFile(imageID)
 		return Poster{}, fmt.Errorf("failed to check duplicate poster: %w", err)
 	}
 
 	// festival existence check
 	fes, err := m.repo.GetFestivalByID(festivalID)
 	if err != nil {
-		_ = m.storage.DeleteFile(imageID)
 		if err == repository.ErrNotFound {
 			return Poster{}, ErrNotFound
 		}
@@ -48,7 +50,6 @@ func (m *ManagerImpl) Create(name string, festivalID uuid.UUID, description stri
 
 	poster, err := m.repo.RegisterPoster(festivalID, name, description, imageID)
 	if err != nil {
-		_ = m.storage.DeleteFile(imageID)
 		return Poster{}, fmt.Errorf("failed to register poster: %w", err)
 	}
 
