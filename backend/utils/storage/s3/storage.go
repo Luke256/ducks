@@ -47,6 +47,8 @@ func NewS3Storage(bucketName string) (*S3Storage, error) {
 		o.UsePathStyle = true
 	})
 
+	slog.Info("S3 Storage initialized", "endpoint", endpoint, "bucket", bucketName)
+
 	return &S3Storage{
 		client:     s3Client,
 		bucketName: bucketName,

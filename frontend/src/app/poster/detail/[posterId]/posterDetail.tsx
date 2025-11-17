@@ -19,7 +19,6 @@ export default function PosterDetail({ params }: Readonly<{
     const router = useRouter();
 
     const { data: poster, error, isLoading, mutate: mutatePoster } = usePoster(posterId);
-    const { data: festival, error: festivalError, isLoading: festivalLoading } = useFestival(poster ? poster.festival_id : "");
 
     return (
         <div>
@@ -78,11 +77,7 @@ export default function PosterDetail({ params }: Readonly<{
                     }
                     <div>
                         <h3 className="text-xl font-semibold mt-4">イベント</h3>
-                        {festivalLoading && <p>Loading ...</p>}
-                        {festivalError && <p>Error loading festival data: {festivalError.message}</p>}
-                        {festival && (
-                            <p>{festival.name}</p>
-                        )}
+                        <p>{poster.festival.name}</p>
                     </div>
                     <div className="mt-4">
                         <h3 className="text-xl font-semibold">ステータス</h3>

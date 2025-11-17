@@ -5,6 +5,7 @@ import (
 	"mime/multipart"
 
 	"github.com/Luke256/ducks/repository"
+	"github.com/Luke256/ducks/service/festival"
 	"github.com/Luke256/ducks/utils/storage"
 	"github.com/google/uuid"
 )
@@ -36,7 +37,7 @@ func (m *ManagerImpl) Create(name string, festivalID uuid.UUID, description stri
 	}
 
 	// festival existence check
-	_, err = m.repo.GetFestivalByID(festivalID)
+	fes, err := m.repo.GetFestivalByID(festivalID)
 	if err != nil {
 		_ = m.storage.DeleteFile(imageID)
 		if err == repository.ErrNotFound {
@@ -54,10 +55,10 @@ func (m *ManagerImpl) Create(name string, festivalID uuid.UUID, description stri
 	return Poster{
 		ID:          poster.ID,
 		Name:        poster.PosterName,
-		FestivalID:  poster.FestivalID,
 		Description: poster.Description,
 		ImageURL:    m.storage.GetFileURL(poster.ImageID),
 		Status:      poster.Status,
+		Festival:    festival.Festival{ID: fes.ID, Name: fes.Name, Description: fes.Description},
 	}, nil
 }
 
@@ -75,10 +76,10 @@ func (m *ManagerImpl) Get(id uuid.UUID) (Poster, error) {
 	return Poster{
 		ID:          poster.ID,
 		Name:        poster.PosterName,
-		FestivalID:  poster.FestivalID,
 		Description: poster.Description,
 		ImageURL:    m.storage.GetFileURL(poster.ImageID),
 		Status:      poster.Status,
+		Festival:    festival.Festival{ID: poster.Festival.ID, Name: poster.Festival.Name, Description: poster.Festival.Description},
 	}, nil
 }
 
@@ -98,10 +99,10 @@ func (m *ManagerImpl) GetByFestival(festivalID uuid.UUID) ([]Poster, error) {
 		result[i] = Poster{
 			ID:          p.ID,
 			Name:        p.PosterName,
-			FestivalID:  p.FestivalID,
 			Description: p.Description,
 			ImageURL:    m.storage.GetFileURL(p.ImageID),
 			Status:      p.Status,
+			Festival:    festival.Festival{ID: p.Festival.ID, Name: p.Festival.Name, Description: p.Festival.Description},
 		}
 	}
 
@@ -122,10 +123,10 @@ func (m *ManagerImpl) GetByName(festivalID uuid.UUID, name string) (Poster, erro
 	return Poster{
 		ID:          poster.ID,
 		Name:        poster.PosterName,
-		FestivalID:  poster.FestivalID,
 		Description: poster.Description,
 		ImageURL:    m.storage.GetFileURL(poster.ImageID),
 		Status:      poster.Status,
+		Festival:    festival.Festival{ID: poster.Festival.ID, Name: poster.Festival.Name, Description: poster.Festival.Description},
 	}, nil
 }
 
@@ -166,7 +167,7 @@ func (m *ManagerImpl) Delete(id uuid.UUID) error {
 			return fmt.Errorf("failed to get poster by ID: %w", err)
 		}
 	}
-	
+
 	err = m.storage.DeleteFile(poster.ImageID)
 	if err != nil {
 		return fmt.Errorf("failed to delete poster image from storage: %w", err)

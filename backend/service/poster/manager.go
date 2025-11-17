@@ -4,6 +4,7 @@ import (
 	"errors"
 	"mime/multipart"
 
+	"github.com/Luke256/ducks/service/festival"
 	"github.com/google/uuid"
 )
 
@@ -19,12 +20,12 @@ var (
 )
 
 type Poster struct {
-	ID          uuid.UUID `json:"id"`
-	Name        string    `json:"name"`
-	FestivalID  uuid.UUID `json:"festival_id"`
-	Description string    `json:"description"`
-	ImageURL    string    `json:"image_url"`
-	Status      string    `json:"status"`
+	ID          uuid.UUID         `json:"id"`
+	Name        string            `json:"name"`
+	Description string            `json:"description"`
+	ImageURL    string            `json:"image_url"`
+	Status      string            `json:"status"`
+	Festival    festival.Festival `json:"festival"`
 }
 
 type Manager interface {

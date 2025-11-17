@@ -37,6 +37,7 @@ func (r *GormRepository) GetPostersByFestivalID(festivalID uuid.UUID) ([]model.P
 	ctx := context.Background()
 	posters, err := gorm.G[model.Poster](r.db).
 		Where(&model.Poster{FestivalID: festivalID}, "FestivalID").
+		Preload("Festival", nil).
 		Find(ctx)
 	if err != nil {
 		return nil, wrapGormError(err)
@@ -49,6 +50,7 @@ func (r *GormRepository) GetPosterByID(posterID uuid.UUID) (model.Poster, error)
 
 	poster, err := gorm.G[model.Poster](r.db).
 		Where(&model.Poster{ID: posterID}, "ID").
+		Preload("Festival", nil).
 		First(ctx)
 	if err != nil {
 		return model.Poster{}, wrapGormError(err)
@@ -61,6 +63,7 @@ func (r *GormRepository) GetPosterByFestivalIDAndPosterName(festivalID uuid.UUID
 	ctx := context.Background()
 	poster, err := gorm.G[model.Poster](r.db).
 		Where(&model.Poster{FestivalID: festivalID, PosterName: posterName}, "FestivalID", "PosterName").
+		Preload("Festival", nil).
 		First(ctx)
 	if err != nil {
 		return model.Poster{}, wrapGormError(err)
