@@ -117,3 +117,14 @@ func mustCreatePoster(t *testing.T, repo *GormRepository, festivalID uuid.UUID, 
 
 	return poster
 }
+
+func mustCreateStockItem(t *testing.T, repo *GormRepository, name string, description string, category string, imageID string) model.StockItem {
+	t.Helper()
+
+	item, err := repo.RegisterStockItem(name, description, category, imageID)
+	if err != nil {
+		t.Fatalf("failed to register stock item: %v", err)
+	}
+
+	return item
+}

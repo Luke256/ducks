@@ -10,6 +10,6 @@ type FestivalStock struct {
 	StockID    uuid.UUID `gorm:"type:char(36);not null;index"`
 	Price      int       `gorm:"not null"`
 
-	Festival Festival `gorm:"constraint:OnUpdate:CASCADE,OnDelete:CASCADE;"`
-	Stock    Stock    `gorm:"constraint:OnUpdate:CASCADE,OnDelete:CASCADE;"`
+	Festival Festival  `gorm:"constraint:OnUpdate:CASCADE,OnDelete:CASCADE;"`
+	Stock    StockItem `gorm:"constraint:OnUpdate:CASCADE,OnDelete:CASCADE;"`
 }

@@ -10,4 +10,5 @@ var (
 type Repository interface {
 	PosterRepository
 	FestivalRepository
+	StockItemRepository
 }

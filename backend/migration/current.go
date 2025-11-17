@@ -20,6 +20,6 @@ func AllTables() []any {
 	return []any{
 		&model.Poster{},
 		&model.Festival{},
-		&model.Stock{},
+		&model.StockItem{},
 	}
 }
