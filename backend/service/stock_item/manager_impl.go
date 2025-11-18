@@ -20,7 +20,7 @@ func NewManagerImpl(repo repository.Repository, storage storage.Storage) *Manage
 	return &ManagerImpl{repo: repo, storage: storage}
 }
 
-func (m *ManagerImpl) toStockItemModel(item model.StockItem) StockItem {
+func (m *ManagerImpl) toStockItemType(item model.StockItem) StockItem {
 	return StockItem{
 		ID:          item.ID,
 		Name:        item.Name,
@@ -46,7 +46,7 @@ func (m *ManagerImpl) Create(name string, description string, category string, i
 		return StockItem{}, fmt.Errorf("failed to register stock item: %w", err)
 	}
 
-	return m.toStockItemModel(item), nil
+	return m.toStockItemType(item), nil
 }
 
 func (m *ManagerImpl) Get(id uuid.UUID) (StockItem, error) {
@@ -60,7 +60,7 @@ func (m *ManagerImpl) Get(id uuid.UUID) (StockItem, error) {
 		}
 	}
 
-	return m.toStockItemModel(item), nil
+	return m.toStockItemType(item), nil
 }
 
 func (m *ManagerImpl) Query(category string) ([]StockItem, error) {
@@ -71,7 +71,7 @@ func (m *ManagerImpl) Query(category string) ([]StockItem, error) {
 
 	var result []StockItem
 	for _, item := range items {
-		result = append(result, m.toStockItemModel(item))
+		result = append(result, m.toStockItemType(item))
 	}
 
 	return result, nil

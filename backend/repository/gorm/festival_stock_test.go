@@ -20,7 +20,7 @@ func TestRegisterFestivalStock(t *testing.T) {
 		assert.NoError(t, err)
 		assert.NotZero(t, festivalStock.ID)
 		assert.Equal(t, fes.ID, festivalStock.FestivalID)
-		assert.Equal(t, item.ID, festivalStock.StockID)
+		assert.Equal(t, item.ID, festivalStock.StockItemID)
 		assert.Equal(t, 500, festivalStock.Price)
 	})
 }

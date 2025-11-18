@@ -18,10 +18,10 @@ func (r *GormRepository) RegisterFestivalStock(festivalID, itemID uuid.UUID, pri
 	}
 
 	var stock = model.FestivalStock{
-		ID:         fesStockID,
-		FestivalID: festivalID,
-		StockID:    itemID,
-		Price:      price,
+		ID:          fesStockID,
+		FestivalID:  festivalID,
+		StockItemID: itemID,
+		Price:       price,
 	}
 
 	ctx := context.Background()
