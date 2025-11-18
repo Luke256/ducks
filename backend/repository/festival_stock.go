@@ -12,8 +12,8 @@ type FestivalStockRepository interface {
 	// GetFestivalStockByID イベントで販売するアイテムをIDで取得します
 	GetFestivalStockByID(festivalStockID uuid.UUID) (model.FestivalStock, error)
 
-	// GetFestivalStocksByFestivalID イベントで販売するアイテムをイベントIDで取得します
-	GetFestivalStocksByFestivalID(festivalID uuid.UUID) ([]model.FestivalStock, error)
+	// QueryFestivalStocks イベントIDやカテゴリで販売するアイテムを検索します
+	QueryFestivalStocks(festivalID uuid.UUID, category string) ([]model.FestivalStock, error)
 
 	// UpdateFestivalStockPrice イベントで販売するアイテムの価格を更新します
 	UpdateFestivalStockPrice(festivalStockID uuid.UUID, newPrice int) error

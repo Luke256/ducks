@@ -21,5 +21,6 @@ func AllTables() []any {
 		&model.Poster{},
 		&model.Festival{},
 		&model.StockItem{},
+		&model.FestivalStock{},
 	}
 }
