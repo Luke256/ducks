@@ -115,7 +115,7 @@ func TestGetStockItem(t *testing.T) {
 }
 
 func TestQueryStockItems(t *testing.T) {
-	env := setup(t, common)
+	env := setup(t, s1)
 	e := env.R(t)
 
 	item1 := env.mustCreateStockItem(t, "Item 1", "Description 1", "Category A")
