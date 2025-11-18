@@ -4,23 +4,26 @@ import (
 	"github.com/Luke256/ducks/repository"
 	"github.com/Luke256/ducks/service/festival"
 	"github.com/Luke256/ducks/service/poster"
+	stockitem "github.com/Luke256/ducks/service/stock_item"
 	"github.com/Luke256/ducks/utils/storage"
 	"github.com/labstack/echo/v4"
 )
 
 type Handler struct {
-	r               repository.Repository
-	festivalManager festival.Manager
-	posterManager   poster.Manager
-	storage         storage.Storage
+	r                repository.Repository
+	festivalManager  festival.Manager
+	posterManager    poster.Manager
+	stockItemManager stockitem.Manager
+	storage          storage.Storage
 }
 
-func NewHandler(r repository.Repository, fm festival.Manager, pm poster.Manager, s storage.Storage) *Handler {
+func NewHandler(r repository.Repository, fm festival.Manager, pm poster.Manager, sim stockitem.Manager, s storage.Storage) *Handler {
 	return &Handler{
-		r:               r,
-		festivalManager: fm,
-		posterManager:   pm,
-		storage:         s,
+		r:                r,
+		festivalManager:  fm,
+		posterManager:    pm,
+		stockItemManager: sim,
+		storage:          s,
 	}
 }
 
@@ -28,6 +31,7 @@ func (r *Handler) Setup(g *echo.Group) {
 	festivals := g.Group("/festivals")
 	posters := g.Group("/posters")
 	images := g.Group("/images")
+	stockItems := g.Group("/stocks")
 
 	// Images
 	images.GET("/:id", r.GetImage)
@@ -47,4 +51,12 @@ func (r *Handler) Setup(g *echo.Group) {
 	posters.PUT("/:id", r.EditPoster)
 	posters.PATCH("/:id/status", r.UpdatePosterStatus)
 	posters.DELETE("/:id", r.DeletePoster)
+
+	// Stock Items
+	stockItems.POST("", r.RegisterStockItem)
+	stockItems.GET("", r.QueryStockItems)
+	stockItems.GET("/:id", r.GetStockItems)
+	stockItems.PUT("/:id", r.EditStockItem)
+	stockItems.PUT("/:id/image", r.UpdateStockItemImage)
+	stockItems.DELETE("/:id", r.DeleteStockItem)
 }

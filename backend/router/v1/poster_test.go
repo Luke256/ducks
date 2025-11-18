@@ -29,7 +29,7 @@ func TestRegisterPoster(t *testing.T) {
 			Object()
 
 		resp.Value("id").NotNull()
-		resp.Value("festival_id").IsEqual(fes.ID.String())
+		resp.Value("festival").Object().Value("id").IsEqual(fes.ID.String())
 		resp.Value("name").IsEqual("Awesome Poster")
 		resp.Value("description").IsEqual("This is an awesome poster.")
 		resp.Value("status").IsEqual(PosterStatusUncollected)
@@ -75,7 +75,7 @@ func TestRegisterPoster(t *testing.T) {
 	})
 
 	t.Run("empty description", func(t *testing.T) {
-		resp := e.POST("/api/posters").
+		e.POST("/api/posters").
 			WithMultipart().
 			WithForm(map[string]any{
 				"festival_id": fes.ID.String(),
@@ -84,15 +84,7 @@ func TestRegisterPoster(t *testing.T) {
 			}).
 			WithFile("image", "poster_image.png", strings.NewReader("")).
 			Expect().
-			Status(201).
-			JSON().
-			Object()
-
-		resp.Value("id").NotNull()
-		resp.Value("festival_id").IsEqual(fes.ID.String())
-		resp.Value("name").IsEqual("No Description Poster")
-		resp.Value("description").IsEqual("")
-		resp.Value("status").IsEqual(PosterStatusUncollected)
+			Status(400)
 	})
 
 	t.Run("too long name", func(t *testing.T) {
@@ -157,7 +149,11 @@ func TestListPostersByFestival(t *testing.T) {
 	array.ContainsOnly(
 		map[string]any{
 			"id":          poster1.ID.String(),
-			"festival_id": fes.ID.String(),
+			"festival": map[string]any{
+				"id": fes.ID.String(),
+				"name": fes.Name,
+				"description": fes.Description,
+			},
 			"name":        poster1.Name,
 			"description": poster1.Description,
 			"image_url":   poster1.ImageURL,
@@ -165,7 +161,11 @@ func TestListPostersByFestival(t *testing.T) {
 		},
 		map[string]any{
 			"id":          poster2.ID.String(),
-			"festival_id": fes.ID.String(),
+			"festival": map[string]any{
+				"id": fes.ID.String(),
+				"name": fes.Name,
+				"description": fes.Description,
+			},
 			"name":        poster2.Name,
 			"description": poster2.Description,
 			"image_url":   poster2.ImageURL,
@@ -188,7 +188,7 @@ func TestGetPoster(t *testing.T) {
 			JSON().
 			Object()
 		resp.Value("id").IsEqual(poster.ID.String())
-		resp.Value("festival_id").IsEqual(fes.ID.String())
+		resp.Value("festival").Object().Value("id").IsEqual(fes.ID.String())
 		resp.Value("name").IsEqual(poster.Name)
 		resp.Value("description").IsEqual(poster.Description)
 		resp.Value("image_url").IsEqual(poster.ImageURL)
@@ -217,7 +217,7 @@ func TestGetPosterByFestivalAndName(t *testing.T) {
 			JSON().
 			Object()
 		resp.Value("id").IsEqual(poster.ID.String())
-		resp.Value("festival_id").IsEqual(fes.ID.String())
+		resp.Value("festival").Object().Value("id").IsEqual(fes.ID.String())
 		resp.Value("name").IsEqual(poster.Name)
 		resp.Value("description").IsEqual(poster.Description)
 		resp.Value("image_url").IsEqual(poster.ImageURL)
@@ -260,7 +260,7 @@ func TestUpdatePoster(t *testing.T) {
 			JSON().
 			Object()
 		resp.Value("id").IsEqual(poster.ID.String())
-		resp.Value("festival_id").IsEqual(fes.ID.String())
+		resp.Value("festival").Object().Value("id").IsEqual(fes.ID.String())
 		resp.Value("name").IsEqual("Updated Poster Name")
 		resp.Value("description").IsEqual("Updated description.")
 		resp.Value("image_url").IsEqual(poster.ImageURL)
@@ -330,7 +330,7 @@ func TestUpdatePosterStatus(t *testing.T) {
 			JSON().
 			Object()
 		resp.Value("id").IsEqual(poster.ID.String())
-		resp.Value("festival_id").IsEqual(fes.ID.String())
+		resp.Value("festival").Object().Value("id").IsEqual(fes.ID.String())
 		resp.Value("name").IsEqual(poster.Name)
 		resp.Value("description").IsEqual(poster.Description)
 		resp.Value("image_url").IsEqual(poster.ImageURL)

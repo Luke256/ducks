@@ -9,6 +9,7 @@ import (
 	v1 "github.com/Luke256/ducks/router/v1"
 	"github.com/Luke256/ducks/service/festival"
 	"github.com/Luke256/ducks/service/poster"
+	stockitem "github.com/Luke256/ducks/service/stock_item"
 	"github.com/Luke256/ducks/utils/storage/s3"
 
 	dsnConfig "github.com/go-sql-driver/mysql"
@@ -84,8 +85,9 @@ func setup() *router.Router {
 
 	festivalManager := festival.NewManagerImpl(repo)
 	posterManager := poster.NewManagerImpl(repo, storage)
+	stockItemManager := stockitem.NewManagerImpl(repo, storage)
 
-	v1Handler := v1.NewHandler(repo, festivalManager, posterManager, storage)
+	v1Handler := v1.NewHandler(repo, festivalManager, posterManager, stockItemManager, storage)
 
 	router := router.NewRouter(e, v1Handler, repo)
 

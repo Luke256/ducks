@@ -13,6 +13,7 @@ import (
 	gormRepo "github.com/Luke256/ducks/repository/gorm"
 	"github.com/Luke256/ducks/service/festival"
 	"github.com/Luke256/ducks/service/poster"
+	stockitem "github.com/Luke256/ducks/service/stock_item"
 	"github.com/Luke256/ducks/utils"
 	mockstorage "github.com/Luke256/ducks/utils/storage/mock_storage"
 	"github.com/gavv/httpexpect/v2"
@@ -88,6 +89,7 @@ func TestMain(m *testing.M) {
 
 		env.FM = festival.NewManagerImpl(repo)
 		env.PM = poster.NewManagerImpl(repo, env.Storage)
+		env.SIM = stockitem.NewManagerImpl(repo, env.Storage)
 
 		// サーバー
 		e := echo.New()
@@ -98,6 +100,7 @@ func TestMain(m *testing.M) {
 			repo,
 			env.FM,
 			env.PM,
+			env.SIM,
 			env.Storage,
 		)
 		handlers.Setup(e.Group("/api"))
@@ -126,6 +129,7 @@ type env struct {
 	Repo    repository.Repository
 	FM      festival.Manager
 	PM      poster.Manager
+	SIM     stockitem.Manager
 	Storage *mockstorage.MockStorage
 }
 
@@ -173,4 +177,13 @@ func (e *env) mustCreatePoster(t *testing.T, festivalID uuid.UUID, name string, 
 		t.Fatalf("failed to create poster: %v", err)
 	}
 	return poster
+}
+
+func (e *env) mustCreateStockItem(t *testing.T, name string, description string, category string) stockitem.StockItem {
+	t.Helper()
+	item, err := e.SIM.Create(name, description, category, nil)
+	if err != nil {
+		t.Fatalf("failed to create stock item: %v", err)
+	}
+	return item
 }
