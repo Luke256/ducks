@@ -38,7 +38,7 @@ func TestGetFestivalStockByID(t *testing.T) {
 		assert.Equal(t, fesStock.ID, retrievedStock.ID)
 		assert.Equal(t, fesStock.Price, retrievedStock.Price)
 		assert.Equal(t, fes.ID, retrievedStock.Festival.ID)
-		assert.Equal(t, item.ID, retrievedStock.Stock.ID)
+		assert.Equal(t, item.ID, retrievedStock.StockItem.ID)
 	})
 
 	t.Run("Get Non-Existent Festival Stock By ID", func(t *testing.T) {
@@ -57,7 +57,7 @@ func TestGetFestivalStockByID(t *testing.T) {
 }
 
 func TestQueryFestivalStocks(t *testing.T) {
-	repo := setup(t, s1)
+	repo := setup(t, s2)
 
 	fes1 := mustCreateFestival(t, repo, "Fest for Stock", "Festival Description")
 	fes2 := mustCreateFestival(t, repo, "Another Fest for Stock", "Another Festival Description")
@@ -88,7 +88,7 @@ func TestQueryFestivalStocks(t *testing.T) {
 		assert.Contains(t, stockIDs, stock4.ID)
 
 		assert.Equal(t, fes1.ID, fetchedStock1.Festival.ID)
-		assert.Equal(t, item1.ID, fetchedStock1.Stock.ID)
+		assert.Equal(t, item1.ID, fetchedStock1.StockItem.ID)
 		assert.Equal(t, 500, fetchedStock1.Price)
 	})
 

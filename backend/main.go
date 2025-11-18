@@ -8,6 +8,7 @@ import (
 	"github.com/Luke256/ducks/router"
 	v1 "github.com/Luke256/ducks/router/v1"
 	"github.com/Luke256/ducks/service/festival"
+	festivalstock "github.com/Luke256/ducks/service/festival_stock"
 	"github.com/Luke256/ducks/service/poster"
 	stockitem "github.com/Luke256/ducks/service/stock_item"
 	"github.com/Luke256/ducks/utils/storage/s3"
@@ -86,8 +87,9 @@ func setup() *router.Router {
 	festivalManager := festival.NewManagerImpl(repo)
 	posterManager := poster.NewManagerImpl(repo, storage)
 	stockItemManager := stockitem.NewManagerImpl(repo, storage)
+	festivalStockManager := festivalstock.NewManagerImpl(repo)
 
-	v1Handler := v1.NewHandler(repo, festivalManager, posterManager, stockItemManager, storage)
+	v1Handler := v1.NewHandler(repo, festivalManager, posterManager, stockItemManager, festivalStockManager, storage)
 
 	router := router.NewRouter(e, v1Handler, repo)
 

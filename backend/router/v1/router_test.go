@@ -12,6 +12,7 @@ import (
 	"github.com/Luke256/ducks/repository"
 	gormRepo "github.com/Luke256/ducks/repository/gorm"
 	"github.com/Luke256/ducks/service/festival"
+	festivalstock "github.com/Luke256/ducks/service/festival_stock"
 	"github.com/Luke256/ducks/service/poster"
 	stockitem "github.com/Luke256/ducks/service/stock_item"
 	"github.com/Luke256/ducks/utils"
@@ -29,6 +30,7 @@ const (
 	dbPrefix = "traq-ducks-router-test-"
 	common   = "common"
 	s1       = "s1"
+	s2       = "s2"
 )
 
 var (
@@ -41,7 +43,7 @@ func TestMain(m *testing.M) {
 	dbHost := utils.GetEnvOrDefault("NS_MARIADB_HOST", "localhost")
 	dbPort := utils.GetEnvOrDefault("NS_MARIADB_PORT", "3307")
 	dbs := []string{
-		common, s1,
+		common, s1, s2,
 	}
 
 	config := &driverMysql.Config{
@@ -90,6 +92,7 @@ func TestMain(m *testing.M) {
 		env.FM = festival.NewManagerImpl(repo)
 		env.PM = poster.NewManagerImpl(repo, env.Storage)
 		env.SIM = stockitem.NewManagerImpl(repo, env.Storage)
+		env.FSM = festivalstock.NewManagerImpl(repo)
 
 		// サーバー
 		e := echo.New()
@@ -101,6 +104,7 @@ func TestMain(m *testing.M) {
 			env.FM,
 			env.PM,
 			env.SIM,
+			env.FSM,
 			env.Storage,
 		)
 		handlers.Setup(e.Group("/api"))
@@ -130,6 +134,7 @@ type env struct {
 	FM      festival.Manager
 	PM      poster.Manager
 	SIM     stockitem.Manager
+	FSM     festivalstock.Manager
 	Storage *mockstorage.MockStorage
 }
 
@@ -186,4 +191,13 @@ func (e *env) mustCreateStockItem(t *testing.T, name string, description string,
 		t.Fatalf("failed to create stock item: %v", err)
 	}
 	return item
+}
+
+func (e *env) mustCreateFestivalStock(t *testing.T, festivalID, itemID uuid.UUID, price int) festivalstock.Stock {
+	t.Helper()
+	stock, err := e.FSM.Create(festivalID, itemID, price)
+	if err != nil {
+		t.Fatalf("failed to create festival stock: %v", err)
+	}
+	return stock
 }

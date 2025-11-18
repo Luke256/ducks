@@ -3,20 +3,22 @@ package festivalstock
 import (
 	"github.com/Luke256/ducks/model"
 	"github.com/Luke256/ducks/repository"
+	"github.com/Luke256/ducks/service/festival"
+	stockitem "github.com/Luke256/ducks/service/stock_item"
 	"github.com/google/uuid"
 )
 
 type ManagerImpl struct {
-	repo repository.FestivalStockRepository
+	repo repository.Repository
 }
 
-func NewManager(repo repository.FestivalStockRepository) *ManagerImpl {
+func NewManagerImpl(repo repository.Repository) *ManagerImpl {
 	return &ManagerImpl{repo: repo}
 }
 
 func (fm *ManagerImpl) toStockType(fs model.FestivalStock) Stock {
 	return Stock{
-		ID:          fs.ID.String(),
+		ID:          fs.ID,
 		StockItemID: fs.StockItemID,
 		FestivalID:  fs.FestivalID,
 		Price:       fs.Price,
@@ -24,6 +26,28 @@ func (fm *ManagerImpl) toStockType(fs model.FestivalStock) Stock {
 }
 
 func (fm *ManagerImpl) Create(festivalID, itemID uuid.UUID, price int) (Stock, error) {
+	// festival exists
+	_, err := fm.repo.GetFestivalByID(festivalID)
+	if err != nil {
+		switch err {
+		case repository.ErrNotFound:
+			return Stock{}, festival.ErrNotFound
+		default:
+			return Stock{}, err
+		}
+	}
+
+	// item exists
+	_, err = fm.repo.GetStockItemByID(itemID)
+	if err != nil {
+		switch err {
+		case repository.ErrNotFound:
+			return Stock{}, stockitem.ErrNotFound
+		default:
+			return Stock{}, err
+		}
+	}
+
 	fesStock, err := fm.repo.RegisterFestivalStock(festivalID, itemID, price)
 	if err != nil {
 		return Stock{}, err

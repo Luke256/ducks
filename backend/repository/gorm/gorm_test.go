@@ -18,6 +18,7 @@ const (
 	dbPrefix = "traq-ducks-test-"
 	common = "common"
 	s1 = "s1"
+	s2 = "s2"
 )
 
 var (
@@ -31,7 +32,7 @@ func TestMain(m *testing.M) {
 	dbHost := utils.GetEnvOrDefault("NS_MARIADB_HOST", "localhost")
 	dbPort := utils.GetEnvOrDefault("NS_MARIADB_PORT", "3307")
 	dbs := []string{
-		common, s1,
+		common, s1, s2,
 	}
 	config := &driverMysql.Config{
 		User:                 dbUser,

@@ -39,7 +39,7 @@ func (r *GormRepository) GetFestivalStockByID(festivalStockID uuid.UUID) (model.
 	stock, err := gorm.G[model.FestivalStock](r.db).
 		Where(model.FestivalStock{ID: festivalStockID}, "ID").
 		Preload("Festival", nil).
-		Preload("Stock", nil).
+		Preload("StockItem", nil).
 		First(ctx)
 
 	if err != nil {
@@ -53,7 +53,7 @@ func (r *GormRepository) QueryFestivalStocks(festivalID uuid.UUID, category stri
 	ctx := context.Background()
 
 	stocks, err := gorm.G[model.FestivalStock](r.db.Debug()).
-		Joins(clause.JoinTarget{Association: "Stock"}, func(db gorm.JoinBuilder, joinTable clause.Table, curTable clause.Table) error {
+		Joins(clause.JoinTarget{Association: "StockItem"}, func(db gorm.JoinBuilder, joinTable clause.Table, curTable clause.Table) error {
 			db.Where(model.StockItem{Category: category})
 			return nil
 		}).

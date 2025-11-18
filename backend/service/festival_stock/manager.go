@@ -11,7 +11,7 @@ var (
 )
 
 type Stock struct {
-	ID          string    `json:"id"`
+	ID          uuid.UUID `json:"id"`
 	StockItemID uuid.UUID `json:"stock_item_id"`
 	FestivalID  uuid.UUID `json:"festival_id"`
 	Price       int       `json:"price"`
