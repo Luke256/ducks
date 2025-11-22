@@ -3,16 +3,17 @@ package sale
 import (
 	"github.com/Luke256/ducks/model"
 	"github.com/Luke256/ducks/repository"
+	festivalstock "github.com/Luke256/ducks/service/festival_stock"
 
 	"github.com/google/uuid"
 )
 
 type ManagerImpl struct {
-	saleRepo repository.SaleRepository
+	repo repository.Repository
 }
 
-func NewManagerImpl(saleRepo repository.SaleRepository) *ManagerImpl {
-	return &ManagerImpl{saleRepo: saleRepo}
+func NewManagerImpl(saleRepo repository.Repository) *ManagerImpl {
+	return &ManagerImpl{repo: saleRepo}
 }
 
 func (m *ManagerImpl) toSaleRecordType(record model.SaleRecord) SaleRecord {
@@ -24,7 +25,17 @@ func (m *ManagerImpl) toSaleRecordType(record model.SaleRecord) SaleRecord {
 }
 
 func (m *ManagerImpl) Create(stockID uuid.UUID, quantity int) (SaleRecord, error) {
-	record, err := m.saleRepo.CreateSaleRecord(stockID, quantity)
+	_, err := m.repo.GetFestivalStockByID(stockID)
+	if err != nil {
+		switch err {
+		case repository.ErrNotFound:
+			return SaleRecord{}, festivalstock.ErrNotFound
+		default:
+			return SaleRecord{}, err
+		}
+	}
+
+	record, err := m.repo.CreateSaleRecord(stockID, quantity)
 	if err != nil {
 		return SaleRecord{}, err
 	}
@@ -32,7 +43,7 @@ func (m *ManagerImpl) Create(stockID uuid.UUID, quantity int) (SaleRecord, error
 }
 
 func (m *ManagerImpl) Get(id uuid.UUID) (SaleRecord, error) {
-	record, err := m.saleRepo.GetSaleRecordByID(id)
+	record, err := m.repo.GetSaleRecordByID(id)
 	if err != nil {
 		switch err {
 		case repository.ErrNotFound:
@@ -45,9 +56,14 @@ func (m *ManagerImpl) Get(id uuid.UUID) (SaleRecord, error) {
 }
 
 func (m *ManagerImpl) GetByStockID(stockID uuid.UUID) ([]SaleRecord, error) {
-	records, err := m.saleRepo.GetSaleRecordsByFestivalStockID(stockID)
+	records, err := m.repo.GetSaleRecordsByFestivalStockID(stockID)
 	if err != nil {
-		return nil, err
+		switch err {
+		case repository.ErrNotFound:
+			return nil, festivalstock.ErrNotFound
+		default:
+			return nil, err
+		}
 	}
 
 	result := make([]SaleRecord, len(records))
@@ -58,7 +74,7 @@ func (m *ManagerImpl) GetByStockID(stockID uuid.UUID) ([]SaleRecord, error) {
 }
 
 func (m *ManagerImpl) Query(festivalID, stockItemID uuid.UUID) ([]SaleRecord, error) {
-	records, err := m.saleRepo.QuerySaleRecords(festivalID, stockItemID)
+	records, err := m.repo.QuerySaleRecords(festivalID, stockItemID)
 	if err != nil {
 		return nil, err
 	}
@@ -71,7 +87,7 @@ func (m *ManagerImpl) Query(festivalID, stockItemID uuid.UUID) ([]SaleRecord, er
 }
 
 func (m *ManagerImpl) Delete(id uuid.UUID) error {
-	err := m.saleRepo.DeleteSaleRecord(id)
+	err := m.repo.DeleteSaleRecord(id)
 	if err != nil {
 		switch err {
 		case repository.ErrNotFound:

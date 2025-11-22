@@ -44,6 +44,11 @@ func (r *GormRepository) GetSaleRecordByID(saleRecordID uuid.UUID) (model.SaleRe
 func (r *GormRepository) GetSaleRecordsByFestivalStockID(festivalStockID uuid.UUID) ([]model.SaleRecord, error) {
 	ctx := context.Background()
 
+	_, err := r.GetFestivalStockByID(festivalStockID)
+	if err != nil {
+		return nil, wrapGormError(err)
+	}
+
 	saleRecords, err := gorm.G[model.SaleRecord](r.db).
 		Where(model.SaleRecord{FestivalStockID: festivalStockID}, "FestivalStockID").
 		Find(ctx)

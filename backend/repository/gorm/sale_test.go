@@ -71,9 +71,8 @@ func TestGetSaleRecordsByFestivalStockID(t *testing.T) {
 	})
 
 	t.Run("Get Sale Records By Non-Existent Festival Stock ID", func(t *testing.T) {
-		records, err := repo.GetSaleRecordsByFestivalStockID(uuid.New())
-		assert.NoError(t, err)
-		assert.Len(t, records, 0)
+		_, err := repo.GetSaleRecordsByFestivalStockID(uuid.New())
+		assert.Equal(t, repository.ErrNotFound, err)
 	})
 }
 

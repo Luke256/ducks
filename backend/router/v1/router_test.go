@@ -32,6 +32,7 @@ const (
 	common   = "common"
 	s1       = "s1"
 	s2       = "s2"
+	s3       = "s3"
 )
 
 var (
@@ -44,7 +45,7 @@ func TestMain(m *testing.M) {
 	dbHost := utils.GetEnvOrDefault("NS_MARIADB_HOST", "localhost")
 	dbPort := utils.GetEnvOrDefault("NS_MARIADB_PORT", "3307")
 	dbs := []string{
-		common, s1, s2,
+		common, s1, s2, s3,
 	}
 
 	config := &driverMysql.Config{
@@ -204,4 +205,13 @@ func (e *env) mustCreateFestivalStock(t *testing.T, festivalID, itemID uuid.UUID
 		t.Fatalf("failed to create festival stock: %v", err)
 	}
 	return stock
+}
+
+func (e *env) mustCreateSaleRecord(t *testing.T, stockID uuid.UUID, quantity int) sale.SaleRecord {
+	t.Helper()
+	record, err := e.SM.Create(stockID, quantity)
+	if err != nil {
+		t.Fatalf("failed to create sale record: %v", err)
+	}
+	return record
 }
