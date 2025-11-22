@@ -14,6 +14,7 @@ import (
 	"github.com/Luke256/ducks/service/festival"
 	festivalstock "github.com/Luke256/ducks/service/festival_stock"
 	"github.com/Luke256/ducks/service/poster"
+	"github.com/Luke256/ducks/service/sale"
 	stockitem "github.com/Luke256/ducks/service/stock_item"
 	"github.com/Luke256/ducks/utils"
 	mockstorage "github.com/Luke256/ducks/utils/storage/mock_storage"
@@ -93,6 +94,7 @@ func TestMain(m *testing.M) {
 		env.PM = poster.NewManagerImpl(repo, env.Storage)
 		env.SIM = stockitem.NewManagerImpl(repo, env.Storage)
 		env.FSM = festivalstock.NewManagerImpl(repo)
+		env.SM = sale.NewManagerImpl(repo)
 
 		// サーバー
 		e := echo.New()
@@ -105,6 +107,7 @@ func TestMain(m *testing.M) {
 			env.PM,
 			env.SIM,
 			env.FSM,
+			env.SM,
 			env.Storage,
 		)
 		handlers.Setup(e.Group("/api"))
@@ -135,6 +138,7 @@ type env struct {
 	PM      poster.Manager
 	SIM     stockitem.Manager
 	FSM     festivalstock.Manager
+	SM      sale.Manager
 	Storage *mockstorage.MockStorage
 }
 

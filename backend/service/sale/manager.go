@@ -16,7 +16,7 @@ var (
 	ErrNotFound = errors.New("sale record not found")
 )
 
-type SaleManager interface {
+type Manager interface {
 	// Create 購入記録を作成します
 	Create(StockID uuid.UUID, quantity int) (SaleRecord, error)
 
