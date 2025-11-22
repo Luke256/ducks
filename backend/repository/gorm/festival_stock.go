@@ -52,7 +52,7 @@ func (r *GormRepository) GetFestivalStockByID(festivalStockID uuid.UUID) (model.
 func (r *GormRepository) QueryFestivalStocks(festivalID uuid.UUID, category string) ([]model.FestivalStock, error) {
 	ctx := context.Background()
 
-	stocks, err := gorm.G[model.FestivalStock](r.db.Debug()).
+	stocks, err := gorm.G[model.FestivalStock](r.db).
 		Joins(clause.JoinTarget{Association: "StockItem"}, func(db gorm.JoinBuilder, joinTable clause.Table, curTable clause.Table) error {
 			db.Where(model.StockItem{Category: category})
 			return nil

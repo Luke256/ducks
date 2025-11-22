@@ -22,5 +22,6 @@ func AllTables() []any {
 		&model.Festival{},
 		&model.StockItem{},
 		&model.FestivalStock{},
+		&model.SaleRecord{},
 	}
 }
