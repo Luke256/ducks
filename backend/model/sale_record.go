@@ -9,7 +9,7 @@ import (
 type SaleRecord struct {
 	ID              uuid.UUID `gorm:"type:string;primary_key"`
 	FestivalStockID uuid.UUID `gorm:"type:string;not null;index"`
-	Amount          int       `gorm:"not null"`
+	Quantity        int       `gorm:"not null"`
 	CreatedAt       time.Time `gorm:"not null"`
 
 	FestivalStock FestivalStock `gorm:"constraint:OnUpdate:CASCADE,OnDelete:CASCADE;"`

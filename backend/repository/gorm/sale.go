@@ -11,7 +11,7 @@ import (
 	"github.com/google/uuid"
 )
 
-func (r *GormRepository) CreateSaleRecord(festivalStockID uuid.UUID, amount int) (model.SaleRecord, error) {
+func (r *GormRepository) CreateSaleRecord(festivalStockID uuid.UUID, quantity int) (model.SaleRecord, error) {
 	ctx := context.Background()
 	id, err := uuid.NewV7()
 	if err != nil {
@@ -20,7 +20,7 @@ func (r *GormRepository) CreateSaleRecord(festivalStockID uuid.UUID, amount int)
 	saleRecord := model.SaleRecord{
 		ID:              id,
 		FestivalStockID: festivalStockID,
-		Amount:          amount,
+		Quantity:        quantity,
 	}
 
 	if err := gorm.G[model.SaleRecord](r.db).Create(ctx, &saleRecord); err != nil {
@@ -60,7 +60,7 @@ func (r *GormRepository) QuerySaleRecords(festivalID, stockItemID uuid.UUID) ([]
 	saleRecords, err := gorm.G[model.SaleRecord](r.db).
 		Joins(clause.JoinTarget{Association: "FestivalStock"}, func(db gorm.JoinBuilder, joinTable clause.Table, curTable clause.Table) error {
 			db.Where(model.FestivalStock{
-				FestivalID: festivalID,
+				FestivalID:  festivalID,
 				StockItemID: stockItemID,
 			})
 			return nil

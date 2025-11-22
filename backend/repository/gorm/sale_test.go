@@ -19,7 +19,7 @@ func TestCreateSaleRecord(t *testing.T) {
 		saleRecord, err := repo.CreateSaleRecord(fesStock.ID, 5)
 		assert.NoError(t, err)
 		assert.Equal(t, fesStock.ID, saleRecord.FestivalStockID)
-		assert.Equal(t, 5, saleRecord.Amount)
+		assert.Equal(t, 5, saleRecord.Quantity)
 	})
 }
 
@@ -36,7 +36,7 @@ func TestGetSaleRecordByID(t *testing.T) {
 		assert.NoError(t, err)
 		assert.Equal(t, saleRecord.ID, got.ID)
 		assert.Equal(t, saleRecord.FestivalStockID, got.FestivalStockID)
-		assert.Equal(t, saleRecord.Amount, got.Amount)
+		assert.Equal(t, saleRecord.Quantity, got.Quantity)
 	})
 
 	t.Run("Get Non-Existent Sale Record By ID", func(t *testing.T) {
