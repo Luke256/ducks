@@ -144,7 +144,7 @@ func TestGetSaleRecordsByStockID(t *testing.T) {
 	env.mustCreateSaleRecord(t, stock2.ID, 3)
 
 	t.Run("Get Sale Records by Stock ID", func(t *testing.T) {
-		res := e.GET("/api/festival_stocks/{stock_id}/sales", stock1.ID).
+		res := e.GET("/api/stocks/{stock_id}/sales", stock1.ID).
 			Expect().
 			Status(200).
 			JSON().
@@ -158,13 +158,13 @@ func TestGetSaleRecordsByStockID(t *testing.T) {
 		if err != nil {
 			t.Fatalf("failed to generate uuid: %v", err)
 		}
-		e.GET("/api/festival_stocks/{stock_id}/sales", id).
+		e.GET("/api/stocks/{stock_id}/sales", id).
 			Expect().
 			Status(404)
 	})
 
 	t.Run("Invalid Stock ID", func(t *testing.T) {
-		e.GET("/api/festival_stocks/{stock_id}/sales", "invalid-uuid").
+		e.GET("/api/stocks/{stock_id}/sales", "invalid-uuid").
 			Expect().
 			Status(404)
 	})

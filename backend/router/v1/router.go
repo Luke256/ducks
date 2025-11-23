@@ -37,8 +37,8 @@ func (r *Handler) Setup(g *echo.Group) {
 	festivals := g.Group("/festivals")
 	posters := g.Group("/posters")
 	images := g.Group("/images")
-	stockItems := g.Group("/stocks")
-	festivalStocks := g.Group("/festival_stocks")
+	stockItems := g.Group("/items")
+	festivalStocks := g.Group("/stocks")
 	sales := g.Group("/sales")
 
 	// Images

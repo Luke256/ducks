@@ -127,7 +127,7 @@ func TestGetFestivalStock(t *testing.T) {
 	fesStock := env.mustCreateFestivalStock(t, fes.ID, item.ID, 2000)
 
 	t.Run("Get Festival Stock", func (t *testing.T) {
-		res := e.GET("/api/festival_stocks/{festival_stock_id}", fesStock.ID).
+		res := e.GET("/api/stocks/{festival_stock_id}", fesStock.ID).
 			Expect().
 			Status(200).
 			JSON().
@@ -140,13 +140,13 @@ func TestGetFestivalStock(t *testing.T) {
 	})
 
 	t.Run("Get Festival Stock - Not Found", func (t *testing.T) {
-		e.GET("/api/festival_stocks/{festival_stock_id}", uuid.New()).
+		e.GET("/api/stocks/{festival_stock_id}", uuid.New()).
 			Expect().
 			Status(404)
 	})
 
 	t.Run("Get Festival Stock - Invalid ID", func (t *testing.T) {
-		e.GET("/api/festival_stocks/{festival_stock_id}", "invalid-uuid").
+		e.GET("/api/stocks/{festival_stock_id}", "invalid-uuid").
 			Expect().
 			Status(404)
 	})
@@ -199,14 +199,14 @@ func TestUpdateFestivalStockPrice(t *testing.T) {
 	fesStock := env.mustCreateFestivalStock(t, fes.ID, item.ID, 2000)
 
 	t.Run("Update Festival Stock Price", func(t *testing.T) {
-		e.PUT("/api/festival_stocks/{festival_stock_id}/price", fesStock.ID).
+		e.PUT("/api/stocks/{festival_stock_id}/price", fesStock.ID).
 			WithJSON(map[string]any{
 				"new_price": 2500,
 			}).
 			Expect().
 			Status(204)
 
-		res := e.GET("/api/festival_stocks/{festival_stock_id}", fesStock.ID).
+		res := e.GET("/api/stocks/{festival_stock_id}", fesStock.ID).
 			Expect().
 			Status(200).
 			JSON().
@@ -216,7 +216,7 @@ func TestUpdateFestivalStockPrice(t *testing.T) {
 	})
 
 	t.Run("Update Festival Stock Price - Not Found", func(t *testing.T) {
-		e.PUT("/api/festival_stocks/{festival_stock_id}/price", uuid.New()).
+		e.PUT("/api/stocks/{festival_stock_id}/price", uuid.New()).
 			WithJSON(map[string]any{
 				"new_price": 2500,
 			}).
@@ -225,7 +225,7 @@ func TestUpdateFestivalStockPrice(t *testing.T) {
 	})
 
 	t.Run("Update Festival Stock Price - Invalid ID", func(t *testing.T) {
-		e.PUT("/api/festival_stocks/{festival_stock_id}/price", "invalid-uuid").
+		e.PUT("/api/stocks/{festival_stock_id}/price", "invalid-uuid").
 			WithJSON(map[string]any{
 				"new_price": 2500,
 			}).
@@ -234,14 +234,14 @@ func TestUpdateFestivalStockPrice(t *testing.T) {
 	})
 
 	t.Run("Update Festival Stock Price - Missing New Price", func(t *testing.T) {
-		e.PUT("/api/festival_stocks/{festival_stock_id}/price", fesStock.ID).
+		e.PUT("/api/stocks/{festival_stock_id}/price", fesStock.ID).
 			WithJSON(map[string]any{}).
 			Expect().
 			Status(400)
 	})
 
 	t.Run("Update Festival Stock Price - Negative New Price", func(t *testing.T) {
-		e.PUT("/api/festival_stocks/{festival_stock_id}/price", fesStock.ID).
+		e.PUT("/api/stocks/{festival_stock_id}/price", fesStock.ID).
 			WithJSON(map[string]any{
 				"new_price": -100,
 			}).
@@ -250,7 +250,7 @@ func TestUpdateFestivalStockPrice(t *testing.T) {
 	})
 
 	t.Run("Update Festival Stock Price - Zero ID", func(t *testing.T) {
-		e.PUT("/api/festival_stocks/{festival_stock_id}/price", uuid.Nil).
+		e.PUT("/api/stocks/{festival_stock_id}/price", uuid.Nil).
 			WithJSON(map[string]any{
 				"new_price": 2500,
 			}).
@@ -268,29 +268,29 @@ func TestDeleteFestivalStock(t *testing.T) {
 	fesStock := env.mustCreateFestivalStock(t, fes.ID, item.ID, 2000)
 
 	t.Run("Delete Festival Stock - Not Implemented", func(t *testing.T) {
-		e.DELETE("/api/festival_stocks/{festival_stock_id}", fesStock.ID).
+		e.DELETE("/api/stocks/{festival_stock_id}", fesStock.ID).
 			Expect().
 			Status(204)
 
-		e.GET("/api/festival_stocks/{festival_stock_id}", fesStock.ID).
+		e.GET("/api/stocks/{festival_stock_id}", fesStock.ID).
 			Expect().
 			Status(404)
 	})
 
 	t.Run("Delete Festival Stock - Not Found", func(t *testing.T) {
-		e.DELETE("/api/festival_stocks/{festival_stock_id}", uuid.New()).
+		e.DELETE("/api/stocks/{festival_stock_id}", uuid.New()).
 			Expect().
 			Status(404)
 	})
 
 	t.Run("Delete Festival Stock - Invalid ID", func(t *testing.T) {
-		e.DELETE("/api/festival_stocks/{festival_stock_id}", "invalid-uuid").
+		e.DELETE("/api/stocks/{festival_stock_id}", "invalid-uuid").
 			Expect().
 			Status(404)
 	})
 
 	t.Run("Delete Festival Stock - Zero ID", func(t *testing.T) {
-		e.DELETE("/api/festival_stocks/{festival_stock_id}", uuid.Nil).
+		e.DELETE("/api/stocks/{festival_stock_id}", uuid.Nil).
 			Expect().
 			Status(404)
 	})
