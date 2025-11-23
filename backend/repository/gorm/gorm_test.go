@@ -131,10 +131,10 @@ func mustCreateStockItem(t *testing.T, repo *GormRepository, name string, descri
 	return item
 }
 
-func mustCreateFestivalStock(t *testing.T, repo *GormRepository, festivalID, itemID uuid.UUID, price int) model.FestivalStock {
+func mustCreateFestivalStock(t *testing.T, repo *GormRepository, festivalID, itemID uuid.UUID, price int, description string) model.FestivalStock {
 	t.Helper()
 	
-	festivalStock, err := repo.RegisterFestivalStock(festivalID, itemID, price)
+	festivalStock, err := repo.RegisterFestivalStock(festivalID, itemID, price, description)
 	if err != nil {
 		t.Fatalf("failed to register festival stock: %v", err)
 	}

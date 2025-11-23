@@ -14,6 +14,7 @@ type RegisterFestivalStockRequest struct {
 	FestivalID  string `param:"festival_id"`
 	StockItemID string `json:"item_id"`
 	Price       int    `json:"price"`
+	Description string `json:"description"`
 }
 
 func (r RegisterFestivalStockRequest) Validate() error {
@@ -36,15 +37,14 @@ func (r QueryFestivalStocksRequest) Validate() error {
 	)
 }
 
-type UpdateFestivalStockPriceRequest struct {
-	ID    string `param:"id"`
-	Price int    `json:"new_price"`
+type UpdateFestivalStockRequest struct {
+	ID          string `param:"id"`
+	Description string `json:"description"`
 }
 
-func (r UpdateFestivalStockPriceRequest) Validate() error {
+func (r UpdateFestivalStockRequest) Validate() error {
 	return validation.ValidateStruct(&r,
 		validation.Field(&r.ID, validation.Required),
-		validation.Field(&r.Price, validation.Required, validation.Min(0)),
 	)
 }
 
@@ -67,7 +67,7 @@ func (h *Handler) RegisterFestivalStock(c echo.Context) error {
 		return herror.NotFound("Stock item not found")
 	}
 
-	festivalStock, err := h.festivalStockManager.Create(fesID, itemID, req.Price)
+	festivalStock, err := h.festivalStockManager.Create(fesID, itemID, req.Price, req.Description)
 	if err != nil {
 		switch err {
 		case festival.ErrNotFound:
@@ -125,8 +125,8 @@ func (h *Handler) QueryFestivalStocks(c echo.Context) error {
 	})
 }
 
-func (h *Handler) UpdateFestivalStockPrice(c echo.Context) error {
-	var req UpdateFestivalStockPriceRequest
+func (h *Handler) UpdateFestivalStock(c echo.Context) error {
+	var req UpdateFestivalStockRequest
 	if err := c.Bind(&req); err != nil {
 		return herror.BadRequest("Invalid request body")
 	}
@@ -139,7 +139,7 @@ func (h *Handler) UpdateFestivalStockPrice(c echo.Context) error {
 		return herror.NotFound("Festival stock not found")
 	}
 
-	err = h.festivalStockManager.UpdatePrice(id, req.Price)
+	err = h.festivalStockManager.Update(id, req.Description)
 	if err != nil {
 		switch err {
 		case festivalstock.ErrNotFound:

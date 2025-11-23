@@ -16,12 +16,13 @@ func TestRegisterFestivalStock(t *testing.T) {
 	item := mustCreateStockItem(t, repo, "Stock Item", "Item Description", "Category", "image_id")
 
 	t.Run("Register Festival Stock", func(t *testing.T) {
-		festivalStock, err := repo.RegisterFestivalStock(fes.ID, item.ID, 500)
+		festivalStock, err := repo.RegisterFestivalStock(fes.ID, item.ID, 500, "Stock Description")
 		assert.NoError(t, err)
 		assert.NotZero(t, festivalStock.ID)
 		assert.Equal(t, fes.ID, festivalStock.FestivalID)
 		assert.Equal(t, item.ID, festivalStock.StockItemID)
 		assert.Equal(t, 500, festivalStock.Price)
+		assert.Equal(t, "Stock Description", festivalStock.Description)
 	})
 }
 
@@ -30,13 +31,14 @@ func TestGetFestivalStockByID(t *testing.T) {
 
 	fes := mustCreateFestival(t, repo, "Fest for Stock", "Festival Description")
 	item := mustCreateStockItem(t, repo, "Stock Item", "Item Description", "Category", "image_id")
-	fesStock := mustCreateFestivalStock(t, repo, fes.ID, item.ID, 500)
+	fesStock := mustCreateFestivalStock(t, repo, fes.ID, item.ID, 500, "Stock Description")
 
 	t.Run("Get Festival Stock By ID", func(t *testing.T) {
 		retrievedStock, err := repo.GetFestivalStockByID(fesStock.ID)
 		assert.NoError(t, err)
 		assert.Equal(t, fesStock.ID, retrievedStock.ID)
 		assert.Equal(t, fesStock.Price, retrievedStock.Price)
+		assert.Equal(t, "Stock Description", retrievedStock.Description)
 		assert.Equal(t, fes.ID, retrievedStock.Festival.ID)
 		assert.Equal(t, item.ID, retrievedStock.StockItem.ID)
 	})
@@ -64,10 +66,10 @@ func TestQueryFestivalStocks(t *testing.T) {
 	item1 := mustCreateStockItem(t, repo, "Stock Item 1", "Item Description 1", "Category1", "image_id_1")
 	item2 := mustCreateStockItem(t, repo, "Stock Item 2", "Item Description 2", "Category1", "image_id_2")
 	item3 := mustCreateStockItem(t, repo, "Stock Item 3", "Item Description 3", "Category2", "image_id_3")
-	stock1 := mustCreateFestivalStock(t, repo, fes1.ID, item1.ID, 500)
-	stock2 := mustCreateFestivalStock(t, repo, fes1.ID, item2.ID, 800)
-	stock3 := mustCreateFestivalStock(t, repo, fes1.ID, item3.ID, 1200)
-	stock4 := mustCreateFestivalStock(t, repo, fes2.ID, item1.ID, 700)
+	stock1 := mustCreateFestivalStock(t, repo, fes1.ID, item1.ID, 500, "Stock Description 1")
+	stock2 := mustCreateFestivalStock(t, repo, fes1.ID, item2.ID, 800, "Stock Description 2")
+	stock3 := mustCreateFestivalStock(t, repo, fes1.ID, item3.ID, 1200, "Stock Description 3")
+	stock4 := mustCreateFestivalStock(t, repo, fes2.ID, item1.ID, 700, "Stock Description 4")
 
 	t.Run("Query All Festival Stocks", func(t *testing.T) {
 		stocks, err := repo.QueryFestivalStocks(uuid.Nil, "")
@@ -139,27 +141,28 @@ func TestUpdateFestivalStockPrice(t *testing.T) {
 
 	fes := mustCreateFestival(t, repo, "Fest for Stock", "Festival Description")
 	item := mustCreateStockItem(t, repo, "Stock Item", "Item Description", "Category", "image_id")
-	fesStock := mustCreateFestivalStock(t, repo, fes.ID, item.ID, 500)
+	fesStock := mustCreateFestivalStock(t, repo, fes.ID, item.ID, 500, "Stock Description")
 
 	t.Run("Update Festival Stock Price", func(t *testing.T) {
-		err := repo.UpdateFestivalStockPrice(fesStock.ID, 750)
+		err := repo.UpdateFestivalStock(fesStock.ID, "Updated Stock Description")
 		assert.NoError(t, err)
 
 		updatedStock, err := repo.GetFestivalStockByID(fesStock.ID)
 		assert.NoError(t, err)
-		assert.Equal(t, 750, updatedStock.Price)
+		assert.Equal(t, 500, updatedStock.Price)
+		assert.Equal(t, "Updated Stock Description", updatedStock.Description)
 	})
 
 	t.Run("Update Non-Existent Festival Stock Price", func(t *testing.T) {
 		id, err := uuid.NewV7()
 		assert.NoError(t, err)
-		err = repo.UpdateFestivalStockPrice(id, 900)
+		err = repo.UpdateFestivalStock(id, "Updated Stock Description")
 		assert.Error(t, err)
 		assert.Equal(t, repository.ErrNotFound, err)
 	})
 
 	t.Run("Update Festival Stock Price with Zero UUID", func(t *testing.T) {
-		err := repo.UpdateFestivalStockPrice(uuid.Nil, 900)
+		err := repo.UpdateFestivalStock(uuid.Nil, "Updated Stock Description")
 		assert.Error(t, err)
 		assert.Equal(t, repository.ErrNotFound, err)
 	})
@@ -170,7 +173,7 @@ func TestDeleteFestivalStock(t *testing.T) {
 
 	fes := mustCreateFestival(t, repo, "Fest for Stock", "Festival Description")
 	item := mustCreateStockItem(t, repo, "Stock Item", "Item Description", "Category", "image_id")
-	fesStock := mustCreateFestivalStock(t, repo, fes.ID, item.ID, 500)
+	fesStock := mustCreateFestivalStock(t, repo, fes.ID, item.ID, 500, "Stock Description")
 
 	t.Run("Delete Festival Stock", func(t *testing.T) {
 		err := repo.DeleteFestivalStock(fesStock.ID)

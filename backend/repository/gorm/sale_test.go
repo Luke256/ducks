@@ -13,7 +13,7 @@ func TestCreateSaleRecord(t *testing.T) {
 
 	fes := mustCreateFestival(t, repo, "Test Festival", "A festival for testing")
 	stockItem := mustCreateStockItem(t, repo, "Test Stock Item", "An item for testing", "Test Category", "")
-	fesStock := mustCreateFestivalStock(t, repo, fes.ID, stockItem.ID, 100)
+	fesStock := mustCreateFestivalStock(t, repo, fes.ID, stockItem.ID, 100, "Stock Description")
 
 	t.Run("Create Sale Record", func(t *testing.T) {
 		saleRecord, err := repo.CreateSaleRecord(fesStock.ID, 5)
@@ -28,7 +28,7 @@ func TestGetSaleRecordByID(t *testing.T) {
 
 	fes := mustCreateFestival(t, repo, "Test Festival", "A festival for testing")
 	stockItem := mustCreateStockItem(t, repo, "Test Stock Item", "An item for testing", "Test Category", "")
-	fesStock := mustCreateFestivalStock(t, repo, fes.ID, stockItem.ID, 100)
+	fesStock := mustCreateFestivalStock(t, repo, fes.ID, stockItem.ID, 100, "Stock Description")
 	saleRecord := mustCreateSaleRecord(t, repo, fesStock.ID, 10)
 
 	t.Run("Get Sale Record By ID", func(t *testing.T) {
@@ -50,8 +50,8 @@ func TestGetSaleRecordsByFestivalStockID(t *testing.T) {
 
 	fes := mustCreateFestival(t, repo, "Test Festival", "A festival for testing")
 	stockItem := mustCreateStockItem(t, repo, "Test Stock Item", "An item for testing", "Test Category", "")
-	fesStock := mustCreateFestivalStock(t, repo, fes.ID, stockItem.ID, 100)
-	fesStock2 := mustCreateFestivalStock(t, repo, fes.ID, stockItem.ID, 200)
+	fesStock := mustCreateFestivalStock(t, repo, fes.ID, stockItem.ID, 100, "Stock Description")
+	fesStock2 := mustCreateFestivalStock(t, repo, fes.ID, stockItem.ID, 200, "Stock Description")
 
 	saleRecord1 := mustCreateSaleRecord(t, repo, fesStock.ID, 10)
 	saleRecord2 := mustCreateSaleRecord(t, repo, fesStock.ID, 20)
@@ -85,9 +85,9 @@ func TestQuerySaleRecords(t *testing.T) {
 	itemA := mustCreateStockItem(t, repo, "Item A", "First item", "Category 1", "")
 	itemB := mustCreateStockItem(t, repo, "Item B", "Second item", "Category 2", "")
 
-	fes1StockA := mustCreateFestivalStock(t, repo, fes1.ID, itemA.ID, 150)
-	fes1StockB := mustCreateFestivalStock(t, repo, fes1.ID, itemB.ID, 200)
-	fes2StockA := mustCreateFestivalStock(t, repo, fes2.ID, itemA.ID, 250)
+	fes1StockA := mustCreateFestivalStock(t, repo, fes1.ID, itemA.ID, 150, "Stock Description A")
+	fes1StockB := mustCreateFestivalStock(t, repo, fes1.ID, itemB.ID, 200, "Stock Description B")
+	fes2StockA := mustCreateFestivalStock(t, repo, fes2.ID, itemA.ID, 250, "Stock Description A")
 
 	saleRecord1 := mustCreateSaleRecord(t, repo, fes1StockA.ID, 3)
 	saleRecord2 := mustCreateSaleRecord(t, repo, fes1StockB.ID, 5)
@@ -140,7 +140,7 @@ func TestDeleteSaleRecord(t *testing.T) {
 
 	fes := mustCreateFestival(t, repo, "Test Festival", "A festival for testing")
 	stockItem := mustCreateStockItem(t, repo, "Test Stock Item", "An item for testing", "Test Category", "")
-	fesStock := mustCreateFestivalStock(t, repo, fes.ID, stockItem.ID, 100)
+	fesStock := mustCreateFestivalStock(t, repo, fes.ID, stockItem.ID, 100, "Stock Description")
 	saleRecord := mustCreateSaleRecord(t, repo, fesStock.ID, 10)
 
 	t.Run("Delete Sale Record", func(t *testing.T) {

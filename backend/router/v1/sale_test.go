@@ -12,7 +12,7 @@ func TestCreateSaleRecord(t *testing.T) {
 
 	fes := env.mustCreateFestival(t, "Test Festival", "Description")
 	stock_item := env.mustCreateStockItem(t, "Test Stock Item", "Category", "")
-	stock := env.mustCreateFestivalStock(t, fes.ID, stock_item.ID, 100)
+	stock := env.mustCreateFestivalStock(t, fes.ID, stock_item.ID, 100, "")
 
 	t.Run("Create Sale Record", func(t *testing.T) {
 		res := e.POST("/api/sales").
@@ -98,7 +98,7 @@ func TestGetSaleRecord(t *testing.T) {
 
 	fes := env.mustCreateFestival(t, "Test Festival", "Description")
 	stock_item := env.mustCreateStockItem(t, "Test Stock Item", "Category", "")
-	stock := env.mustCreateFestivalStock(t, fes.ID, stock_item.ID, 100)
+	stock := env.mustCreateFestivalStock(t, fes.ID, stock_item.ID, 100, "")
 	record := env.mustCreateSaleRecord(t, stock.ID, 3)
 
 	t.Run("Get Existing Sale Record", func(t *testing.T) {
@@ -136,8 +136,8 @@ func TestGetSaleRecordsByStockID(t *testing.T) {
 
 	fes := env.mustCreateFestival(t, "Test Festival", "Description")
 	stock_item := env.mustCreateStockItem(t, "Test Stock Item", "Category", "")
-	stock1 := env.mustCreateFestivalStock(t, fes.ID, stock_item.ID, 100)
-	stock2 := env.mustCreateFestivalStock(t, fes.ID, stock_item.ID, 150)
+	stock1 := env.mustCreateFestivalStock(t, fes.ID, stock_item.ID, 100, "")
+	stock2 := env.mustCreateFestivalStock(t, fes.ID, stock_item.ID, 150, "")
 
 	sale1 := env.mustCreateSaleRecord(t, stock1.ID, 2)
 	sale2 := env.mustCreateSaleRecord(t, stock1.ID, 5)
@@ -179,9 +179,9 @@ func TestQuerySaleRecords(t *testing.T) {
 	stock_item1 := env.mustCreateStockItem(t, "Stock Item 1", "Category", "")
 	stock_item2 := env.mustCreateStockItem(t, "Stock Item 2", "Category", "")
 
-	stock1 := env.mustCreateFestivalStock(t, fes1.ID, stock_item1.ID, 100)
-	stock2 := env.mustCreateFestivalStock(t, fes1.ID, stock_item2.ID, 150)
-	stock3 := env.mustCreateFestivalStock(t, fes2.ID, stock_item1.ID, 200)
+	stock1 := env.mustCreateFestivalStock(t, fes1.ID, stock_item1.ID, 100, "")
+	stock2 := env.mustCreateFestivalStock(t, fes1.ID, stock_item2.ID, 150, "")
+	stock3 := env.mustCreateFestivalStock(t, fes2.ID, stock_item1.ID, 200, "")
 
 	sale1 := env.mustCreateSaleRecord(t, stock1.ID, 2)
 	sale2 := env.mustCreateSaleRecord(t, stock1.ID, 3)
@@ -259,7 +259,7 @@ func TestDeleteSaleRecord(t *testing.T) {
 
 	fes := env.mustCreateFestival(t, "Test Festival", "Description")
 	stock_item := env.mustCreateStockItem(t, "Test Stock Item", "Category", "")
-	stock := env.mustCreateFestivalStock(t, fes.ID, stock_item.ID, 100)
+	stock := env.mustCreateFestivalStock(t, fes.ID, stock_item.ID, 100, "")
 
 	sale := env.mustCreateSaleRecord(t, stock.ID, 4)
 

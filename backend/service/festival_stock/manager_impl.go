@@ -33,10 +33,11 @@ func (fm *ManagerImpl) toStockType(fs model.FestivalStock) Stock {
 		},
 		FestivalID: fs.FestivalID,
 		Price:      fs.Price,
+		Description: fs.Description,
 	}
 }
 
-func (fm *ManagerImpl) Create(festivalID, itemID uuid.UUID, price int) (Stock, error) {
+func (fm *ManagerImpl) Create(festivalID, itemID uuid.UUID, price int, description string) (Stock, error) {
 	// festival exists
 	_, err := fm.repo.GetFestivalByID(festivalID)
 	if err != nil {
@@ -59,7 +60,7 @@ func (fm *ManagerImpl) Create(festivalID, itemID uuid.UUID, price int) (Stock, e
 		}
 	}
 
-	fesStock, err := fm.repo.RegisterFestivalStock(festivalID, itemID, price)
+	fesStock, err := fm.repo.RegisterFestivalStock(festivalID, itemID, price, description)
 	if err != nil {
 		return Stock{}, err
 	}
@@ -95,8 +96,8 @@ func (fm *ManagerImpl) Query(festivalID uuid.UUID, category string) ([]Stock, er
 	return result, nil
 }
 
-func (fm *ManagerImpl) UpdatePrice(id uuid.UUID, newPrice int) error {
-	err := fm.repo.UpdateFestivalStockPrice(id, newPrice)
+func (fm *ManagerImpl) Update(id uuid.UUID, description string) error {
+	err := fm.repo.UpdateFestivalStock(id, description)
 	switch err {
 	case nil:
 		return nil

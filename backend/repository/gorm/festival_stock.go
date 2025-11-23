@@ -11,7 +11,7 @@ import (
 	"github.com/google/uuid"
 )
 
-func (r *GormRepository) RegisterFestivalStock(festivalID, itemID uuid.UUID, price int) (model.FestivalStock, error) {
+func (r *GormRepository) RegisterFestivalStock(festivalID, itemID uuid.UUID, price int, description string) (model.FestivalStock, error) {
 	fesStockID, err := uuid.NewV7()
 	if err != nil {
 		return model.FestivalStock{}, err
@@ -22,6 +22,7 @@ func (r *GormRepository) RegisterFestivalStock(festivalID, itemID uuid.UUID, pri
 		FestivalID:  festivalID,
 		StockItemID: itemID,
 		Price:       price,
+		Description: description,
 	}
 
 	ctx := context.Background()
@@ -70,13 +71,13 @@ func (r *GormRepository) QueryFestivalStocks(festivalID uuid.UUID, category stri
 	return stocks, nil
 }
 
-func (r *GormRepository) UpdateFestivalStockPrice(festivalStockID uuid.UUID, newPrice int) error {
+func (r *GormRepository) UpdateFestivalStock(festivalStockID uuid.UUID, description string) error {
 	ctx := context.Background()
 
 	rows, err := gorm.G[model.FestivalStock](r.db).
 		Where(model.FestivalStock{ID: festivalStockID}, "ID").
-		Select("Price").
-		Updates(ctx, model.FestivalStock{Price: newPrice})
+		Select("Description").
+		Updates(ctx, model.FestivalStock{Description: description})
 	if err != nil {
 		return wrapGormError(err)
 	}
