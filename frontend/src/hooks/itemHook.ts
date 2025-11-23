@@ -36,7 +36,22 @@ const useQueryStockItems = (category?: string) => {
         }
     );
 
-    return { data, error, isLoading, mutate };
+    const mutateWithFilter = async (category?: string) => {
+        const queryParam = category ? `?category=${category}` : '';
+        await mutate(
+            async () => {
+                const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/items${queryParam}`);
+                if (!res.ok) {
+                    throw new Error("Failed to fetch item list");
+                }
+                const data = await res.json();
+                return data["items"];
+            },
+            false
+        );
+    }
+
+    return { data, error, isLoading, mutate: mutateWithFilter };
 }
 
 export { useStockItem, useQueryStockItems };

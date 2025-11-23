@@ -1,11 +1,13 @@
 'use client';
 
 import { useQueryStockItems } from "@/hooks/itemHook";
-import { LaunchTwoTone } from "@mui/icons-material";
+import { LaunchTwoTone, RefreshTwoTone } from "@mui/icons-material";
 import Link from "next/link";
+import { useState } from "react";
 
 export default function ItemPageClient() {
-    const { data: items, error, isLoading } = useQueryStockItems();
+    const { data: items, error, isLoading, mutate } = useQueryStockItems();
+    const [filterCategory, setFilterCategory] = useState("");
 
     return (
         <main>
@@ -17,6 +19,13 @@ export default function ItemPageClient() {
                 <Link href="/sales/items/new" className="mb-4 inline-block px-4 py-2 bg-blue-500 text-white hover:bg-blue-600">
                     新規アイテム
                 </Link>
+
+                <div className="mb-4">
+                    <input type="text" placeholder="カテゴリ" value={filterCategory} onChange={(e) => setFilterCategory(e.target.value)} className="p-2 border border-gray-300 w-full" />
+                </div>
+                <button className="mb-4 px-4 py-2 bg-gray-500 text-white hover:bg-gray-600 hover:cursor-pointer" onClick={() => mutate(filterCategory)}>
+                    <RefreshTwoTone />
+                </button>
                 {items && (
                     <div>
                         <table className="w-full">
