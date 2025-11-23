@@ -13,6 +13,7 @@ export default function StockDetailPageClient({ params }: Readonly<{
     const { stockId } = params;
 
     const [editMode, setEditMode] = useState(false);
+    const [editedDescription, setEditedDescription] = useState("");
 
     const router = useRouter();
 
@@ -28,6 +29,7 @@ export default function StockDetailPageClient({ params }: Readonly<{
                     <button
                         onClick={() => {
                             setEditMode(!editMode)
+                            setEditedDescription(stock.description);
                         }}
                         className="mb-4 px-4 py-2 bg-blue-500 text-white hover:cursor-pointer"
                     >
@@ -67,14 +69,48 @@ export default function StockDetailPageClient({ params }: Readonly<{
                     </div>
 
                     <div className="mb-4">
+                        <h2 className="text-xl font-bold">説明：</h2>
+                        {editMode ? (
+                            <textarea className="w-full p-2 border border-gray-300" value={editedDescription} onChange={(e) => setEditedDescription(e.target.value)} />
+                        ) : (
+                            <p>{stock.description}</p>
+                        )}
+                    </div>
+
+                    <div className="mb-4">
                         <h2 className="text-xl font-bold">価格：</h2>
                         <p>{stock.price} 円</p>
                     </div>
 
-                    <div className="mb-4">
-                        <h2 className="text-xl font-bold">説明：</h2>
-                        <p>{stock.item.description}</p>
-                    </div>
+                    {editMode && (
+                        <button
+                            onClick={async () => {
+                                const updateToastId = toast.loading("商品の更新中...");
+
+                                const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/stocks/${stock.id}`, {
+                                    method: "PUT",
+                                    headers: {
+                                        "Content-Type": "application/json",
+                                    },
+                                    body: JSON.stringify({
+                                        description: editedDescription,
+                                    }),
+                                });
+
+                                if (res.ok) {
+                                    toast.update(updateToastId, { render: "商品の更新に成功しました", type: "success", isLoading: false, autoClose: 3000 });
+                                    mutateStock();
+                                    setEditMode(false);
+                                }
+                                else {
+                                    toast.update(updateToastId, { render: "商品の更新に失敗しました", type: "error", isLoading: false, autoClose: 3000 });
+                                }
+                            }}
+                            className="px-4 py-2 bg-green-500 text-white hover:cursor-pointer"
+                        >
+                            変更を保存
+                        </button>
+                    )}
                 </div>
             )}
         </div>

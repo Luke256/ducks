@@ -4,6 +4,7 @@ type FestivalItem = {
     id: number;
     festivalId: string;
     price: number;
+    description: string;
     item: StockItem;
 }
 

@@ -228,7 +228,7 @@ func TestUpdateFestivalStock(t *testing.T) {
 	fesStock := env.mustCreateFestivalStock(t, fes.ID, item.ID, 2000, "Stock Description")
 
 	t.Run("Update Festival Stock Price", func(t *testing.T) {
-		e.PUT("/api/stocks/{festival_stock_id}/price", fesStock.ID).
+		e.PUT("/api/stocks/{festival_stock_id}", fesStock.ID).
 			WithJSON(map[string]any{
 				"description": "Updated Stock Description",
 			}).
@@ -245,7 +245,7 @@ func TestUpdateFestivalStock(t *testing.T) {
 	})
 
 	t.Run("Update Festival Stock Price - Not Found", func(t *testing.T) {
-		e.PUT("/api/stocks/{festival_stock_id}/price", uuid.New()).
+		e.PUT("/api/stocks/{festival_stock_id}", uuid.New()).
 			WithJSON(map[string]any{
 				"description": "Updated Stock Description",
 			}).
@@ -254,7 +254,7 @@ func TestUpdateFestivalStock(t *testing.T) {
 	})
 
 	t.Run("Update Festival Stock Price - Invalid ID", func(t *testing.T) {
-		e.PUT("/api/stocks/{festival_stock_id}/price", "invalid-uuid").
+		e.PUT("/api/stocks/{festival_stock_id}", "invalid-uuid").
 			WithJSON(map[string]any{
 				"description": "Updated Stock Description",
 			}).
@@ -263,7 +263,7 @@ func TestUpdateFestivalStock(t *testing.T) {
 	})
 
 	t.Run("Update Festival Stock Price - Zero ID", func(t *testing.T) {
-		e.PUT("/api/stocks/{festival_stock_id}/price", uuid.Nil).
+		e.PUT("/api/stocks/{festival_stock_id}", uuid.Nil).
 			WithJSON(map[string]any{
 				"description": "Updated Stock Description",
 			}).

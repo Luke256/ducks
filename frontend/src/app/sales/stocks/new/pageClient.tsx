@@ -24,6 +24,7 @@ export default function NewStocksPageClient() {
         const formElement = e.currentTarget;
         const formData = new FormData(formElement);
         const itemId = formData.get("item_id") as string;
+        const description = formData.get("description") as string;
         const price = formData.get("price") as string;
 
         const uploadToasId = toast.loading("物販アイテムを登録中...");
@@ -36,6 +37,7 @@ export default function NewStocksPageClient() {
             body: JSON.stringify({
                 item_id: itemId,
                 price: Number(price),
+                description: description,
             }),
         });
 
@@ -94,6 +96,10 @@ export default function NewStocksPageClient() {
                                 }
                             </select>
                         </div>
+                    </div>
+                    <div className="mb-4">
+                        <label className="block mb-2">説明</label>
+                        <input name="description" type="text" className="p-2 border border-gray-300 w-full" />
                     </div>
                     <div className="mb-4">
                         <label className="block mb-2">価格 (円)</label>

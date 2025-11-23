@@ -72,7 +72,7 @@ func (r *Handler) Setup(g *echo.Group) {
 	festivals.POST("/:festival_id/stocks", r.RegisterFestivalStock)
 	festivals.GET("/:festival_id/stocks", r.QueryFestivalStocks)
 	festivalStocks.GET("/:id", r.GetFestivalStock)
-	festivalStocks.PUT("/:id/price", r.UpdateFestivalStock)
+	festivalStocks.PUT("/:id", r.UpdateFestivalStock)
 	festivalStocks.DELETE("/:id", r.DeleteFestivalStock)
 
 	// Sales

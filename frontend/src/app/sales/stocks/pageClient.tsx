@@ -13,7 +13,6 @@ export default function StocksPageClient() {
     const { data: stocks, mutate: mutateStocks } = useStockList(currentFestivalId);
     const { data: festivals } = useFestivalList();
 
-
     return (
         <main>
             <div className="max-w-7xl mx-auto p-4">
@@ -49,6 +48,7 @@ export default function StocksPageClient() {
                                 <tr>
                                     <th>アイテム名</th>
                                     <th>カテゴリ</th>
+                                    <th>説明</th>
                                     <th>価格</th>
                                     <th></th>
                                 </tr>
@@ -58,6 +58,7 @@ export default function StocksPageClient() {
                                     <tr key={stock.id}>
                                         <td className="p-2 border-t text-center">{stock.item.name}</td>
                                         <td className="p-2 border-t text-center">{stock.item.category}</td>
+                                        <td className="p-2 border-t text-center">{stock.description}</td>
                                         <td className="p-2 border-t text-center">{stock.price} 円</td>
                                         <td className="p-2 border-t text-center hover:cursor-pointer transition">
                                             <Link href={`/sales/stocks/${stock.id}`} className="hover:text-blue-500">
