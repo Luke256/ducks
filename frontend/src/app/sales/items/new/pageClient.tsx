@@ -1,0 +1,106 @@
+"use client";
+
+import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
+import { toast } from "react-toastify";
+
+export default function NewItemPageClient() {
+    const [previewSrc, setPreviewSrc] = useState<string | null>(null);
+
+    const router = useRouter();
+
+    useEffect(() => {
+        return () => {
+            if (previewSrc) {
+                URL.revokeObjectURL(previewSrc);
+            }
+        };
+    }, [previewSrc]);
+
+    const submitHandler = async (event: React.FormEvent<HTMLFormElement>) => {
+        event.preventDefault();
+        const formElement = event.currentTarget;
+        const formData = new FormData(formElement);
+        const name = formData.get("name") as string;
+        const description = formData.get("description") as string;
+        const category = formData.get("category") as string;
+        const imageEntry = formData.get("image");
+
+        if (!(imageEntry instanceof File)) {
+            alert("画像ファイルが取得できませんでした");
+            return;
+        }
+
+        const form = new FormData();
+        form.append("name", name);
+        form.append("description", description);
+        form.append("category", category);
+        form.append("image", imageEntry);
+
+        const uploadToastId = toast.loading("アイテムを作成中...");
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/items`, {
+            method: "POST",
+            body: form,
+        });
+
+        if (res.ok) {
+            toast.update(uploadToastId, { render: "アイテムが作成されました", type: "success", isLoading: false, autoClose: 3000 });
+            router.push("/sales/items");
+            return;
+        }
+
+        toast.update(uploadToastId, { render: `アイテムの作成に失敗しました: ${res.statusText}`, type: "error", isLoading: false, autoClose: 5000 });
+    }
+
+    return (
+        <main>
+            <div className="p-4">
+                <h1 className="text-2xl font-bold mb-4">新規アイテム登録</h1>
+                
+                <form onSubmit={submitHandler}>
+                    <label className="block font-semibold mb-2">アイテム名</label>
+                    <input type="text" name="name" placeholder="アイテム名" className="w-full p-2 mb-4 border border-gray-300" required />
+
+                    <label className="block font-semibold mb-2">説明</label>
+                    <textarea name="description" placeholder="説明" className="w-full p-2 mb-4 border border-gray-300"></textarea>
+
+                    <label className="block font-semibold mb-2">カテゴリ</label>
+                    <input type="text" name="category" placeholder="カテゴリ" className="w-full p-2 mb-4 border border-gray-300" required />
+
+                    <label className="block font-semibold mb-2">画像</label>
+                    <input type="file" name="image" accept="image/*" className="w-full p-2 mb-4 border border-gray-300" required 
+                        onChange={(e) => {
+                            const file = e.target.files?.[0];
+                            if (file) {
+                                const objectUrl = URL.createObjectURL(file);
+                                setPreviewSrc((prev) => {
+                                    if (prev) {
+                                        URL.revokeObjectURL(prev);
+                                    }
+                                    return objectUrl;
+                                });
+                            } else {
+                                setPreviewSrc((prev) => {
+                                    if (prev) {
+                                        URL.revokeObjectURL(prev);
+                                    }
+                                    return null;
+                                });
+                            }
+                        }}
+                    />
+                    {previewSrc && (
+                        <div className="mb-4">
+                            <p className="font-semibold mb-2">画像プレビュー:</p>
+                            <img src={previewSrc} alt="画像プレビュー" className="max-w-xs border border-gray-300" />
+                        </div>
+                    )}
+
+                    <button type="submit" className="px-4 py-2 bg-blue-500 text-white hover:bg-blue-600 hover:cursor-pointer">
+                        アイテム作成
+                    </button>
+                </form>
+            </div>
+        </main>
+    );
+}

@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import Form from "next/form"
 import { redirect } from "next/navigation";
 import { Festival } from "@/types/festival";
+import { useFestivalList } from "@/hooks/festivalHook";
 
 type FestivalCreateFormData = {
     name: string;
@@ -31,12 +32,8 @@ const createEvent = async (formData: FestivalCreateFormData) => {
 }
 
 export default function EventPageClient() {
-    const [events, setEvents] = useState([]);
+    const { data: events, error: eventsError, isLoading: eventsLoading, mutate: reloadEvents } = useFestivalList();
     const [formOpen, setFormOpen] = useState(false);
-
-    useEffect(() => {
-        fetchEvents().then((data) => setEvents(data));
-    }, []);
 
 
     const submitAction = async (formData: FormData) => {
@@ -44,35 +41,38 @@ export default function EventPageClient() {
         const description = formData.get("description") as string;
 
         await createEvent({ name, description });
-        const updatedEvents = await fetchEvents();
-        setEvents(updatedEvents);
+        await reloadEvents();
         setFormOpen(false);
     }
 
     return (
         <main className="max-w-7xl mx-auto">
-            <div className="max-w-3xl bg-white md:p-8">
+            <div className="max-w-3xl bg-white md:p-8 mx-auto">
                 <h1 className="mb-4 text-2xl font-bold text-black">イベント管理</h1>
-                <table className="min-w-full table-auto border-collapse">
-                    <thead>
-                        <tr>
-                            <th className="px-4 py-2 text-left">イベント名</th>
-                            <th className="px-4 py-2 text-left">概要</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {events.map((event: Festival) => (
-                            <tr
-                                key={event.id}
-                                onClick={() => redirect(`/event/${event.id}`)}
-                                className="hover:cursor-pointer hover:bg-gray-100 transition-colors"
-                            >
-                                <td className="border-t border-gray-300 px-4 py-2">{event.name}</td>
-                                <td className="border-t border-gray-300 px-4 py-2">{event.description}</td>
+                {eventsLoading && <p>Loading events...</p>}
+                {eventsError && <p className="text-red-500">Failed to load events: {eventsError.message}</p>}
+                {events &&
+                    <table className="min-w-full table-auto border-collapse">
+                        <thead>
+                            <tr>
+                                <th className="px-4 py-2 text-left">イベント名</th>
+                                <th className="px-4 py-2 text-left">概要</th>
                             </tr>
-                        ))}
-                    </tbody>
-                </table>
+                        </thead>
+                        <tbody>
+                            {events.map((event: Festival) => (
+                                <tr
+                                    key={event.id}
+                                    onClick={() => redirect(`/event/${event.id}`)}
+                                    className="hover:cursor-pointer hover:bg-gray-100 transition-colors"
+                                >
+                                    <td className="border-t border-gray-300 px-4 py-2">{event.name}</td>
+                                    <td className="border-t border-gray-300 px-4 py-2">{event.description}</td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                }
 
                 {/* Create Event Form (Hidden with accordion) */}
 

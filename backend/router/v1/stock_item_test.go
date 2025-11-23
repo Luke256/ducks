@@ -13,7 +13,7 @@ func TestRegisterStockItem(t *testing.T) {
 	e := env.R(t)
 
 	t.Run("RegisterStockItem", func(t *testing.T) {
-		req := e.POST("/api/stocks").
+		req := e.POST("/api/items").
 			WithMultipart().
 			WithForm(map[string]any{
 				"name":  "Sample Stock Item",
@@ -33,7 +33,7 @@ func TestRegisterStockItem(t *testing.T) {
 	})
 
 	t.Run("Empty Name", func(t *testing.T) {
-		e.POST("/api/stocks").
+		e.POST("/api/items").
 			WithMultipart().
 			WithForm(map[string]any{
 				"name":  "",
@@ -46,7 +46,7 @@ func TestRegisterStockItem(t *testing.T) {
 	})
 
 	t.Run("Missing Image", func(t *testing.T) {
-		e.POST("/api/stocks").
+		e.POST("/api/items").
 			WithMultipart().
 			WithForm(map[string]any{
 				"name":  "Sample Stock Item",
@@ -58,7 +58,7 @@ func TestRegisterStockItem(t *testing.T) {
 	})
 
 	t.Run("Empty Category", func(t *testing.T) {
-		e.POST("/api/stocks").
+		e.POST("/api/items").
 			WithMultipart().
 			WithForm(map[string]any{
 				"name":  "Sample Stock Item",
@@ -78,7 +78,7 @@ func TestGetStockItem(t *testing.T) {
 	item := env.mustCreateStockItem(t, "Test Item", "This is a test item.", "Test Category")
 
 	t.Run("GetStockItem", func(t *testing.T) {
-		resp := e.GET("/api/stocks/{id}", item.ID.String()).
+		resp := e.GET("/api/items/{id}", item.ID.String()).
 			Expect().
 			Status(200).
 			JSON().
@@ -96,19 +96,19 @@ func TestGetStockItem(t *testing.T) {
 		if err != nil {
 			t.Fatalf("failed to generate uuid: %v", err)
 		}
-		e.GET("/api/stocks/{id}", id.String()).
+		e.GET("/api/items/{id}", id.String()).
 			Expect().
 			Status(404)
 	})
 
 	t.Run("GetStockItem Zero ID", func(t *testing.T) {
-		e.GET("/api/stocks/{id}", "00000000-0000-0000-0000-000000000000").
+		e.GET("/api/items/{id}", "00000000-0000-0000-0000-000000000000").
 			Expect().
 			Status(404)
 	})
 
 	t.Run("GetStockItem Invalid ID", func(t *testing.T) {
-		e.GET("/api/stocks/{id}", "invalid-uuid").
+		e.GET("/api/items/{id}", "invalid-uuid").
 			Expect().
 			Status(404)
 	})
@@ -123,7 +123,7 @@ func TestQueryStockItems(t *testing.T) {
 	item3 := env.mustCreateStockItem(t, "Item 3", "Description 3", "Category B")
 
 	t.Run("QueryStockItems", func(t *testing.T) {
-		resp := e.GET("/api/stocks").
+		resp := e.GET("/api/items").
 			Expect().
 			Status(200).
 			JSON().
@@ -133,7 +133,7 @@ func TestQueryStockItems(t *testing.T) {
 	})
 
 	t.Run("QueryStockItems with Category Filter", func(t *testing.T) {
-		resp := e.GET("/api/stocks").
+		resp := e.GET("/api/items").
 			WithQuery("category", "Category A").
 			Expect().
 			Status(200).
@@ -151,7 +151,7 @@ func TestEditStockItem(t *testing.T) {
 	item := env.mustCreateStockItem(t, "Original Name", "Original Description", "Original Category")
 
 	t.Run("EditStockItem", func(t *testing.T) {
-		e.PUT("/api/stocks/{id}", item.ID.String()).
+		e.PUT("/api/items/{id}", item.ID.String()).
 			WithJSON(map[string]any{
 				"name":        "Updated Name",
 				"description": "Updated Description",
@@ -160,7 +160,7 @@ func TestEditStockItem(t *testing.T) {
 			Expect().
 			Status(204)
 		
-		res := e.GET("/api/stocks/{id}", item.ID.String()).
+		res := e.GET("/api/items/{id}", item.ID.String()).
 			Expect().
 			Status(200).
 			JSON().
@@ -177,7 +177,7 @@ func TestEditStockItem(t *testing.T) {
 		if err != nil {
 			t.Fatalf("failed to generate uuid: %v", err)
 		}
-		e.PUT("/api/stocks/{id}", id.String()).
+		e.PUT("/api/items/{id}", id.String()).
 			WithJSON(map[string]any{
 				"name":        "Updated Name",
 				"description": "Updated Description",
@@ -188,7 +188,7 @@ func TestEditStockItem(t *testing.T) {
 	})
 
 	t.Run("EditStockItem Zero ID", func(t *testing.T) {
-		e.PUT("/api/stocks/{id}", "00000000-0000-0000-0000-000000000000").
+		e.PUT("/api/items/{id}", "00000000-0000-0000-0000-000000000000").
 			WithJSON(map[string]any{
 				"name":        "Updated Name",
 				"description": "Updated Description",
@@ -199,7 +199,7 @@ func TestEditStockItem(t *testing.T) {
 	})
 
 	t.Run("EditStockItem Invalid ID", func(t *testing.T) {
-		e.PUT("/api/stocks/{id}", "invalid-uuid").
+		e.PUT("/api/items/{id}", "invalid-uuid").
 			WithJSON(map[string]any{
 				"name":        "Updated Name",
 				"description": "Updated Description",
@@ -217,7 +217,7 @@ func TestUpdateStockItemImage(t *testing.T) {
 	item := env.mustCreateStockItem(t, "Item with Image", "Description", "Category")
 
 	t.Run("UpdateStockItemImage", func(t *testing.T) {
-		e.PUT("/api/stocks/{id}/image", item.ID.String()).
+		e.PUT("/api/items/{id}/image", item.ID.String()).
 			WithMultipart().
 			WithFile("image", "new_image.png", strings.NewReader("")).
 			Expect().
@@ -230,7 +230,7 @@ func TestUpdateStockItemImage(t *testing.T) {
 			t.Fatalf("failed to generate uuid: %v", err)
 		}
 
-		e.PUT("/api/stocks/{id}/image", id.String()).
+		e.PUT("/api/items/{id}/image", id.String()).
 			WithMultipart().
 			WithFile("image", "new_image.png", strings.NewReader("")).
 			Expect().
@@ -238,7 +238,7 @@ func TestUpdateStockItemImage(t *testing.T) {
 	})
 
 	t.Run("UpdateStockItemImage Zero ID", func(t *testing.T) {
-		e.PUT("/api/stocks/{id}/image", "00000000-0000-0000-0000-000000000000").
+		e.PUT("/api/items/{id}/image", "00000000-0000-0000-0000-000000000000").
 			WithMultipart().
 			WithFile("image", "new_image.png", strings.NewReader("")).
 			Expect().
@@ -246,7 +246,7 @@ func TestUpdateStockItemImage(t *testing.T) {
 	})
 
 	t.Run("UpdateStockItemImage Invalid ID", func(t *testing.T) {
-		e.PUT("/api/stocks/{id}/image", "invalid-uuid").
+		e.PUT("/api/items/{id}/image", "invalid-uuid").
 			WithMultipart().
 			WithFile("image", "new_image.png", strings.NewReader("")).
 			Expect().
@@ -261,11 +261,11 @@ func TestDeleteStockItem(t *testing.T) {
 	item := env.mustCreateStockItem(t, "Item to Delete", "Description", "Category")
 
 	t.Run("DeleteStockItem", func(t *testing.T) {
-		e.DELETE("/api/stocks/{id}", item.ID.String()).
+		e.DELETE("/api/items/{id}", item.ID.String()).
 			Expect().
 			Status(204)
 
-		e.GET("/api/stocks/{id}", item.ID.String()).
+		e.GET("/api/items/{id}", item.ID.String()).
 			Expect().
 			Status(404)
 	})
@@ -275,19 +275,19 @@ func TestDeleteStockItem(t *testing.T) {
 		if err != nil {
 			t.Fatalf("failed to generate uuid: %v", err)
 		}
-		e.DELETE("/api/stocks/{id}", id.String()).
+		e.DELETE("/api/items/{id}", id.String()).
 			Expect().
 			Status(404)
 	})
 
 	t.Run("DeleteStockItem Zero ID", func(t *testing.T) {
-		e.DELETE("/api/stocks/{id}", "00000000-0000-0000-0000-000000000000").
+		e.DELETE("/api/items/{id}", "00000000-0000-0000-0000-000000000000").
 			Expect().
 			Status(404)
 	})
 
 	t.Run("DeleteStockItem Invalid ID", func(t *testing.T) {
-		e.DELETE("/api/stocks/{id}", "invalid-uuid").
+		e.DELETE("/api/items/{id}", "invalid-uuid").
 			Expect().
 			Status(404)
 	})
