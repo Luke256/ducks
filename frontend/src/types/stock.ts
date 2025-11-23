@@ -1,11 +1,11 @@
 import { StockItem } from "./stockItem";
 
-type FestivalItem = {
-    id: number;
+type Stock = {
+    id: string;
     festivalId: string;
     price: number;
     description: string;
     item: StockItem;
 }
 
-export type { FestivalItem };
+export type { Stock };

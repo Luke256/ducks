@@ -6,7 +6,7 @@ import { useSessionStorage } from "@/hooks/sessStorage";
 import { Festival } from "@/types/festival";
 import { StockItem } from "@/types/stockItem";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { toast } from "react-toastify";
 
 
@@ -15,10 +15,14 @@ export default function NewStocksPageClient() {
     const [currentFestivalId, setCurrentFestivalId] = useSessionStorage("currentFestivalId", "");
     const [selectedCategory, setSelectedCategory] = useState("");
     const { data: stockItems } = useQueryStockItems();
+    const submitButton = useRef<HTMLButtonElement>(null);
 
     const router = useRouter();
 
     const submitHandler = async (e: React.FormEvent<HTMLFormElement>) => {
+        if (submitButton.current) {
+            submitButton.current.disabled = true;
+        }
         e.preventDefault();
 
         const formElement = e.currentTarget;
@@ -48,6 +52,9 @@ export default function NewStocksPageClient() {
         }
 
         toast.update(uploadToasId, { render: `物販アイテムの登録に失敗しました: ${res.statusText}`, type: "error", isLoading: false, autoClose: 5000 });
+        if (submitButton.current) {
+            submitButton.current.disabled = false;
+        }
     }
 
     const categories: string[] = Array.from(new Set(stockItems?.map((item: any) => item.category)));
@@ -105,7 +112,7 @@ export default function NewStocksPageClient() {
                         <label className="block mb-2">価格 (円)</label>
                         <input name="price" type="number" className="p-2 border border-gray-300 w-full" required />
                     </div>
-                    <button type="submit" className="px-4 py-2 bg-blue-500 text-white hover:bg-blue-600 hover:cursor-pointer">
+                    <button ref={submitButton} type="submit" className="px-4 py-2 bg-blue-500 text-white hover:bg-blue-600 hover:cursor-pointer">
                         登録
                     </button>
                 </form>

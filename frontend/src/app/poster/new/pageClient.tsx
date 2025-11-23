@@ -5,13 +5,14 @@ import { useSessionStorage } from "@/hooks/sessStorage";
 import { Festival } from "@/types/festival";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { FormEvent, useEffect, useState } from "react";
+import { FormEvent, useEffect, useRef, useState } from "react";
 import { toast } from "react-toastify";
 
 const NewPosterPageClient = () => {
     const { data: festivals } = useFestivalList();
     const [currentFestivalId, setCurrentFestivalId] = useSessionStorage("currentFestivalId", "");
     const [previewSrc, setPreviewSrc] = useState<string | null>(null);
+    const submitButton = useRef<HTMLButtonElement>(null);
 
     const router = useRouter();
 
@@ -24,6 +25,9 @@ const NewPosterPageClient = () => {
     }, [previewSrc]);
 
     const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
+        if (submitButton.current) {
+            submitButton.current.disabled = true;
+        }
         event.preventDefault();
         const formElement = event.currentTarget;
         const formData = new FormData(formElement);
@@ -55,6 +59,9 @@ const NewPosterPageClient = () => {
         }
 
         toast.update(uploadToastId, { render: `ポスターの作成に失敗しました: ${res.statusText}`, type: "error", isLoading: false, autoClose: 5000 });
+        if (submitButton.current) {
+            submitButton.current.disabled = false;
+        }
     };
 
     return (
@@ -120,7 +127,7 @@ const NewPosterPageClient = () => {
                             />
                         )}
                         <br />
-                        <button type="submit" className="px-4 py-2 bg-blue-500 text-white hover:bg-blue-600 hover:cursor-pointer">作成</button>
+                        <button ref={submitButton} type="submit" className="px-4 py-2 bg-blue-500 text-white hover:bg-blue-600 hover:cursor-pointer">作成</button>
                     </form>
                 </div>
             )}

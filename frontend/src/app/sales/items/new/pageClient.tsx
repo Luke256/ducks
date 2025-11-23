@@ -1,11 +1,12 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { toast } from "react-toastify";
 
 export default function NewItemPageClient() {
     const [previewSrc, setPreviewSrc] = useState<string | null>(null);
+    const submitButton = useRef<HTMLButtonElement>(null);
 
     const router = useRouter();
 
@@ -18,6 +19,9 @@ export default function NewItemPageClient() {
     }, [previewSrc]);
 
     const submitHandler = async (event: React.FormEvent<HTMLFormElement>) => {
+        if (submitButton.current) {
+            submitButton.current.disabled = true;
+        }
         event.preventDefault();
         const formElement = event.currentTarget;
         const formData = new FormData(formElement);
@@ -50,6 +54,9 @@ export default function NewItemPageClient() {
         }
 
         toast.update(uploadToastId, { render: `アイテムの作成に失敗しました: ${res.statusText}`, type: "error", isLoading: false, autoClose: 5000 });
+        if (submitButton.current) {
+            submitButton.current.disabled = false;
+        }
     }
 
     return (
@@ -96,7 +103,7 @@ export default function NewItemPageClient() {
                         </div>
                     )}
 
-                    <button type="submit" className="px-4 py-2 bg-blue-500 text-white hover:bg-blue-600 hover:cursor-pointer">
+                    <button ref={submitButton} type="submit" className="px-4 py-2 bg-blue-500 text-white hover:bg-blue-600 hover:cursor-pointer">
                         アイテム作成
                     </button>
                 </form>
