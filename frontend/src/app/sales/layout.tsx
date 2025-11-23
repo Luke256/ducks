@@ -7,7 +7,7 @@ import { useState } from "react";
 // type PageMode = "items" | "stocks" | "orders" | "cashiers";
 
 const PageTabs = [
-    { href: "cashiers", label: "会計処理" },
+    { href: "cashier", label: "会計処理" },
     { href: "orders", label: "売上管理" },
     { href: "stocks", label: "物販設定" },
     { href: "items", label: "商品管理" },
