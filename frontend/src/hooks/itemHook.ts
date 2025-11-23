@@ -31,8 +31,20 @@ const useQueryStockItems = (category?: string) => {
             if (!res.ok) {
                 throw new Error("Failed to fetch item list");
             }
+            
             const data = await res.json();
-            return data["items"];
+            const items = data["items"];
+
+            // category->nameでソート
+            items.sort((a: any, b: any) => {
+                if (a.category < b.category) return -1;
+                if (a.category > b.category) return 1;
+                if (a.name < b.name) return -1;
+                if (a.name > b.name) return 1;
+                return 0;
+            });
+
+            return items;
         }
     );
 
@@ -45,7 +57,18 @@ const useQueryStockItems = (category?: string) => {
                     throw new Error("Failed to fetch item list");
                 }
                 const data = await res.json();
-                return data["items"];
+                const items = data["items"];
+
+                // category->nameでソート
+                items.sort((a: any, b: any) => {
+                    if (a.category < b.category) return -1;
+                    if (a.category > b.category) return 1;
+                    if (a.name < b.name) return -1;
+                    if (a.name > b.name) return 1;
+                    return 0;
+                });
+
+                return items;
             },
             false
         );

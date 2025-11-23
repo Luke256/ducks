@@ -45,14 +45,16 @@ export default function ItemDetailPageClient({ params }: Readonly<{
                                 return;
                             }
 
+                            const deleteToastId = toast.loading("アイテムの削除中...");
+
                             const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/items/${item.id}`, {
                                 method: "DELETE",
                             });
                             if (res.ok) {
-                                alert("アイテムが削除されました");
+                                toast.update(deleteToastId, { render: "アイテムの削除に成功しました", type: "success", isLoading: false, autoClose: 3000 });
                                 router.push("/sales/items");
                             } else {
-                                alert(`アイテムの削除に失敗しました: ${res.statusText}`);
+                                toast.update(deleteToastId, { render: "アイテムの削除に失敗しました", type: "error", isLoading: false, autoClose: 3000 });
                             }
                         }}>
                             アイテムを削除

@@ -5,23 +5,34 @@ import (
 	"github.com/Luke256/ducks/repository"
 	"github.com/Luke256/ducks/service/festival"
 	stockitem "github.com/Luke256/ducks/service/stock_item"
+	"github.com/Luke256/ducks/utils/storage"
 	"github.com/google/uuid"
 )
 
 type ManagerImpl struct {
-	repo repository.Repository
+	repo    repository.Repository
+	storage storage.Storage
 }
 
-func NewManagerImpl(repo repository.Repository) *ManagerImpl {
-	return &ManagerImpl{repo: repo}
+func NewManagerImpl(repo repository.Repository, storage storage.Storage) *ManagerImpl {
+	return &ManagerImpl{
+		repo:    repo,
+		storage: storage,
+	}
 }
 
 func (fm *ManagerImpl) toStockType(fs model.FestivalStock) Stock {
 	return Stock{
-		ID:          fs.ID,
-		StockItemID: fs.StockItemID,
-		FestivalID:  fs.FestivalID,
-		Price:       fs.Price,
+		ID: fs.ID,
+		Item: stockitem.StockItem{
+			ID:          fs.StockItem.ID,
+			Name:        fs.StockItem.Name,
+			Description: fs.StockItem.Description,
+			Category:    fs.StockItem.Category,
+			ImageURL:    fm.storage.GetFileURL(fs.StockItem.ImageID),
+		},
+		FestivalID: fs.FestivalID,
+		Price:      fs.Price,
 	}
 }
 
