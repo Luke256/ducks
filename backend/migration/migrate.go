@@ -28,7 +28,7 @@ func Migrate(db *gorm.DB) (init bool, err error) {
 		// 初回のみに呼ばれる
 		// 全ての最新のデータベース定義を書く事
 		init = true
-
+		
 		// テーブル
 		return db.AutoMigrate(AllTables()...)
 	})

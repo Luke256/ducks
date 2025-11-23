@@ -10,7 +10,9 @@ import (
 //
 // 新たなマイグレーションを行う場合は、この配列の末尾に必ず追加すること
 func Migrations() []*gormigrate.Migration {
-	return []*gormigrate.Migration{}
+	return []*gormigrate.Migration{
+		v1(), // v1 販売管理システムの追加
+	}
 }
 
 // AllTables 最新のスキーマの全テーブルモデル
