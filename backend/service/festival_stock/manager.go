@@ -3,6 +3,7 @@ package festivalstock
 import (
 	"errors"
 
+	stockitem "github.com/Luke256/ducks/service/stock_item"
 	"github.com/google/uuid"
 )
 
@@ -11,10 +12,10 @@ var (
 )
 
 type Stock struct {
-	ID          uuid.UUID `json:"id"`
-	StockItemID uuid.UUID `json:"stock_item_id"`
-	FestivalID  uuid.UUID `json:"festival_id"`
-	Price       int       `json:"price"`
+	ID         uuid.UUID           `json:"id"`
+	Item       stockitem.StockItem `json:"item"`
+	FestivalID uuid.UUID           `json:"festival_id"`
+	Price      int                 `json:"price"`
 }
 
 type Manager interface {

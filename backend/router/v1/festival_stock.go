@@ -120,7 +120,9 @@ func (h *Handler) QueryFestivalStocks(c echo.Context) error {
 		return herror.InternalServerError("Failed to query festival stocks")
 	}
 
-	return c.JSON(200, festivalStocks)
+	return c.JSON(200, map[string]any{
+		"stocks": festivalStocks,
+	})
 }
 
 func (h *Handler) UpdateFestivalStockPrice(c echo.Context) error {

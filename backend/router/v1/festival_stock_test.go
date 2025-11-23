@@ -25,7 +25,6 @@ func TestRegisterFestivalStock(t *testing.T) {
 			Object()
 			
 		res.Value("festival_id").IsEqual(festival.ID.String())
-		res.Value("stock_item_id").IsEqual(stockItem.ID.String())
 		res.Value("price").IsEqual(1500)
 	})
 
@@ -135,7 +134,7 @@ func TestGetFestivalStock(t *testing.T) {
 
 		res.Value("id").IsEqual(fesStock.ID.String())
 		res.Value("festival_id").IsEqual(fes.ID.String())
-		res.Value("stock_item_id").IsEqual(item.ID.String())
+		res.Value("item").Object().Value("id").IsEqual(item.ID.String())
 		res.Value("price").IsEqual(2000)
 	})
 
@@ -162,19 +161,28 @@ func TestQueryFestivalStocks(t *testing.T) {
 	itemA := env.mustCreateStockItem(t, "Item A", "First item", "Cat1")
 	itemB := env.mustCreateStockItem(t, "Item B", "Second item", "Cat2")
 
-	stock1 := env.mustCreateFestivalStock(t, fes1.ID, itemA.ID, 1000)
-	stock2 := env.mustCreateFestivalStock(t, fes1.ID, itemB.ID, 1500)
+	st1 := env.mustCreateFestivalStock(t, fes1.ID, itemA.ID, 1000)
+	st2 :=env.mustCreateFestivalStock(t, fes1.ID, itemB.ID, 1500)
 	env.mustCreateFestivalStock(t, fes2.ID, itemA.ID, 2000)
+
+	stock1, err := env.FSM.Get(st1.ID)
+	if err != nil {
+		t.Fatalf("Failed to get stock1: %v", err)
+	}
+	stock2, err := env.FSM.Get(st2.ID)
+	if err != nil {
+		t.Fatalf("Failed to get stock2: %v", err)
+	}
 
 	t.Run("Query Festival Stocks by Festival ID", func (t *testing.T) {
 		res := e.GET("/api/festivals/{festival_id}/stocks", fes1.ID).
 			Expect().
 			Status(200).
 			JSON().
-			Array()
+			Object()
 
-		res.Length().IsEqual(2)
-		res.ContainsOnly(stock1, stock2)
+		res.Value("stocks").Array().Length().IsEqual(2)
+		res.Value("stocks").Array().ContainsOnly(stock1, stock2)
 	})
 
 	t.Run("Query Festival Stocks - With Category Filter", func (t *testing.T) {
@@ -183,10 +191,10 @@ func TestQueryFestivalStocks(t *testing.T) {
 			Expect().
 			Status(200).
 			JSON().
-			Array()
+			Object()
 
-		res.Length().IsEqual(1)
-		res.ContainsOnly(stock1)
+		res.Value("stocks").Array().Length().IsEqual(1)
+		res.Value("stocks").Array().ContainsOnly(stock1)
 	})
 }
 

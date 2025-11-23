@@ -94,7 +94,7 @@ func TestMain(m *testing.M) {
 		env.FM = festival.NewManagerImpl(repo)
 		env.PM = poster.NewManagerImpl(repo, env.Storage)
 		env.SIM = stockitem.NewManagerImpl(repo, env.Storage)
-		env.FSM = festivalstock.NewManagerImpl(repo)
+		env.FSM = festivalstock.NewManagerImpl(repo, env.Storage)
 		env.SM = sale.NewManagerImpl(repo)
 
 		// サーバー
