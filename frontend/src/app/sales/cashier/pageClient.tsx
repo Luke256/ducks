@@ -7,7 +7,8 @@ import { Festival } from "@/types/festival";
 import { Stock } from "@/types/stock";
 import { Clear } from "@mui/icons-material";
 import Image from "next/image";
-import { useState } from "react";
+import { useRef, useState } from "react";
+import { toast } from "react-toastify";
 
 const hsl2hex = (h: number, s: number, l: number): string => {
     s /= 100;
@@ -26,6 +27,7 @@ export default function CashiersPageClient() {
     const { data: festivals } = useFestivalList();
     const { data: stocks, error: stocksError, isLoading: stocksLoading, mutate: mutateStocks } = useStockListByFestival(currentFestivalId);
     const [selectedStocks, setSelectedStockIds] = useState<{ [key: string]: number }>({});
+    const submitButton = useRef<HTMLButtonElement>(null);
 
     const displayStocksMap: { [key: string]: Stock[] } = {};
     if (stocks) {
@@ -44,6 +46,34 @@ export default function CashiersPageClient() {
         // HSLの色相を計算（赤から緑へのグラデーション）
         const hue = priceMax === priceMin ? 120 : 120 - ((price - priceMin) / (priceMax - priceMin)) * 120;
         return hsl2hex(hue, 60, 50);
+    }
+
+    const saleHandler = async () => {
+        submitButton.current?.setAttribute("disabled", "true");
+
+        const items = Object.entries(selectedStocks).map(([stockId, quantity]) => ({
+            stock_id: stockId,
+            quantity,
+        }));
+
+        const saleToastId = toast.loading("会計処理中...");
+
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/sales`, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ items }),
+        });
+
+        if (res.ok) {
+            toast.update(saleToastId, { render: "会計処理が完了しました。", type: "success", isLoading: false, autoClose: 3000 });
+            setSelectedStockIds({});
+        }
+        else {
+            toast.update(saleToastId, { render: `会計処理中にエラーが発生しました: ${res.statusText}`, type: "error", isLoading: false, autoClose: 3000 });
+        }
+        submitButton.current?.removeAttribute("disabled");
     }
 
     return (
@@ -126,7 +156,7 @@ export default function CashiersPageClient() {
                             return sum;
                         }, 0).toLocaleString()} 円
                     </p>
-                    <button className="mt-4 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 hover:cursor-pointer">
+                    <button ref={submitButton} className="mt-4 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 hover:cursor-pointer" onClick={saleHandler}>
                         会計する
                     </button>
                 </div>

@@ -21,6 +21,7 @@ func (m *ManagerImpl) toSaleRecordType(record model.SaleRecord) SaleRecord {
 		ID:       record.ID,
 		StockID:  record.FestivalStockID,
 		Quantity: record.Quantity,
+		CreatedAt: record.CreatedAt,
 	}
 }
 

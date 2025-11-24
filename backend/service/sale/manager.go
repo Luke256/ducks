@@ -2,6 +2,7 @@ package sale
 
 import (
 	"errors"
+	"time"
 
 	"github.com/google/uuid"
 )
@@ -10,6 +11,7 @@ type SaleRecord struct {
 	ID        uuid.UUID `json:"id"`
 	StockID   uuid.UUID `json:"stock_id"`
 	Quantity  int       `json:"quantity"`
+	CreatedAt time.Time `json:"created_at"`
 }
 
 var (
