@@ -35,6 +35,10 @@ const useQueryStockItems = (category?: string) => {
             const data = await res.json();
             const items = data["items"];
 
+            if (!items) {
+                return [];
+            }
+
             // category->nameでソート
             items.sort((a: any, b: any) => {
                 if (a.category < b.category) return -1;
@@ -58,6 +62,10 @@ const useQueryStockItems = (category?: string) => {
                 }
                 const data = await res.json();
                 const items = data["items"];
+
+                if (!items) {
+                    return [];
+                }
 
                 // category->nameでソート
                 items.sort((a: any, b: any) => {

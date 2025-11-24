@@ -35,6 +35,10 @@ const useStockListByFestival = (festivalId: string) => {
             const data = await res.json();
             const stocks = data["stocks"];
             
+            if (!stocks) {
+                return [];
+            }
+
             // category->nameでソート
             stocks.sort((a: any, b: any) => {
                 if (a.item.category < b.item.category) return -1;
