@@ -27,7 +27,7 @@ export default function OrdersPageClient() {
     
     console.log(data)
 
-    // sort by created_at -> category -> name
+    // sort by category, name, created_at
     if (data) {
         data.sort((a: SaleRecord, b: SaleRecord) => {
             const stockA = festivalStocks[a.stock_id];
@@ -40,16 +40,14 @@ export default function OrdersPageClient() {
             const dateA = new Date(a.created_at);
             const dateB = new Date(b.created_at);
 
-            // 一秒未満の差は無視
-            if (Math.abs(dateA.getTime() - dateB.getTime()) > 1000) {
-                return dateA.getTime() - dateB.getTime();
-            }
-            
             if (stockA.item.category < stockB.item.category) return -1;
             if (stockA.item.category > stockB.item.category) return 1;
-
+            
             if (stockA.item.name < stockB.item.name) return -1;
             if (stockA.item.name > stockB.item.name) return 1;
+
+            if (dateA < dateB) return -1;
+            if (dateA > dateB) return 1;
 
             return 0;
         });
