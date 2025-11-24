@@ -24,8 +24,6 @@ export default function OrdersPageClient() {
             festivalStocks[stock.id] = stock;
         });
     }
-    
-    console.log(data)
 
     // sort by category, name, created_at
     if (data) {
