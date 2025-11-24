@@ -11,7 +11,6 @@ import { useSessionStorage } from "@/hooks/sessStorage";
 import { Poster, PosterStatusLabels } from "@/types/poster";
 import { toast } from "react-toastify";
 import { useRouter } from "next/navigation";
-import { Metadata } from "next";
 
 const posterItemBg = {
   "uncollected": "bg-yellow-100",

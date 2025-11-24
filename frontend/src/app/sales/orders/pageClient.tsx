@@ -7,13 +7,12 @@ import { useStockListByFestival } from "@/hooks/stockHook";
 import { Festival } from "@/types/festival";
 import { SaleRecord } from "@/types/saleRecord";
 import { Stock } from "@/types/stock";
-import { useState } from "react";
 
 export default function OrdersPageClient() {
     const { data, error, isLoading } = useSalesDataList();
     const [currentFestivalId, setCurrentFestivalId] = useSessionStorage("currentFestivalId", "");
     const { data: festivals } = useFestivalList();
-    const { data: stocks, error: stockError, isLoading: stockIsLoading } = useStockListByFestival(currentFestivalId);
+    const { data: stocks } = useStockListByFestival(currentFestivalId);
 
     const festivalStocks: { [key: string]: Stock } = {};
     if (stocks) {

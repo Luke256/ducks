@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "react-toastify";
@@ -99,7 +100,7 @@ export default function NewItemPageClient() {
                     {previewSrc && (
                         <div className="mb-4">
                             <p className="font-semibold mb-2">画像プレビュー:</p>
-                            <img src={previewSrc} alt="画像プレビュー" className="max-w-xs border border-gray-300" />
+                            <Image src={previewSrc} alt="画像プレビュー" className="max-w-xs border border-gray-300" width={200} height={200} />
                         </div>
                     )}
 

@@ -57,7 +57,7 @@ export default function NewStocksPageClient() {
         }
     }
 
-    const categories: string[] = Array.from(new Set(stockItems?.map((item: any) => item.category)));
+    const categories: string[] = Array.from(new Set(stockItems?.map((item: StockItem) => item.category)));
 
     return (
         <main>

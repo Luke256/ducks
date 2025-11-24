@@ -1,10 +1,11 @@
 "use client";
 
+import { SaleRecord } from "@/types/saleRecord";
 import useSWR from "swr";
 
 // 売上データを取得するカスタムフック
 const useSalesDataList = (): {
-    data: any | null;
+    data: SaleRecord[] | null;
     error: Error | null;
     isLoading: boolean;
     mutate: () => Promise<void>;
@@ -19,7 +20,7 @@ const useSalesDataList = (): {
             const data = await res.json();
             const sales = data["sales"];
             
-            sales.sort((a: any, b: any) => {
+            sales.sort((a: SaleRecord, b: SaleRecord) => {
                 return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
             });
 

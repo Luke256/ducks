@@ -4,9 +4,9 @@ import { useFestivalList } from "@/hooks/festivalHook";
 import { useSessionStorage } from "@/hooks/sessStorage";
 import { useStockListByFestival as useStockList } from "@/hooks/stockHook";
 import { Festival } from "@/types/festival";
-import { DeleteTwoTone, EditTwoTone, LaunchTwoTone, RefreshTwoTone } from "@mui/icons-material";
+import { Stock } from "@/types/stock";
+import { LaunchTwoTone, RefreshTwoTone } from "@mui/icons-material";
 import Link from "next/link";
-import { toast } from "react-toastify";
 
 export default function StocksPageClient() {
     const [currentFestivalId, setCurrentFestivalId] = useSessionStorage("currentFestivalId", "");
@@ -54,7 +54,7 @@ export default function StocksPageClient() {
                                 </tr>
                             </thead>
                             <tbody>
-                                {stocks.map((stock: any) => (
+                                {stocks.map((stock: Stock) => (
                                     <tr key={stock.id}>
                                         <td className="p-2 border-t text-center">{stock.item.name}</td>
                                         <td className="p-2 border-t text-center">{stock.item.category}</td>

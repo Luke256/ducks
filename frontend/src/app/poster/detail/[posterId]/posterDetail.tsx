@@ -1,6 +1,5 @@
 "use client";
 
-import { useFestival } from "@/hooks/festivalHook";
 import { usePoster } from "@/hooks/posterHook";
 import { useState } from "react";
 import { toast } from 'react-toastify';

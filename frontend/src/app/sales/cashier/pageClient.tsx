@@ -25,7 +25,7 @@ const hsl2hex = (h: number, s: number, l: number): string => {
 export default function CashiersPageClient() {
     const [currentFestivalId, setCurrentFestivalId] = useSessionStorage("currentFestivalId", "");
     const { data: festivals } = useFestivalList();
-    const { data: stocks, error: stocksError, isLoading: stocksLoading, mutate: mutateStocks } = useStockListByFestival(currentFestivalId);
+    const { data: stocks, error: stocksError, isLoading: stocksLoading } = useStockListByFestival(currentFestivalId);
     const [selectedStocks, setSelectedStockIds] = useState<{ [key: string]: number }>({});
     const submitButton = useRef<HTMLButtonElement>(null);
 

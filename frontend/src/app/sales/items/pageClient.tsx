@@ -1,6 +1,7 @@
 'use client';
 
 import { useQueryStockItems } from "@/hooks/itemHook";
+import { StockItem } from "@/types/stockItem";
 import { LaunchTwoTone, RefreshTwoTone } from "@mui/icons-material";
 import Link from "next/link";
 import { useState } from "react";
@@ -38,7 +39,7 @@ export default function ItemPageClient() {
                                 </tr>
                             </thead>
                             <tbody>
-                                {items.map((item: any) => (
+                                {items.map((item: StockItem) => (
                                     <tr key={item.id}>
                                         <td className="p-2 border-t text-center">{item.name}</td>
                                         <td className="p-2 border-t text-center">{item.category}</td>

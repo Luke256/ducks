@@ -1,5 +1,6 @@
 'use client';
 
+import { Stock } from "@/types/stock";
 import useSWR from "swr";
 
 // IDで物販ストックを取得するカスタムフック
@@ -40,7 +41,7 @@ const useStockListByFestival = (festivalId: string) => {
             }
 
             // category->nameでソート
-            stocks.sort((a: any, b: any) => {
+            stocks.sort((a: Stock, b: Stock) => {
                 if (a.item.category < b.item.category) return -1;
                 if (a.item.category > b.item.category) return 1;
                 if (a.item.name < b.item.name) return -1;

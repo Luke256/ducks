@@ -1,6 +1,6 @@
 'use client';
 
-import { Festival } from "@mui/icons-material";
+import { StockItem } from "@/types/stockItem";
 import useSWR from "swr";
 
 // IDでアイテムを取得するカスタムフック
@@ -40,7 +40,7 @@ const useQueryStockItems = (category?: string) => {
             }
 
             // category->nameでソート
-            items.sort((a: any, b: any) => {
+            items.sort((a: StockItem, b: StockItem) => {
                 if (a.category < b.category) return -1;
                 if (a.category > b.category) return 1;
                 if (a.name < b.name) return -1;
@@ -68,7 +68,7 @@ const useQueryStockItems = (category?: string) => {
                 }
 
                 // category->nameでソート
-                items.sort((a: any, b: any) => {
+                items.sort((a: StockItem, b: StockItem) => {
                     if (a.category < b.category) return -1;
                     if (a.category > b.category) return 1;
                     if (a.name < b.name) return -1;

@@ -2,9 +2,6 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useState } from "react";
-
-// type PageMode = "items" | "stocks" | "orders" | "cashiers";
 
 const PageTabs = [
     { href: "cashier", label: "会計処理" },

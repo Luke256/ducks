@@ -1,7 +1,7 @@
 'use client';
 
 import { KeyboardArrowDown, KeyboardArrowUp } from "@mui/icons-material";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import Form from "next/form"
 import { redirect } from "next/navigation";
 import { Festival } from "@/types/festival";
@@ -10,12 +10,6 @@ import { useFestivalList } from "@/hooks/festivalHook";
 type FestivalCreateFormData = {
     name: string;
     description: string;
-};
-
-const fetchEvents = async () => {
-    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/festivals`);
-    const data = await response.json();
-    return data["festivals"];
 };
 
 const createEvent = async (formData: FestivalCreateFormData) => {
