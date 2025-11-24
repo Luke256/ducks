@@ -10,8 +10,15 @@ import Link from "next/link";
 
 export default function StocksPageClient() {
     const [currentFestivalId, setCurrentFestivalId] = useSessionStorage("currentFestivalId", "");
+    const [filterCategory, setFilterCategory] = useSessionStorage("stockFilterCategory", "");
     const { data: stocks, mutate: mutateStocks } = useStockList(currentFestivalId);
     const { data: festivals } = useFestivalList();
+
+    const categories: string[] = Array.from(new Set(stocks?.map((stock: Stock) => stock.item.category)));
+
+    const filteredStocks = filterCategory
+        ? stocks?.filter((stock: Stock) => stock.item.category === filterCategory)
+        : stocks;
 
     return (
         <main>
@@ -40,6 +47,18 @@ export default function StocksPageClient() {
 
                 {stocks && (
                     <div>
+                        <div>
+                            <select className="mb-4 p-2 border border-gray-300 hover:cursor-pointer" onChange={(e) => {
+                                setFilterCategory(e.target.value);
+                            }} value={filterCategory}>
+                                <option value="">すべてのカテゴリ</option>
+                                {categories.map((category: string) => (
+                                    <option key={category} value={category}>
+                                        {category}
+                                    </option>
+                                ))}
+                            </select>
+                        </div>
                         <button className="mb-4 px-4 py-2 bg-gray-500 text-white hover:bg-gray-600 hover:cursor-pointer" onClick={() => mutateStocks()}>
                             <RefreshTwoTone />
                         </button>
@@ -54,7 +73,7 @@ export default function StocksPageClient() {
                                 </tr>
                             </thead>
                             <tbody>
-                                {stocks.map((stock: Stock) => (
+                                {filteredStocks.map((stock: Stock) => (
                                     <tr key={stock.id}>
                                         <td className="p-2 border-t text-left">{stock.item.name}</td>
                                         <td className="p-2 border-t text-left">{stock.item.category}</td>
