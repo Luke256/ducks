@@ -7,6 +7,7 @@ import (
 
 	"github.com/Luke256/ducks/migration"
 	"github.com/Luke256/ducks/model"
+	"github.com/Luke256/ducks/repository"
 	"github.com/Luke256/ducks/utils"
 	driverMysql "github.com/go-sql-driver/mysql"
 	"github.com/google/uuid"
@@ -54,7 +55,9 @@ func TestMain(m *testing.M) {
 		
 		engine, err := gorm.Open(mysql.New(mysql.Config{
 			DSN: dbConfig.FormatDSN(),
-		}))
+		}), &gorm.Config{
+			TranslateError: true,
+		})
 		if err != nil {
 			panic(err)
 		}
@@ -145,10 +148,13 @@ func mustCreateFestivalStock(t *testing.T, repo *GormRepository, festivalID, ite
 func mustCreateSaleRecord(t *testing.T, repo *GormRepository, festivalStockID uuid.UUID, amount int) model.SaleRecord {
 	t.Helper()
 	
-	saleRecord, err := repo.CreateSaleRecord(festivalStockID, amount)
+	saleRecord, err := repo.CreateSaleRecords(repository.SaleData{
+		FestivalStockID: festivalStockID,
+		Quantity:        amount,
+	})
 	if err != nil {
 		t.Fatalf("failed to create sale record: %v", err)
 	}
 
-	return saleRecord
+	return saleRecord[0]
 }

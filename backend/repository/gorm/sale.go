@@ -11,23 +11,35 @@ import (
 	"github.com/google/uuid"
 )
 
-func (r *GormRepository) CreateSaleRecord(festivalStockID uuid.UUID, quantity int) (model.SaleRecord, error) {
+func (r *GormRepository) CreateSaleRecords(saleData ...repository.SaleData) ([]model.SaleRecord, error) {
 	ctx := context.Background()
-	id, err := uuid.NewV7()
+	saleRecords := make([]model.SaleRecord, len(saleData))
+
+	err := r.db.Transaction(func(tx *gorm.DB) error {
+		for i, data := range saleData {
+			id, err := uuid.NewV7()
+			if err != nil {
+				return err
+			}
+			
+			record := model.SaleRecord{
+				ID:              id,
+				FestivalStockID: data.FestivalStockID,
+				Quantity:        data.Quantity,
+			}
+
+			if err := gorm.G[model.SaleRecord](tx).
+				Create(ctx, &record); err != nil {
+				return err
+			}
+			saleRecords[i] = record
+		}
+		return nil
+	})
 	if err != nil {
-		return model.SaleRecord{}, err
+		return nil, wrapGormError(err)
 	}
-	saleRecord := model.SaleRecord{
-		ID:              id,
-		FestivalStockID: festivalStockID,
-		Quantity:        quantity,
-	}
-
-	if err := gorm.G[model.SaleRecord](r.db).Create(ctx, &saleRecord); err != nil {
-		return model.SaleRecord{}, wrapGormError(err)
-	}
-
-	return saleRecord, nil
+	return saleRecords, nil
 }
 
 func (r *GormRepository) GetSaleRecordByID(saleRecordID uuid.UUID) (model.SaleRecord, error) {

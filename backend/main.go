@@ -67,7 +67,9 @@ func setup() *router.Router {
 
 	db, err := gorm.Open(mysql.New(mysql.Config{
 		DSN: DSNConfig.FormatDSN(),
-	}))
+	}), &gorm.Config{
+		TranslateError: true,
+	})
 	if err != nil {
 		slog.Error("failed to connect database:", slog.String("error", err.Error()))
 		panic(err)

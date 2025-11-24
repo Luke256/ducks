@@ -24,22 +24,30 @@ func (m *ManagerImpl) toSaleRecordType(record model.SaleRecord) SaleRecord {
 	}
 }
 
-func (m *ManagerImpl) Create(stockID uuid.UUID, quantity int) (SaleRecord, error) {
-	_, err := m.repo.GetFestivalStockByID(stockID)
-	if err != nil {
-		switch err {
-		case repository.ErrNotFound:
-			return SaleRecord{}, festivalstock.ErrNotFound
-		default:
-			return SaleRecord{}, err
+func (m *ManagerImpl) Create(saleData ...SaleRecord) ([]SaleRecord, error) {
+	repoSaleData := make([]repository.SaleData, len(saleData))
+	for i, data := range saleData {
+		repoSaleData[i] = repository.SaleData{
+			FestivalStockID: data.StockID,
+			Quantity:        data.Quantity,
 		}
 	}
 
-	record, err := m.repo.CreateSaleRecord(stockID, quantity)
+	records, err := m.repo.CreateSaleRecords(repoSaleData...)
 	if err != nil {
-		return SaleRecord{}, err
+		switch err {
+		case repository.ErrForeignKey:
+			return nil, festivalstock.ErrNotFound
+		default:
+			return nil, err
+		}
 	}
-	return m.toSaleRecordType(record), nil
+
+	result := make([]SaleRecord, len(records))
+	for i, record := range records {
+		result[i] = m.toSaleRecordType(record)
+	}
+	return result, nil
 }
 
 func (m *ManagerImpl) Get(id uuid.UUID) (SaleRecord, error) {

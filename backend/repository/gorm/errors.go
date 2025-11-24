@@ -9,6 +9,8 @@ func wrapGormError(err error) error {
 	switch err {
 	case gorm.ErrRecordNotFound:
 		return repository.ErrNotFound
+	case gorm.ErrForeignKeyViolated:
+		return repository.ErrForeignKey
 	default:
 		return err
 	}

@@ -17,23 +17,32 @@ func TestCreateSaleRecord(t *testing.T) {
 	t.Run("Create Sale Record", func(t *testing.T) {
 		res := e.POST("/api/sales").
 			WithJSON(map[string]any{
-				"stock_id": stock.ID.String(),
-				"quantity": 2,
+				"items": []map[string]any{
+					{
+						"stock_id": stock.ID.String(),
+						"quantity": 2,
+					},
+				},
 			}).
 			Expect().
 			Status(201).
 			JSON().
 			Object()
 
-		res.Value("stock_id").IsEqual(stock.ID.String())
-		res.Value("quantity").IsEqual(2)
+		items := res.Value("items").Array()
+		items.Value(0).Object().Value("stock_id").IsEqual(stock.ID.String())
+		items.Value(0).Object().Value("quantity").IsEqual(2)
 	})
 
 	t.Run("Invalid Stock ID", func(t *testing.T) {
 		e.POST("/api/sales").
 			WithJSON(map[string]any{
-				"stock_id": "invalid-uuid",
-				"quantity": 2,
+				"items": []map[string]any{
+					{
+						"stock_id": "invalid-uuid",
+						"quantity": 2,
+					},
+				},
 			}).
 			Expect().
 			Status(404)
@@ -46,8 +55,12 @@ func TestCreateSaleRecord(t *testing.T) {
 		}
 		e.POST("/api/sales").
 			WithJSON(map[string]any{
-				"stock_id": id.String(),
-				"quantity": 2,
+				"items": []map[string]any{
+					{
+						"stock_id": id.String(),
+						"quantity": 2,
+					},
+				},
 			}).
 			Expect().
 			Status(404)
@@ -56,7 +69,11 @@ func TestCreateSaleRecord(t *testing.T) {
 	t.Run("Missing Stock ID", func(t *testing.T) {
 		e.POST("/api/sales").
 			WithJSON(map[string]any{
-				"quantity": 2,
+				"items": []map[string]any{
+					{
+						"quantity": 2,
+					},
+				},
 			}).
 			Expect().
 			Status(400)
@@ -65,8 +82,12 @@ func TestCreateSaleRecord(t *testing.T) {
 	t.Run("Negative Quantity", func(t *testing.T) {
 		e.POST("/api/sales").
 			WithJSON(map[string]any{
-				"stock_id": stock.ID.String(),
-				"quantity": -5,
+				"items": []map[string]any{
+					{
+						"stock_id": stock.ID.String(),
+						"quantity": -5,
+					},
+				},
 			}).
 			Expect().
 			Status(400)
@@ -75,8 +96,12 @@ func TestCreateSaleRecord(t *testing.T) {
 	t.Run("Zero Quantity", func(t *testing.T) {
 		e.POST("/api/sales").
 			WithJSON(map[string]any{
-				"stock_id": stock.ID.String(),
-				"quantity": 0,
+				"items": []map[string]any{
+					{
+						"stock_id": stock.ID.String(),
+						"quantity": 0,
+					},
+				},
 			}).
 			Expect().
 			Status(400)
@@ -85,10 +110,73 @@ func TestCreateSaleRecord(t *testing.T) {
 	t.Run("Missing Quantity", func(t *testing.T) {
 		e.POST("/api/sales").
 			WithJSON(map[string]any{
-				"stock_id": stock.ID.String(),
+				"items": []map[string]any{
+					{
+						"stock_id": stock.ID.String(),
+					},
+				},
 			}).
 			Expect().
 			Status(400)
+	})
+
+	t.Run("Empty Items", func(t *testing.T) {
+		e.POST("/api/sales").
+			WithJSON(map[string]any{
+				"items": []map[string]any{},
+			}).
+			Expect().
+			Status(201)
+	})
+
+	t.Run("Missing Items", func(t *testing.T) {
+		e.POST("/api/sales").
+			WithJSON(map[string]any{}).
+			Expect().
+			Status(201)
+	})
+
+	t.Run("Non-Existent Stock ID", func(t *testing.T) {
+		id, err := uuid.NewV7()
+		if err != nil {
+			t.Fatalf("failed to generate uuid: %v", err)
+		}
+		e.POST("/api/sales").
+			WithJSON(map[string]any{
+				"items": []map[string]any{
+					{
+						"stock_id": id.String(),
+						"quantity": 2,
+					},
+				},
+			}).
+			Expect().
+			Status(404)
+	})
+
+	t.Run("Create Multiple Sale Records", func(t *testing.T) {
+		res := e.POST("/api/sales").
+			WithJSON(map[string]any{
+				"items": []map[string]any{
+					{
+						"stock_id": stock.ID.String(),
+						"quantity": 3,
+					},
+					{
+						"stock_id": stock.ID.String(),
+						"quantity": 7,
+					},
+				},
+			}).
+			Expect().
+			Status(201).
+			JSON().
+			Object()
+
+		sales := res.Value("items").Array()
+		sales.Length().IsEqual(2)
+		sales.Value(0).Object().Value("quantity").IsEqual(3)
+		sales.Value(1).Object().Value("quantity").IsEqual(7)
 	})
 }
 

@@ -68,7 +68,9 @@ func TestMain(m *testing.M) {
 		// DB接続
 		engine, err := gorm.Open(mysql.New(mysql.Config{
 			DSN: dbConfig.FormatDSN(),
-		}))
+		}), &gorm.Config{
+			TranslateError: true,
+		})
 		if err != nil {
 			panic(err)
 		}
@@ -209,9 +211,12 @@ func (e *env) mustCreateFestivalStock(t *testing.T, festivalID, itemID uuid.UUID
 
 func (e *env) mustCreateSaleRecord(t *testing.T, stockID uuid.UUID, quantity int) sale.SaleRecord {
 	t.Helper()
-	record, err := e.SM.Create(stockID, quantity)
+	record, err := e.SM.Create(sale.SaleRecord{
+		StockID:  stockID,
+		Quantity: quantity,
+	})
 	if err != nil {
 		t.Fatalf("failed to create sale record: %v", err)
 	}
-	return record
+	return record[0]
 }

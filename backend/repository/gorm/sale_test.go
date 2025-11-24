@@ -16,10 +16,39 @@ func TestCreateSaleRecord(t *testing.T) {
 	fesStock := mustCreateFestivalStock(t, repo, fes.ID, stockItem.ID, 100, "Stock Description")
 
 	t.Run("Create Sale Record", func(t *testing.T) {
-		saleRecord, err := repo.CreateSaleRecord(fesStock.ID, 5)
+		saleRecord, err := repo.CreateSaleRecords(repository.SaleData{
+			FestivalStockID: fesStock.ID,
+			Quantity:        5,
+		})
 		assert.NoError(t, err)
-		assert.Equal(t, fesStock.ID, saleRecord.FestivalStockID)
-		assert.Equal(t, 5, saleRecord.Quantity)
+		assert.Equal(t, fesStock.ID, saleRecord[0].FestivalStockID)
+		assert.Equal(t, 5, saleRecord[0].Quantity)
+	})
+
+	t.Run("Create Multiple Sale Records", func(t *testing.T) {
+		saleRecords, err := repo.CreateSaleRecords(
+			repository.SaleData{
+				FestivalStockID: fesStock.ID,
+				Quantity:        3,
+			},
+			repository.SaleData{
+				FestivalStockID: fesStock.ID,
+				Quantity:        7,
+			},
+		)
+		assert.NoError(t, err)
+		assert.Len(t, saleRecords, 2)
+		assert.Equal(t, 3, saleRecords[0].Quantity)
+		assert.Equal(t, 7, saleRecords[1].Quantity)
+	})
+
+	t.Run("Create Sale Record with Non-Existent Festival Stock", func(t *testing.T) {
+		_, err := repo.CreateSaleRecords(repository.SaleData{
+			FestivalStockID: uuid.New(),
+			Quantity:        5,
+		})
+		assert.Error(t, err)
+		assert.Equal(t, repository.ErrForeignKey, err)
 	})
 }
 

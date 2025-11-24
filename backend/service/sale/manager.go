@@ -18,8 +18,8 @@ var (
 
 type Manager interface {
 	// Create 購入記録を作成します
-	Create(StockID uuid.UUID, quantity int) (SaleRecord, error)
-
+	Create(saleData ...SaleRecord) ([]SaleRecord, error)
+	
 	// Get 購入記録をIDで取得します
 	Get(id uuid.UUID) (SaleRecord, error)
 

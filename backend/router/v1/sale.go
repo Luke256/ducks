@@ -11,16 +11,20 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
-type CreateSaleRecordRequest struct {
+type CreateSaleRecordRequestItem struct {
 	StockID  string `json:"stock_id"`
 	Quantity int    `json:"quantity"`
 }
 
-func (r CreateSaleRecordRequest) Validate() error {
+func (r CreateSaleRecordRequestItem) Validate() error {
 	return validation.ValidateStruct(&r,
 		validation.Field(&r.StockID, validation.Required),
 		validation.Field(&r.Quantity, validation.Required, validation.Min(1)),
 	)
+}
+
+type CreateSaleRecordRequest struct {
+	Items []CreateSaleRecordRequestItem `json:"items"`
 }
 
 func (h *Handler) CreateSaleRecord(c echo.Context) error {
@@ -28,26 +32,36 @@ func (h *Handler) CreateSaleRecord(c echo.Context) error {
 	if err := c.Bind(&req); err != nil {
 		return herror.BadRequest("Invalid request body")
 	}
-	if err := req.Validate(); err != nil {
-		return herror.BadRequest("Validation failed: " + err.Error())
+	if err := validation.Validate(req.Items); err != nil {
+		return herror.BadRequest("Validation error: " + err.Error())
 	}
-	stockID, err := uuid.Parse(req.StockID)
-	if err != nil {
-		return herror.NotFound("Stock not found")
+	
+	saleItems := make([]sale.SaleRecord, len(req.Items))
+	for i, item := range req.Items {
+		stockID, err := uuid.Parse(item.StockID)
+		if err != nil {
+			return herror.NotFound("Festival stock not found")
+		}
+		saleItems[i] = sale.SaleRecord{
+			StockID:  stockID,
+			Quantity: item.Quantity,
+		}
 	}
 
-	record, err := h.saleManager.Create(stockID, req.Quantity)
+	record, err := h.saleManager.Create(saleItems...)
 	if err != nil {
 		switch err {
 		case festivalstock.ErrNotFound:
-			return herror.NotFound("Stock not found")
+			return herror.NotFound("Festival stock not found")
 		default:
 			slog.Error("Failed to create sale record", "error", err)
 			return herror.InternalServerError("Failed to create sale record")
 		}
 	}
 
-	return c.JSON(201, record)
+	return c.JSON(201, map[string]any{
+		"items": record,
+	})
 }
 
 func (h *Handler) GetSaleRecord(c echo.Context) error {
