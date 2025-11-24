@@ -10,7 +10,7 @@ type GormRepository struct {
 }
 
 func NewGormRepository(db *gorm.DB, doMigration bool) (repo *GormRepository, init bool, err error) {
-		if db == nil {
+	if db == nil {
 		return nil, false, gorm.ErrInvalidDB
 	}
 	repo = &GormRepository{

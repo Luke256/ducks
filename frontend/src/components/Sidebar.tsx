@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 const navItems = [
   { href: "/event", label: "イベント" },
   { href: "/poster", label: "ポスター" },
+  { href: "/sales", label: "物販" }
 ];
 
 export default function Sidebar() {

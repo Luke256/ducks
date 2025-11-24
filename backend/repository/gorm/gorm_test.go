@@ -7,6 +7,7 @@ import (
 
 	"github.com/Luke256/ducks/migration"
 	"github.com/Luke256/ducks/model"
+	"github.com/Luke256/ducks/repository"
 	"github.com/Luke256/ducks/utils"
 	driverMysql "github.com/go-sql-driver/mysql"
 	"github.com/google/uuid"
@@ -18,6 +19,8 @@ const (
 	dbPrefix = "traq-ducks-test-"
 	common = "common"
 	s1 = "s1"
+	s2 = "s2"
+	s3 = "s3"
 )
 
 var (
@@ -31,7 +34,7 @@ func TestMain(m *testing.M) {
 	dbHost := utils.GetEnvOrDefault("NS_MARIADB_HOST", "localhost")
 	dbPort := utils.GetEnvOrDefault("NS_MARIADB_PORT", "3307")
 	dbs := []string{
-		common, s1,
+		common, s1, s2, s3,
 	}
 	config := &driverMysql.Config{
 		User:                 dbUser,
@@ -52,7 +55,9 @@ func TestMain(m *testing.M) {
 		
 		engine, err := gorm.Open(mysql.New(mysql.Config{
 			DSN: dbConfig.FormatDSN(),
-		}))
+		}), &gorm.Config{
+			TranslateError: true,
+		})
 		if err != nil {
 			panic(err)
 		}
@@ -116,4 +121,40 @@ func mustCreatePoster(t *testing.T, repo *GormRepository, festivalID uuid.UUID, 
 	}
 
 	return poster
+}
+
+func mustCreateStockItem(t *testing.T, repo *GormRepository, name string, description string, category string, imageID string) model.StockItem {
+	t.Helper()
+
+	item, err := repo.RegisterStockItem(name, description, category, imageID)
+	if err != nil {
+		t.Fatalf("failed to register stock item: %v", err)
+	}
+
+	return item
+}
+
+func mustCreateFestivalStock(t *testing.T, repo *GormRepository, festivalID, itemID uuid.UUID, price int, description string) model.FestivalStock {
+	t.Helper()
+	
+	festivalStock, err := repo.RegisterFestivalStock(festivalID, itemID, price, description)
+	if err != nil {
+		t.Fatalf("failed to register festival stock: %v", err)
+	}
+
+	return festivalStock
+}
+
+func mustCreateSaleRecord(t *testing.T, repo *GormRepository, festivalStockID uuid.UUID, amount int) model.SaleRecord {
+	t.Helper()
+	
+	saleRecord, err := repo.CreateSaleRecords(repository.SaleData{
+		FestivalStockID: festivalStockID,
+		Quantity:        amount,
+	})
+	if err != nil {
+		t.Fatalf("failed to create sale record: %v", err)
+	}
+
+	return saleRecord[0]
 }

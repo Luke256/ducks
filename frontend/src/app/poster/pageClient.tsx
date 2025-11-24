@@ -11,7 +11,6 @@ import { useSessionStorage } from "@/hooks/sessStorage";
 import { Poster, PosterStatusLabels } from "@/types/poster";
 import { toast } from "react-toastify";
 import { useRouter } from "next/navigation";
-import { Metadata } from "next";
 
 const posterItemBg = {
   "uncollected": "bg-yellow-100",
@@ -37,7 +36,7 @@ export default function PosterPageClient() {
 
   return (
     <main>
-      <div className="max-w-3xl bg-white md:p-8">
+      <div className="max-w-7xl bg-white md:p-8 mx-auto">
         <h1 className="mb-4 text-2xl font-bold text-black">ポスター</h1>
         <select className="mb-4 p-2 border border-gray-300 hover:cursor-pointer" onChange={(e) => {
           setCurrentFestivalId(e.target.value);

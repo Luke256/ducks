@@ -1,3 +1,4 @@
+import { Festival } from "./festival";
 
 type PosterStatus = 'uncollected' | 'collected' | 'lost';
 
@@ -10,10 +11,10 @@ const PosterStatusLabels: { [key in PosterStatus]: string } = {
 type Poster = {
     id: string;
     name: string;
-    festival_id: string;
     description: string;
     image_url: string;
     status: PosterStatus;
+    festival: Festival;
 }
 
 export type { Poster, PosterStatus };

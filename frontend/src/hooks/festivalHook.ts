@@ -4,7 +4,7 @@ import useSWR from "swr";
 
 // IDでイベントを取得するカスタムフック
 const useFestival = (festivalId: string) => {
-    const { data, error, isLoading } = useSWR(
+    const { data, error, isLoading, mutate } = useSWR(
         `${process.env.NEXT_PUBLIC_API_URL}/festivals/${festivalId}`,
         async (url: string) => {
             if (!festivalId) {
@@ -17,12 +17,12 @@ const useFestival = (festivalId: string) => {
             return res.json();
         }
     );
-    return { data, error, isLoading };
+    return { data, error, isLoading, mutate };
 };
 
 // 全イベント一覧を取得するカスタムフック
 const useFestivalList = () => {
-    const { data, error, isLoading } = useSWR(
+    const { data, error, isLoading, mutate } = useSWR(
         `${process.env.NEXT_PUBLIC_API_URL}/festivals`,
         async (url: string) => {
             const res = await fetch(url);
@@ -33,7 +33,7 @@ const useFestivalList = () => {
             return data["festivals"];
         }
     );
-    return { data, error, isLoading };
+    return { data, error, isLoading, mutate };
 };
 
 export { useFestival, useFestivalList };

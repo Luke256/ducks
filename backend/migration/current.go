@@ -10,15 +10,20 @@ import (
 //
 // 新たなマイグレーションを行う場合は、この配列の末尾に必ず追加すること
 func Migrations() []*gormigrate.Migration {
-	return []*gormigrate.Migration{}
+	return []*gormigrate.Migration{
+		v1(), // v1 販売管理システムの追加
+	}
 }
 
 // AllTables 最新のスキーマの全テーブルモデル
 //
 // 最新のスキーマの全テーブルのモデル構造体を記述すること
-func AllTables() []interface{} {
-	return []interface{}{
+func AllTables() []any {
+	return []any{
 		&model.Poster{},
 		&model.Festival{},
+		&model.StockItem{},
+		&model.FestivalStock{},
+		&model.SaleRecord{},
 	}
 }

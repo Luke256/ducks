@@ -7,17 +7,17 @@ import (
 	"github.com/google/uuid"
 )
 
-type FestivalImpl struct {
+type ManagerImpl struct {
 	repo repository.FestivalRepository
 }
 
-func NewManagerImpl(repo repository.FestivalRepository) *FestivalImpl {
-	return &FestivalImpl{
+func NewManagerImpl(repo repository.FestivalRepository) *ManagerImpl {
+	return &ManagerImpl{
 		repo: repo,
 	}
 }
 
-func (f *FestivalImpl) Create(name, description string) (Festival, error) {
+func (f *ManagerImpl) Create(name, description string) (Festival, error) {
 	festival, err := f.repo.RegisterFestival(name, description)
 	if err != nil {
 		return Festival{}, err
@@ -30,7 +30,7 @@ func (f *FestivalImpl) Create(name, description string) (Festival, error) {
 	}, nil
 }
 
-func (f *FestivalImpl) Get(id uuid.UUID) (Festival, error) {
+func (f *ManagerImpl) Get(id uuid.UUID) (Festival, error) {
 	festival, err := f.repo.GetFestivalByID(id)
 	if err != nil {
 		switch err {
@@ -48,7 +48,7 @@ func (f *FestivalImpl) Get(id uuid.UUID) (Festival, error) {
 	}, nil
 }
 
-func (f *FestivalImpl) List() ([]Festival, error) {
+func (f *ManagerImpl) List() ([]Festival, error) {
 	festivals, err := f.repo.GetAllFestivals()
 	if err != nil {
 		return nil, err
@@ -67,7 +67,7 @@ func (f *FestivalImpl) List() ([]Festival, error) {
 	return result, nil
 }
 
-func (f *FestivalImpl) Edit(id uuid.UUID, name, description string) error {
+func (f *ManagerImpl) Edit(id uuid.UUID, name, description string) error {
 	err := f.repo.UpdateFestival(id, name, description)
 
 	if err != nil {
@@ -82,7 +82,7 @@ func (f *FestivalImpl) Edit(id uuid.UUID, name, description string) error {
 	return nil
 }
 
-func (f *FestivalImpl) Delete(id uuid.UUID) error {
+func (f *ManagerImpl) Delete(id uuid.UUID) error {
 	err := f.repo.DeleteFestival(id)
 	if err != nil {
 		switch err {

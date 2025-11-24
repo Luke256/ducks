@@ -1,0 +1,121 @@
+package festivalstock
+
+import (
+	"github.com/Luke256/ducks/model"
+	"github.com/Luke256/ducks/repository"
+	"github.com/Luke256/ducks/service/festival"
+	stockitem "github.com/Luke256/ducks/service/stock_item"
+	"github.com/Luke256/ducks/utils/storage"
+	"github.com/google/uuid"
+)
+
+type ManagerImpl struct {
+	repo    repository.Repository
+	storage storage.Storage
+}
+
+func NewManagerImpl(repo repository.Repository, storage storage.Storage) *ManagerImpl {
+	return &ManagerImpl{
+		repo:    repo,
+		storage: storage,
+	}
+}
+
+func (fm *ManagerImpl) toStockType(fs model.FestivalStock) Stock {
+	return Stock{
+		ID: fs.ID,
+		Item: stockitem.StockItem{
+			ID:          fs.StockItem.ID,
+			Name:        fs.StockItem.Name,
+			Description: fs.StockItem.Description,
+			Category:    fs.StockItem.Category,
+			ImageURL:    fm.storage.GetFileURL(fs.StockItem.ImageID),
+		},
+		FestivalID: fs.FestivalID,
+		Price:      fs.Price,
+		Description: fs.Description,
+	}
+}
+
+func (fm *ManagerImpl) Create(festivalID, itemID uuid.UUID, price int, description string) (Stock, error) {
+	// festival exists
+	_, err := fm.repo.GetFestivalByID(festivalID)
+	if err != nil {
+		switch err {
+		case repository.ErrNotFound:
+			return Stock{}, festival.ErrNotFound
+		default:
+			return Stock{}, err
+		}
+	}
+
+	// item exists
+	_, err = fm.repo.GetStockItemByID(itemID)
+	if err != nil {
+		switch err {
+		case repository.ErrNotFound:
+			return Stock{}, stockitem.ErrNotFound
+		default:
+			return Stock{}, err
+		}
+	}
+
+	fesStock, err := fm.repo.RegisterFestivalStock(festivalID, itemID, price, description)
+	if err != nil {
+		return Stock{}, err
+	}
+
+	return fm.toStockType(fesStock), nil
+}
+
+func (fm *ManagerImpl) Get(id uuid.UUID) (Stock, error) {
+	fesStock, err := fm.repo.GetFestivalStockByID(id)
+	if err != nil {
+		switch err {
+		case repository.ErrNotFound:
+			return Stock{}, ErrNotFound
+		default:
+			return Stock{}, err
+		}
+	}
+
+	return fm.toStockType(fesStock), nil
+}
+
+func (fm *ManagerImpl) Query(festivalID uuid.UUID, category string) ([]Stock, error) {
+	fesStocks, err := fm.repo.QueryFestivalStocks(festivalID, category)
+	if err != nil {
+		return nil, err
+	}
+
+	result := make([]Stock, len(fesStocks))
+	for i, fs := range fesStocks {
+		result[i] = fm.toStockType(fs)
+	}
+
+	return result, nil
+}
+
+func (fm *ManagerImpl) Update(id uuid.UUID, description string) error {
+	err := fm.repo.UpdateFestivalStock(id, description)
+	switch err {
+	case nil:
+		return nil
+	case repository.ErrNotFound:
+		return ErrNotFound
+	default:
+		return err
+	}
+}
+
+func (fm *ManagerImpl) Delete(id uuid.UUID) error {
+	err := fm.repo.DeleteFestivalStock(id)
+	switch err {
+	case nil:
+		return nil
+	case repository.ErrNotFound:
+		return ErrNotFound
+	default:
+		return err
+	}
+}
