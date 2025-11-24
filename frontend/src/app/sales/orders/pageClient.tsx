@@ -24,9 +24,36 @@ export default function OrdersPageClient() {
             festivalStocks[stock.id] = stock;
         });
     }
+    
+    console.log(data)
 
-    console.log("sales data:", data);
-    console.log("festival stocks:", festivalStocks);
+    // sort by created_at -> category -> name
+    if (data) {
+        data.sort((a: SaleRecord, b: SaleRecord) => {
+            const stockA = festivalStocks[a.stock_id];
+            const stockB = festivalStocks[b.stock_id];
+
+            if (!stockA || !stockB) {
+                return 0;
+            }
+
+            const dateA = new Date(a.created_at);
+            const dateB = new Date(b.created_at);
+
+            // 一秒未満の差は無視
+            if (Math.abs(dateA.getTime() - dateB.getTime()) > 1000) {
+                return dateA.getTime() - dateB.getTime();
+            }
+            
+            if (stockA.item.category < stockB.item.category) return -1;
+            if (stockA.item.category > stockB.item.category) return 1;
+
+            if (stockA.item.name < stockB.item.name) return -1;
+            if (stockA.item.name > stockB.item.name) return 1;
+
+            return 0;
+        });
+    }
 
     return (
         <main>
