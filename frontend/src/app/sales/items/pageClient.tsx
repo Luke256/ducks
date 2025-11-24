@@ -32,19 +32,19 @@ export default function ItemPageClient() {
                         <table className="w-full">
                             <thead>
                                 <tr>
-                                    <th>アイテム名</th>
-                                    <th>カテゴリ</th>
-                                    <th>説明</th>
-                                    <th></th>
+                                    <th className="text-left">アイテム名</th>
+                                    <th className="text-left">カテゴリ</th>
+                                    <th className="text-left">説明</th>
+                                    <th className="text-left"></th>
                                 </tr>
                             </thead>
                             <tbody>
                                 {items.map((item: StockItem) => (
                                     <tr key={item.id}>
-                                        <td className="p-2 border-t text-center">{item.name}</td>
-                                        <td className="p-2 border-t text-center">{item.category}</td>
-                                        <td className="p-2 border-t text-center">{item.description}</td>
-                                        <td className="p-2 border-t text-center">
+                                        <td className="p-2 border-t text-left">{item.name}</td>
+                                        <td className="p-2 border-t text-left">{item.category}</td>
+                                        <td className="p-2 border-t text-left">{item.description}</td>
+                                        <td className="p-2 border-t text-left">
                                             <Link href={`/sales/items/${item.id}`}>
                                                 <LaunchTwoTone />
                                             </Link>

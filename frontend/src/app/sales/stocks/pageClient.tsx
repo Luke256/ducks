@@ -46,20 +46,20 @@ export default function StocksPageClient() {
                         <table className="table-auto w-full">
                             <thead>
                                 <tr>
-                                    <th>アイテム名</th>
-                                    <th>カテゴリ</th>
-                                    <th>説明</th>
-                                    <th>価格</th>
-                                    <th></th>
+                                    <th className="text-left">アイテム名</th>
+                                    <th className="text-left">カテゴリ</th>
+                                    <th className="text-left">説明</th>
+                                    <th className="text-right">価格</th>
+                                    <th className="text-center"></th>
                                 </tr>
                             </thead>
                             <tbody>
                                 {stocks.map((stock: Stock) => (
                                     <tr key={stock.id}>
-                                        <td className="p-2 border-t text-center">{stock.item.name}</td>
-                                        <td className="p-2 border-t text-center">{stock.item.category}</td>
-                                        <td className="p-2 border-t text-center">{stock.description}</td>
-                                        <td className="p-2 border-t text-center">{stock.price} 円</td>
+                                        <td className="p-2 border-t text-left">{stock.item.name}</td>
+                                        <td className="p-2 border-t text-left">{stock.item.category}</td>
+                                        <td className="p-2 border-t text-left">{stock.description}</td>
+                                        <td className="p-2 border-t text-right">{stock.price} 円</td>
                                         <td className="p-2 border-t text-center hover:cursor-pointer transition">
                                             <Link href={`/sales/stocks/${stock.id}`} className="hover:text-blue-500">
                                                 <LaunchTwoTone />

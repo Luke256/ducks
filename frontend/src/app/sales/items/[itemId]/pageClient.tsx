@@ -21,7 +21,7 @@ export default function ItemDetailPageClient({ params }: Readonly<{
     const { data: item, error, isLoading, mutate: mutateItem } = useStockItem(itemId);
 
     return (
-        <div>
+        <div className="max-w-7xl mx-auto p-4">
             {isLoading && <p>Loading...</p>}
             {error && <p>Error loading item data: {error.message}</p>}
             {item && (

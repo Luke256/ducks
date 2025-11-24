@@ -41,7 +41,7 @@ export default function EventPageClient() {
 
     return (
         <main className="max-w-7xl mx-auto">
-            <div className="max-w-3xl bg-white md:p-8 mx-auto">
+            <div className="md:p-8">
                 <h1 className="mb-4 text-2xl font-bold text-black">イベント管理</h1>
                 {eventsLoading && <p>Loading events...</p>}
                 {eventsError && <p className="text-red-500">Failed to load events: {eventsError.message}</p>}

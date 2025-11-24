@@ -20,7 +20,7 @@ export default function PosterDetail({ params }: Readonly<{
     const { data: poster, error, isLoading, mutate: mutatePoster } = usePoster(posterId);
 
     return (
-        <div>
+        <div className="max-w-7xl mx-auto p-4">
             {isLoading && <p>Loading...</p>}
             {error && <p>Error loading poster data: {error.message}</p>}
             {poster && (

@@ -62,7 +62,7 @@ export default function NewItemPageClient() {
 
     return (
         <main>
-            <div className="p-4">
+            <div className="max-w-7xl mx-auto p-4">
                 <h1 className="text-2xl font-bold mb-4">新規アイテム登録</h1>
                 
                 <form onSubmit={submitHandler}>

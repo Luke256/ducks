@@ -24,7 +24,7 @@ const SalesPageLayout = ({ children }: { children: React.ReactNode }) => {
                     <div
                         key={tab.href}
                         className={
-                            "hover:cursor-pointer rounded-t-2xl border-2 border-b-0 p-2 pb-1 " +
+                            "hover:cursor-pointer rounded-t-xl border-2 border-b-0 p-1 " +
                             (isActive(tab.href) ? "border-yellow-500" : "border-transparent")
                         }
                     >

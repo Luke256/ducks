@@ -1,6 +1,8 @@
 "use client";
 
 import { useStock } from "@/hooks/stockHook";
+import { LaunchTwoTone } from "@mui/icons-material";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "react-toastify";
@@ -58,7 +60,9 @@ export default function StockDetailPageClient({ params }: Readonly<{
 
                     <div className="mb-4">
                         <h2 className="text-xl font-bold">アイテム：</h2>
-                        <p>{stock.item.name}</p>
+                        <Link href={`/sales/items/${stock.item.id}`} className="text-blue-500 hover:underline">
+                            {stock.item.name} <LaunchTwoTone fontSize="small" />
+                        </Link>
                     </div>
 
                     <div className="mb-4">
