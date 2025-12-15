@@ -99,7 +99,7 @@ export default function CashiersPageClient() {
                         {Object.entries(displayStocksMap).map(([itemName, stocks]) => (
                             <div key={itemName}>
                                 <h2 className="text-xl font-semibold">{itemName}</h2>
-                                <div className="grid grid-cols-2 md:grid-cols-6">
+                                <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8">
                                     {stocks.map((stock) => (
                                         <div key={stock.id} className="p-2 m-2 text-center hover:cursor-pointer relative" onClick={() => {
                                             // increment
