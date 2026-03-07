@@ -1,5 +1,6 @@
 "use client";
 
+import { resizeImage } from "@/utils/resizeImage";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
@@ -36,13 +37,25 @@ export default function NewItemPageClient() {
             return;
         }
 
+        const uploadToastId = toast.loading("画像を圧縮中...");
+        let resizedImage: File;
+        try {
+            resizedImage = await resizeImage(imageEntry);
+        } catch (e) {
+            toast.update(uploadToastId, { render: `画像の圧縮に失敗しました: ${e}`, type: "error", isLoading: false, autoClose: 5000 });
+            if (submitButton.current) {
+                submitButton.current.disabled = false;
+            }
+            return;
+        }
+
         const form = new FormData();
         form.append("name", name);
         form.append("description", description);
         form.append("category", category);
-        form.append("image", imageEntry);
+        form.append("image", resizedImage);
 
-        const uploadToastId = toast.loading("アイテムを作成中...");
+        toast.update(uploadToastId, { render: "アイテムを作成中...", isLoading: true });
         const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/items`, {
             method: "POST",
             body: form,

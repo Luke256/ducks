@@ -3,6 +3,7 @@
 import { useFestivalList } from "@/hooks/festivalHook";
 import { useSessionStorage } from "@/hooks/sessStorage";
 import { Festival } from "@/types/festival";
+import { resizeImage } from "@/utils/resizeImage";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { FormEvent, useEffect, useRef, useState } from "react";
@@ -40,13 +41,25 @@ const NewPosterPageClient = () => {
             return;
         }
 
+        const uploadToastId = toast.loading("画像を圧縮中...");
+        let resizedImage: File;
+        try {
+            resizedImage = await resizeImage(imageEntry);
+        } catch (e) {
+            toast.update(uploadToastId, { render: `画像の圧縮に失敗しました: ${e}`, type: "error", isLoading: false, autoClose: 5000 });
+            if (submitButton.current) {
+                submitButton.current.disabled = false;
+            }
+            return;
+        }
+
         const form = new FormData();
         form.append("name", name);
         form.append("description", description);
-        form.append("image", imageEntry);
+        form.append("image", resizedImage);
         form.append("festival_id", currentFestivalId);
 
-        const uploadToastId = toast.loading("ポスターを作成中...");
+        toast.update(uploadToastId, { render: "ポスターを作成中...", isLoading: true });
         const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/posters`, {
             method: "POST",
             body: form,
