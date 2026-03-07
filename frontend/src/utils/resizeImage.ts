@@ -4,8 +4,8 @@
  * WebP形式（非対応ブラウザではJPEG）で圧縮する。
  */
 
-const DEFAULT_MAX_WIDTH = 1920;
-const DEFAULT_MAX_HEIGHT = 1920;
+const DEFAULT_MAX_WIDTH = 800;
+const DEFAULT_MAX_HEIGHT = 800;
 const DEFAULT_QUALITY = 0.8;
 
 export interface ResizeOptions {
