@@ -4,10 +4,10 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 const PageTabs = [
-    { href: "cashier", label: "会計処理" },
-    { href: "orders", label: "売上管理" },
-    { href: "stocks", label: "物販設定" },
-    { href: "items", label: "商品管理" },
+    { href: "cashier", label: "会計" },
+    { href: "orders", label: "売上" },
+    { href: "stocks", label: "目録" },
+    { href: "items", label: "商品" },
 ]
 
 const SalesPageLayout = ({ children }: { children: React.ReactNode }) => {
