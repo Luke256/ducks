@@ -14,6 +14,7 @@ import { toast } from "react-toastify";
 export default function OrdersPageClient() {
     const { data, error, isLoading, mutate: mutateSalesData } = useSalesDataList();
     const [currentFestivalId, setCurrentFestivalId] = useSessionStorage("currentFestivalId", "");
+    const [filterCategory, setFilterCategory] = useSessionStorage("stockFilterCategory", "");
     const { data: festivals } = useFestivalList();
     const { data: stocks } = useStockListByFestival(currentFestivalId);
     const [editMode, setEditMode] = useState(false);
@@ -25,9 +26,29 @@ export default function OrdersPageClient() {
         });
     }
 
+    // collect unique categories
+    const categories: string[] = [];
+    if (stocks) {
+        stocks.forEach((stock: Stock) => {
+            if (stock.item.category && !categories.includes(stock.item.category)) {
+                categories.push(stock.item.category);
+            }
+        });
+        categories.sort();
+    }
+
+    // filter by category
+    let filteredData = data || [];
+    if (filterCategory) {
+        filteredData = filteredData.filter((order: SaleRecord) => {
+            const stock = festivalStocks[order.stock_id];
+            return stock && stock.item.category === filterCategory;
+        });
+    }
+
     // sort by category, name, created_at
-    if (data) {
-        data.sort((a: SaleRecord, b: SaleRecord) => {
+    if (filteredData) {
+        filteredData.sort((a: SaleRecord, b: SaleRecord) => {
             const stockA = festivalStocks[a.stock_id];
             const stockB = festivalStocks[b.stock_id];
 
@@ -64,12 +85,23 @@ export default function OrdersPageClient() {
                         </option>
                     ))}
                 </select>
+                <select className="mb-4 ml-4 p-2 border border-gray-300 hover:cursor-pointer" onChange={(e) => {
+                    setFilterCategory(e.target.value);
+                }} value={filterCategory}>
+                    <option value="">全てのカテゴリ</option>
+                    {categories.map((category: string) => (
+                        <option key={category} value={category}>
+                            {category}
+                        </option>
+                    ))}
+                </select>
                 <h1 className="text-2xl font-bold mb-4">売上管理</h1>
                 <div>
                     {isLoading && <p>Loading...</p>}
                     {error && <p>Error loading sales data.</p>}
-                    {data && (
+                    {filteredData && data && (
                         <div>
+                            
                             <button className="mb-4 py-2 px-4 bg-blue-500 text-white hover:bg-blue-600 hover:cursor-pointer" onClick={() => setEditMode(!editMode)}>
                                 {editMode ? "終了" : "編集"}
                             </button>
@@ -86,7 +118,7 @@ export default function OrdersPageClient() {
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    {data.map((order: SaleRecord, index: number) => (
+                                    {filteredData.map((order: SaleRecord, index: number) => (
                                         <tr key={order.id} className={"border-t border-gray-300 " + (index % 2 === 0 ? "bg-white" : "bg-gray-100")}>
                                             <td className="text-left p-2 px-4">
                                                 {new Date(order.created_at).toLocaleString()}
@@ -139,7 +171,7 @@ export default function OrdersPageClient() {
                                         <td></td>
                                         <td></td>
                                         <td className="p-2 px-4 text-right">
-                                            {data.reduce((total: number, order: SaleRecord) => {
+                                            {filteredData.reduce((total: number, order: SaleRecord) => {
                                                 const stock = festivalStocks[order.stock_id];
                                                 if (stock) {
                                                     return total + stock.price * order.quantity;
