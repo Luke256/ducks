@@ -4,6 +4,7 @@ const isDev = process.env.NODE_ENV !== "production";
 
 const nextConfig: NextConfig = {
   output: "standalone",
+  cacheMaxMemorySize: 0,
   images: {
     remotePatterns: [
       new URL(`${process.env.NEXT_PUBLIC_API_URL}/**` || "http://localhost:8080/**"),
