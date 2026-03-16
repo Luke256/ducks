@@ -3,6 +3,7 @@ import type { NextConfig } from "next";
 const isDev = process.env.NODE_ENV !== "production";
 
 const nextConfig: NextConfig = {
+  output: "standalone",
   images: {
     remotePatterns: [
       new URL(`${process.env.NEXT_PUBLIC_API_URL}/**` || "http://localhost:8080/**"),
