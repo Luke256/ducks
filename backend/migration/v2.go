@@ -8,14 +8,11 @@ import (
 )
 
 // v1 販売管理システムの追加
-func v1() *gormigrate.Migration {
+func v2() *gormigrate.Migration {
 	return &gormigrate.Migration{
-		ID: "1",
+		ID: "2",
 		Migrate: func(db *gorm.DB) error {
 			return db.AutoMigrate(
-				&model.StockItem{},
-				&model.FestivalStock{},
-				&model.SaleRecord{},
 				&model.VisitorCount{},
 			)
 		},

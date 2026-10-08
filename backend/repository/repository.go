@@ -14,4 +14,5 @@ type Repository interface {
 	StockItemRepository
 	FestivalStockRepository
 	SaleRepository
+	VisitorCounterRepository
 }

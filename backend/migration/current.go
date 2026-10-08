@@ -12,6 +12,7 @@ import (
 func Migrations() []*gormigrate.Migration {
 	return []*gormigrate.Migration{
 		v1(), // v1 販売管理システムの追加
+		v2(), // v2 来客数管理システムの追加
 	}
 }
 
@@ -25,5 +26,6 @@ func AllTables() []any {
 		&model.StockItem{},
 		&model.FestivalStock{},
 		&model.SaleRecord{},
+		&model.VisitorCount{},
 	}
 }
