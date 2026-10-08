@@ -9,9 +9,9 @@ const DEFAULT_MAX_HEIGHT = 800;
 const DEFAULT_QUALITY = 0.8;
 
 export interface ResizeOptions {
-  /** リサイズ後の最大幅 (デフォルト: 1920) */
+  /** リサイズ後の最大幅 (デフォルト: 800) */
   maxWidth?: number;
-  /** リサイズ後の最大高さ (デフォルト: 1920) */
+  /** リサイズ後の最大高さ (デフォルト: 800) */
   maxHeight?: number;
   /** 圧縮品質 0.0〜1.0 (デフォルト: 0.8) */
   quality?: number;
@@ -23,7 +23,7 @@ export interface ResizeOptions {
  */
 export async function resizeImage(
   file: File,
-  options: ResizeOptions = {}
+  options: ResizeOptions = {},
 ): Promise<File> {
   const {
     maxWidth = DEFAULT_MAX_WIDTH,
@@ -31,6 +31,9 @@ export async function resizeImage(
     quality = DEFAULT_QUALITY,
   } = options;
 
+  if (!file.type.startsWith("image/") || !file.size) {
+    throw new Error("画像ファイルを選択してください。");
+  }
   // 画像をImageElementに読み込む
   const imageBitmap = await createImageBitmap(file);
   const { width: origWidth, height: origHeight } = imageBitmap;
@@ -53,11 +56,15 @@ export async function resizeImage(
 
   const ctx = canvas.getContext("2d");
   if (!ctx) {
+    imageBitmap.close();
     throw new Error("Canvas 2D context の取得に失敗しました");
   }
 
-  ctx.drawImage(imageBitmap, 0, 0, newWidth, newHeight);
-  imageBitmap.close();
+  try {
+    ctx.drawImage(imageBitmap, 0, 0, newWidth, newHeight);
+  } finally {
+    imageBitmap.close();
+  }
 
   // WebP対応チェック → 非対応ならJPEGにフォールバック
   const mimeType = supportsWebP() ? "image/webp" : "image/jpeg";
@@ -71,7 +78,7 @@ export async function resizeImage(
         else reject(new Error("画像の圧縮に失敗しました"));
       },
       mimeType,
-      quality
+      quality,
     );
   });
 

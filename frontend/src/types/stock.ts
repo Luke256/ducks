@@ -1,11 +1,11 @@
-import { StockItem } from "./stockItem";
+import type { StockItem } from "./stockItem";
 
 type Stock = {
-    id: string;
-    festivalId: string;
-    price: number;
-    description: string;
-    item: StockItem;
-}
+  id: string;
+  festival_id: string;
+  price: number;
+  description: string;
+  item: StockItem;
+};
 
 export type { Stock };
