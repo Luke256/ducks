@@ -26,6 +26,19 @@ func TestVisitorCountUTC(t *testing.T) {
 	require.Equal(t, "2026-10-07 15:00:00", stored)
 }
 
+func TestRepeatedVisitorCountIncrement(t *testing.T) {
+	repo := setup(t, common)
+	festival := mustCreateFestival(t, repo, "Repeated Visitor Festival", "")
+	timestamp := time.Date(2026, 10, 8, 1, 0, 0, 0, time.UTC)
+	for _, amount := range []int{5, 1, 3} {
+		require.NoError(t, repo.AddVisitorCount(t.Context(), festival.ID, timestamp, amount))
+	}
+	counts, err := repo.ListVisitorCounts(t.Context(), festival.ID)
+	require.NoError(t, err)
+	require.Len(t, counts, 1)
+	require.Equal(t, uint(9), counts[0].Count)
+}
+
 func TestIncrementVisitorCount(t *testing.T) {
 	t.Parallel()
 	repo := setup(t, common)

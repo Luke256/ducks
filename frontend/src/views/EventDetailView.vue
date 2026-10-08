@@ -88,6 +88,10 @@ function selectEvent() {
         ><span class="eyebrow">SALES</span>
         <h2>売上履歴 →</h2>
         <p class="muted">販売数と売上を確認</p></RouterLink
+      ><RouterLink to="/visitors" class="panel" @click="selectEvent"
+        ><span class="eyebrow">VISITORS</span>
+        <h2>来場者数 →</h2>
+        <p class="muted">人数のカウントと履歴を確認</p></RouterLink
       >
     </div>
     <form v-if="edit" class="panel form-panel" @submit.prevent="save">

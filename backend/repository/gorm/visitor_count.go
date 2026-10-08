@@ -57,7 +57,7 @@ func (r *GormRepository) AddVisitorCount(ctx context.Context, festivalID uuid.UU
 				return wrapGormError(err)
 			}
 		} else {
-			if count.Count < uint(-amount) {
+			if amount < 0 && count.Count < uint(-amount) {
 				count.Count = 0
 			} else {
 				count.Count += uint(amount)

@@ -16,6 +16,7 @@ const nav = [
   { href: "/event", label: "イベント", icon: "01" },
   { href: "/poster", label: "ポスター", icon: "02" },
   { href: "/sales", label: "物販", icon: "03" },
+  { href: "/visitors", label: "来場者", icon: "04" },
 ];
 const tabs = [
   { href: "/sales/cashier", label: "レジ" },
@@ -28,6 +29,7 @@ const needsFestival = computed(() =>
   [
     "/poster",
     "/poster/new",
+    "/visitors",
     "/sales/cashier",
     "/sales/orders",
     "/sales/stocks",
@@ -67,7 +69,9 @@ onMounted(loadFestivals);
           ? "物販管理"
           : route.path.startsWith("/poster")
             ? "ポスター管理"
-            : "イベント管理"
+            : route.path.startsWith("/visitors")
+              ? "来場者数"
+              : "イベント管理"
       }}</span>
       <label v-if="needsFestival" class="festival-picker"
         >対象イベント

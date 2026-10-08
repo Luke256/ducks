@@ -11,6 +11,7 @@ import {
   stockFilterCategory,
 } from "@/state";
 import { resizeImage } from "@/utils/resizeImage";
+import type { VisitorCount } from "@/types/visitorCount";
 vi.mock("@/utils/resizeImage", () => ({
   resizeImage: vi.fn(async (file: File) => file),
 }));
@@ -45,11 +46,17 @@ const records = [
 let wrapper: VueWrapper;
 const requests: { path: string; options: RequestInit }[] = [];
 let fail = "";
+let visitorCounts: VisitorCount[];
 function fixture(input: string, options: RequestInit = {}) {
   const path = input.slice(apiBase.length);
   requests.push({ path, options });
   if (path === fail)
     return Promise.resolve(new Response("test failure", { status: 500 }));
+  if (path === "/visitors/f1" && options.method === "POST") {
+    const { amount } = JSON.parse(options.body as string);
+    visitorCounts[0].count = Math.max(0, visitorCounts[0].count + amount);
+    return Promise.resolve(new Response(null, { status: 204 }));
+  }
   if (options.method && options.method !== "GET") {
     if (options.method === "POST")
       return Promise.resolve(
@@ -84,6 +91,8 @@ function fixture(input: string, options: RequestInit = {}) {
     "/posters/p1": poster,
     "/sales?festival_id=f1": { sales: records },
     "/sales?festival_id=f2": { sales: [] },
+    "/visitors/f1": { festival_id: "f1", counts: visitorCounts },
+    "/visitors/f2": { festival_id: "f2", counts: null },
   };
   return Promise.resolve(
     Response.json(data[path] ?? {}, { status: data[path] ? 200 : 404 }),
@@ -119,6 +128,10 @@ async function upload() {
 beforeEach(() => {
   requests.length = 0;
   fail = "";
+  visitorCounts = [
+    { festival_id: "f1", bucket_start: "2026-10-08T10:10:00+09:00", count: 5 },
+    { festival_id: "f1", bucket_start: "2026-10-08T10:00:00+09:00", count: 3 },
+  ];
   currentFestivalId.value = "f1";
   stockFilterCategory.value = "";
   notices.value = [];
@@ -147,6 +160,7 @@ describe("既存URLと画面", () => {
     ["/sales", "レジ"],
     ["/sales/cashier", "レジ"],
     ["/sales/orders", "売上履歴"],
+    ["/visitors", "来場者数"],
     ["/sales/items", "商品マスター"],
     ["/sales/items/new", "商品を登録"],
     ["/sales/items/i1", item.name],
@@ -157,6 +171,103 @@ describe("既存URLと画面", () => {
   ])("%s を直接開ける", async (path, heading) => {
     await open(path);
     expect(wrapper.find("h1").text()).toBe(heading);
+  });
+});
+
+describe("来場者数", () => {
+  it("イベント詳細から対象イベントを選んでカウント画面を開く", async () => {
+    currentFestivalId.value = "f2";
+    await open("/event/f1");
+    await wrapper.find('a[href="/visitors"].panel').trigger("click");
+    await flushPromises();
+    expect(router.currentRoute.value.path).toBe("/visitors");
+    expect(currentFestivalId.value).toBe("f1");
+    expect(wrapper.find("h1").text()).toBe("来場者数");
+  });
+  it("累計と日本時間の履歴を新しい順に表示し、追加・訂正後に再取得する", async () => {
+    visitorCounts.reverse();
+    await open("/visitors");
+    expect(wrapper.find(".summary strong").text()).toBe("8 人");
+    expect(wrapper.find("tbody tr").text()).toContain("2026/10/08 10:10");
+    await button("＋1人").trigger("click");
+    await flushPromises();
+    expect(wrapper.find(".summary strong").text()).toBe("9 人");
+    await wrapper.find("input[type=number]").setValue(4);
+    await wrapper.find("form").trigger("submit");
+    await flushPromises();
+    expect(wrapper.find(".summary strong").text()).toBe("13 人");
+    await button("−1人（訂正）").trigger("click");
+    await flushPromises();
+    expect(wrapper.find(".summary strong").text()).toBe("12 人");
+    expect(mutations("/visitors/f1").map((r) => JSON.parse(r.options.body as string))).toEqual([
+      { amount: 1 }, { amount: 4 }, { amount: -1 },
+    ]);
+    expect(requests.filter((r) => r.path === "/visitors/f1" && !r.options.method)).toHaveLength(4);
+  });
+  it("不正な人数を送信せず、失敗時には入力を保持する", async () => {
+    await open("/visitors");
+    for (const value of [0, -1, -2, 1.5, ""]) {
+      await wrapper.find("input[type=number]").setValue(value);
+      await wrapper.find("form").trigger("submit");
+      await flushPromises();
+    }
+    expect(mutations("/visitors/f1")).toHaveLength(0);
+    await wrapper.find("input[type=number]").setValue(7);
+    fail = "/visitors/f1";
+    await wrapper.find("form").trigger("submit");
+    await flushPromises();
+    expect((wrapper.find("input").element as HTMLInputElement).value).toBe("7");
+    expect(wrapper.find(".summary strong").text()).toBe("8 人");
+    expect(wrapper.text()).toContain("更新して人数を確認");
+    fail = "";
+    await wrapper.find("form").trigger("submit");
+    await flushPromises();
+    expect(wrapper.find(".summary strong").text()).toBe("15 人");
+  });
+  it("保存中の二重送信と対象イベントの切り替えを防ぐ", async () => {
+    await open("/visitors");
+    let resolve!: (response: Response) => void;
+    vi.mocked(fetch).mockImplementation((input, options) =>
+      options?.method === "POST"
+        ? new Promise<Response>((done) => {
+            requests.push({ path: "/visitors/f1", options });
+            resolve = done;
+          })
+        : fixture(String(input), options),
+    );
+    await button("＋1人").trigger("click");
+    await wrapper.find("form").trigger("submit");
+    expect(mutations("/visitors/f1")).toHaveLength(1);
+    expect(wrapper.find("fieldset").attributes("disabled")).toBeDefined();
+    expect(wrapper.find(".festival-picker select").attributes("disabled")).toBeDefined();
+    resolve(new Response(null, { status: 204 }));
+    await flushPromises();
+    expect(wrapper.find("fieldset").attributes("disabled")).toBeUndefined();
+  });
+  it("イベント切り替えで累計・入力をリセットし、未選択時は取得しない", async () => {
+    await open("/visitors");
+    await wrapper.find("input[type=number]").setValue(9);
+    await wrapper.find(".festival-picker select").setValue("f2");
+    await flushPromises();
+    expect(wrapper.find(".summary strong").text()).toBe("0 人");
+    expect((wrapper.find("input").element as HTMLInputElement).value).toBe("1");
+    expect(wrapper.find("tbody").exists()).toBe(false);
+    expect(wrapper.text()).toContain("まだ来場者数が記録されていません");
+    const before = requests.length;
+    await wrapper.find(".festival-picker select").setValue("");
+    await flushPromises();
+    expect(requests).toHaveLength(before);
+    expect(wrapper.find("form").exists()).toBe(false);
+  });
+  it("取得失敗時にはカウント操作を止めて再読み込みできる", async () => {
+    fail = "/visitors/f1";
+    await open("/visitors");
+    expect(wrapper.find("fieldset").attributes("disabled")).toBeDefined();
+    fail = "";
+    await button("再読み込み").trigger("click");
+    await flushPromises();
+    expect(wrapper.find(".summary strong").text()).toBe("8 人");
+    expect(wrapper.find("fieldset").attributes("disabled")).toBeUndefined();
   });
 });
 describe("登録・編集", () => {
