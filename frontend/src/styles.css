@@ -116,20 +116,10 @@ textarea {
   line-height: 1;
   letter-spacing: -0.04em;
   padding: 0 12px;
+  margin-bottom: 32px;
 }
 .brand img {
   width: 42px;
-  grid-row: span 2;
-}
-.brand span {
-  font-size: 0.55rem;
-  letter-spacing: 0.18em;
-  margin-top: 7px;
-}
-.sidebar-caption {
-  font-size: 0.76rem;
-  padding: 26px 14px 18px;
-  color: #534620;
 }
 .sidebar nav {
   display: grid;
@@ -841,7 +831,6 @@ dd {
     border-top: 1px solid #dce3e9;
   }
   .brand,
-  .sidebar-caption,
   .sidebar-footer,
   .nav-number,
   .nav-arrow {

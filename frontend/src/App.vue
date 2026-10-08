@@ -42,9 +42,7 @@ onMounted(loadFestivals);
   <a class="skip-link" href="#main">本文へ移動</a>
   <aside class="sidebar">
     <RouterLink to="/event" class="brand"
-      ><img src="/duck.svg" alt="" />Ducks<span
-        >FESTIVAL TOOLS</span
-      ></RouterLink
+      ><img src="/duck.svg" alt="" />Ducks</RouterLink
     >
     <nav aria-label="メインメニュー">
       <RouterLink
