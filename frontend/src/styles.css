@@ -321,6 +321,10 @@ main {
   min-height: 54px;
   font-size: 0.85rem;
 }
+.event-card .actions {
+  flex-direction: column;
+  align-items: flex-start;
+}
 .card-top {
   display: flex;
   justify-content: space-between;

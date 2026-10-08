@@ -108,26 +108,22 @@ async function create() {
       <p class="description muted">
         {{ event.description || "概要は登録されていません。" }}
       </p>
-    < div class="actions" >
-        <div>
-            <button
-            type="button"
-            class="button secondary"
-            :disabled="
+      <div class="actions">
+        <button
+          type="button"
+          class="button secondary"
+          :disabled="
             festivalsLoading ||
             festivalSelectionLocked ||
             currentFestivalId === event.id
-            "
-            @click="currentFestivalId = event.id"
-            >
-                {{ currentFestivalId === event.id ? "選択中" : "このイベントを選択" }}
-            </button>
-        </div>
-        <div>
-            <RouterLink :to="`/event/${event.id}`" class="text-link"
-            >詳細・運営ツールを開く <span aria-hidden="true">→</span></RouterLink
-              >
-        </div>
+          "
+          @click="currentFestivalId = event.id"
+        >
+          {{ currentFestivalId === event.id ? "選択中" : "このイベントを選択" }}
+        </button>
+        <RouterLink :to="`/event/${event.id}`" class="text-link"
+          >詳細・運営ツールを開く <span aria-hidden="true">→</span></RouterLink
+        >
       </div>
     </article>
   </div>
