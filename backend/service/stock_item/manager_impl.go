@@ -2,6 +2,7 @@ package stockitem
 
 import (
 	"fmt"
+	"log/slog"
 	"mime/multipart"
 
 	"github.com/Luke256/ducks/model"
@@ -107,10 +108,6 @@ func (m *ManagerImpl) UpdateImage(id uuid.UUID, image *multipart.FileHeader) (er
 		}
 	}
 
-	if err := m.storage.DeleteFile(item.ImageID); err != nil {
-		return fmt.Errorf("failed to delete old image from storage: %w", err)
-	}
-
 	imageID, err := m.storage.UploadFile(image)
 	if err != nil {
 		return fmt.Errorf("failed to upload new image: %w", err)
@@ -124,6 +121,11 @@ func (m *ManagerImpl) UpdateImage(id uuid.UUID, image *multipart.FileHeader) (er
 	_, err = m.repo.UpdateStockItem(id, item.Name, item.Description, item.Category, imageID)
 	if err != nil {
 		return fmt.Errorf("failed to update stock item image: %w", err)
+	}
+
+	// 新画像への切り替えが完了してから旧画像を削除する。
+	if cleanupErr := m.storage.DeleteFile(item.ImageID); cleanupErr != nil {
+		slog.Warn("failed to delete old stock item image", "image_id", item.ImageID, "error", cleanupErr)
 	}
 
 	return nil

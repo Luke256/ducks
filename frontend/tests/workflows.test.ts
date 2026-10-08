@@ -47,11 +47,14 @@ let wrapper: VueWrapper;
 const requests: { path: string; options: RequestInit }[] = [];
 let fail = "";
 let visitorCounts: VisitorCount[];
+let itemImageUrl: string;
 function fixture(input: string, options: RequestInit = {}) {
   const path = input.slice(apiBase.length);
   requests.push({ path, options });
   if (path === fail)
     return Promise.resolve(new Response("test failure", { status: 500 }));
+  if (path === "/items/i1/image" && options.method === "PUT")
+    itemImageUrl = "/api/v1/images/image2";
   if (path === "/visitors/f1" && options.method === "POST") {
     const { amount } = JSON.parse(options.body as string);
     visitorCounts[0].count = Math.max(0, visitorCounts[0].count + amount);
@@ -81,10 +84,10 @@ function fixture(input: string, options: RequestInit = {}) {
     },
     "/festivals/f1": event,
     "/festivals/f2": { id: "f2", name: "別イベント", description: "" },
-    "/items": { items: [item] },
-    "/items/i1": item,
-    "/stocks/s1": stock,
-    "/festivals/f1/stocks": { stocks: [stock] },
+    "/items": { items: [{ ...item, image_url: itemImageUrl }] },
+    "/items/i1": { ...item, image_url: itemImageUrl },
+    "/stocks/s1": { ...stock, item: { ...item, image_url: itemImageUrl } },
+    "/festivals/f1/stocks": { stocks: [{ ...stock, item: { ...item, image_url: itemImageUrl } }] },
     "/festivals/f2/stocks": { stocks: [] },
     "/festivals/f1/posters": { posters: [poster] },
     "/festivals/f2/posters": { posters: [] },
@@ -128,6 +131,7 @@ async function upload() {
 beforeEach(() => {
   requests.length = 0;
   fail = "";
+  itemImageUrl = item.image_url;
   visitorCounts = [
     { festival_id: "f1", bucket_start: "2026-10-08T10:10:00+09:00", count: 5 },
     { festival_id: "f1", bucket_start: "2026-10-08T10:00:00+09:00", count: 3 },
@@ -336,6 +340,7 @@ describe("登録・編集", () => {
     expect(
       JSON.parse(mutations("/items/i1")[0].options.body as string),
     ).toMatchObject({ name: "改名", category: "グッズ" });
+    expect(mutations("/items/i1/image")).toHaveLength(0);
   });
   it("販売商品を指定イベントに登録し、価格を数値で送信する", async () => {
     await open("/sales/stocks/new");
@@ -390,6 +395,97 @@ describe("登録・編集", () => {
     }
   });
 });
+describe("商品画像の変更", () => {
+  it("差し替え画像を圧縮して送信し、詳細とレジに新画像を表示する", async () => {
+    await open("/sales/items/i1");
+    await button("編集する").trigger("click");
+    expect(wrapper.find("input[type=file]").attributes("required")).toBeUndefined();
+    const compressed = new File(["compressed"], "photo.webp", { type: "image/webp" });
+    vi.mocked(resizeImage).mockResolvedValueOnce(compressed);
+    const file = await upload();
+    expect(wrapper.find(".image-preview").attributes("src")).toBe("blob:preview");
+    await wrapper.find("form").trigger("submit");
+    await flushPromises();
+    const request = mutations("/items/i1/image")[0];
+    expect(request.options.method).toBe("PUT");
+    expect(request.options.headers).toBeUndefined();
+    expect((request.options.body as FormData).get("image")).toBe(compressed);
+    expect(resizeImage).toHaveBeenCalledWith(file);
+    expect(wrapper.find("form").exists()).toBe(false);
+    expect(wrapper.find(".detail-image").attributes("src")).toContain("/images/image2");
+    expect(URL.revokeObjectURL).toHaveBeenCalledWith("blob:preview");
+    await router.push("/sales/cashier");
+    await flushPromises();
+    expect(wrapper.find(".product-photo img").attributes("src")).toContain("/images/image2");
+  });
+  it("編集をキャンセルすると選択画像を破棄し、次の保存で再送しない", async () => {
+    await open("/sales/items/i1");
+    await button("編集する").trigger("click");
+    await upload();
+    await button("編集をキャンセル").trigger("click");
+    expect(URL.revokeObjectURL).toHaveBeenCalledWith("blob:preview");
+    await button("編集する").trigger("click");
+    expect(wrapper.find(".image-preview").attributes("src")).toContain("/images/image1");
+    await wrapper.find("form").trigger("submit");
+    await flushPromises();
+    expect(mutations("/items/i1/image")).toHaveLength(0);
+  });
+  it("画像更新失敗時は入力と選択画像を保持し、再試行できる", async () => {
+    await open("/sales/items/i1");
+    await button("編集する").trigger("click");
+    await wrapper.find("form input").setValue("変更した商品名");
+    await upload();
+    fail = "/items/i1/image";
+    await wrapper.find("form").trigger("submit");
+    await flushPromises();
+    expect((wrapper.find("form input").element as HTMLInputElement).value).toBe("変更した商品名");
+    expect(wrapper.find(".image-preview").attributes("src")).toBe("blob:preview");
+    expect(wrapper.find("fieldset").attributes("disabled")).toBeUndefined();
+    expect(wrapper.text()).toContain("商品情報だけ保存されている場合があります");
+    fail = "";
+    await wrapper.find("form").trigger("submit");
+    await flushPromises();
+    expect(mutations("/items/i1/image")).toHaveLength(2);
+    expect(wrapper.find(".detail-image").attributes("src")).toContain("/images/image2");
+  });
+  it("画像圧縮に失敗した場合は商品情報も送信しない", async () => {
+    await open("/sales/items/i1");
+    await button("編集する").trigger("click");
+    await upload();
+    vi.mocked(resizeImage).mockRejectedValueOnce(new Error("画像の圧縮に失敗しました"));
+    await wrapper.find("form").trigger("submit");
+    await flushPromises();
+    expect(mutations("/items/i1")).toHaveLength(0);
+    expect(mutations("/items/i1/image")).toHaveLength(0);
+    expect(wrapper.find(".image-preview").attributes("src")).toBe("blob:preview");
+    expect(wrapper.find("form").text()).toContain("画像の圧縮に失敗しました");
+  });
+  it("画像更新中の二重送信と編集キャンセルを防ぐ", async () => {
+    await open("/sales/items/i1");
+    await button("編集する").trigger("click");
+    await upload();
+    let resolve!: (response: Response) => void;
+    vi.mocked(fetch).mockImplementation((input, options) =>
+      String(input).endsWith("/items/i1/image") && options?.method === "PUT"
+        ? new Promise<Response>((done) => {
+            requests.push({ path: "/items/i1/image", options });
+            resolve = done;
+          })
+        : fixture(String(input), options),
+    );
+    await wrapper.find("form").trigger("submit");
+    await flushPromises();
+    expect(wrapper.find("fieldset").attributes("disabled")).toBeDefined();
+    expect(button("編集をキャンセル").attributes("disabled")).toBeDefined();
+    await wrapper.find("form").trigger("submit");
+    expect(mutations("/items/i1")).toHaveLength(1);
+    expect(mutations("/items/i1/image")).toHaveLength(1);
+    resolve(new Response(null, { status: 204 }));
+    await flushPromises();
+    expect(wrapper.find("form").exists()).toBe(false);
+  });
+});
+
 describe("ポスター回収", () => {
   it("一覧から状況を変更して件数とフィルタを更新する", async () => {
     await open("/poster");

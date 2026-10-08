@@ -600,6 +600,9 @@ dd {
   padding-bottom: 12px;
   border-bottom: 1px solid #dfe5eb;
 }
+.category-section h2 > span {
+  margin-inline-start: 8px;
+}
 .cashier-products {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(145px, 1fr));
