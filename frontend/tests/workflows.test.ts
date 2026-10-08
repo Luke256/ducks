@@ -8,6 +8,7 @@ import {
   currentFestivalId,
   festivals,
   notices,
+  pendingMutations,
   stockFilterCategory,
 } from "@/state";
 import { resizeImage } from "@/utils/resizeImage";
@@ -175,6 +176,49 @@ describe("既存URLと画面", () => {
   ])("%s を直接開ける", async (path, heading) => {
     await open(path);
     expect(wrapper.find("h1").text()).toBe(heading);
+  });
+});
+
+describe("イベント選択", () => {
+  it("一覧で選択したイベントを保持し、運営画面に引き継ぐ", async () => {
+    currentFestivalId.value = "";
+    await open("/event");
+    const cards = wrapper.findAll(".event-card");
+    await cards[1].find("button").trigger("click");
+    expect(currentFestivalId.value).toBe("f2");
+    expect(sessionStorage.getItem("currentFestivalId")).toBe('"f2"');
+    expect(router.currentRoute.value.path).toBe("/event");
+    expect(cards[1].find(".badge.selected").text()).toBe("選択中");
+    expect(cards[1].find("button").attributes("disabled")).toBeDefined();
+    expect(cards[0].find(".badge.selected").exists()).toBe(false);
+    await cards[0].find("button").trigger("click");
+    expect(cards[0].find(".badge.selected").exists()).toBe(true);
+    expect(cards[1].find(".badge.selected").exists()).toBe(false);
+    await wrapper.find('.sidebar a[href="/visitors"]').trigger("click");
+    await flushPromises();
+    expect(router.currentRoute.value.path).toBe("/visitors");
+    expect(requests.some((r) => r.path === "/visitors/f1")).toBe(true);
+    expect(wrapper.find(".festival-picker select").element).toHaveProperty(
+      "value",
+      "f1",
+    );
+  });
+  it("保存中は一覧からのイベント切り替えも防ぐ", async () => {
+    await open("/event");
+    const select = wrapper.findAll(".event-card")[1].find("button");
+    try {
+      pendingMutations.value = 1;
+      await nextTick();
+      expect(select.attributes("disabled")).toBeDefined();
+      await select.trigger("click");
+      expect(currentFestivalId.value).toBe("f1");
+    } finally {
+      pendingMutations.value = 0;
+      await nextTick();
+    }
+    expect(select.attributes("disabled")).toBeUndefined();
+    await select.trigger("click");
+    expect(currentFestivalId.value).toBe("f2");
   });
 });
 

@@ -7,6 +7,7 @@ import {
   festivalsError,
   loadFestivals,
   currentFestivalId,
+  festivalSelectionLocked,
 } from "@/state";
 import { api, jsonBody } from "@/lib/api";
 import type { Festival } from "@/types/festival";
@@ -107,9 +108,23 @@ async function create() {
       <p class="description muted">
         {{ event.description || "概要は登録されていません。" }}
       </p>
-      <RouterLink :to="`/event/${event.id}`" class="text-link"
-        >詳細・運営ツールを開く <span aria-hidden="true">→</span></RouterLink
-      >
+      <div class="actions">
+        <button
+          type="button"
+          class="button secondary"
+          :disabled="
+            festivalsLoading ||
+            festivalSelectionLocked ||
+            currentFestivalId === event.id
+          "
+          @click="currentFestivalId = event.id"
+        >
+          {{ currentFestivalId === event.id ? "選択中" : "このイベントを選択" }}
+        </button>
+        <RouterLink :to="`/event/${event.id}`" class="text-link"
+          >詳細・運営ツールを開く <span aria-hidden="true">→</span></RouterLink
+        >
+      </div>
     </article>
   </div>
 </template>
