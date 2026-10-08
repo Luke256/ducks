@@ -1,6 +1,8 @@
 package v1
 
 import (
+	"time"
+
 	"github.com/Luke256/ducks/repository"
 	"github.com/Luke256/ducks/service/festival"
 	festivalstock "github.com/Luke256/ducks/service/festival_stock"
@@ -10,6 +12,8 @@ import (
 	"github.com/Luke256/ducks/utils/storage"
 	"github.com/labstack/echo/v4"
 )
+
+var japanTime = time.FixedZone("JST", 9*60*60)
 
 type Handler struct {
 	r                    repository.Repository

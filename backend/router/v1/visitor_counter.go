@@ -36,6 +36,10 @@ func (h *Handler) GetVisitorCounts(c echo.Context) error {
 		}
 	}
 
+	for i := range counts {
+		counts[i].BucketStart = counts[i].BucketStart.In(japanTime)
+	}
+
 	return c.JSON(200, map[string]any{
 		"festival_id": fesID.String(),
 		"counts":      counts,
@@ -44,7 +48,7 @@ func (h *Handler) GetVisitorCounts(c echo.Context) error {
 
 type AddVisitorCountRequest struct {
 	FestivalID string `param:"festival_id"`
-	Amount     int   `json:"amount" query:"amount"`
+	Amount     int    `json:"amount" query:"amount"`
 }
 
 func (h *Handler) AddVisitorCount(c echo.Context) error {

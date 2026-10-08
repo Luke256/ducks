@@ -55,6 +55,8 @@ func TestMain(m *testing.M) {
 		Addr:                 fmt.Sprintf("%s:%s", dbHost, dbPort),
 		AllowNativePasswords: true,
 		ParseTime:            true,
+		Loc:                  time.UTC,
+		Params:               map[string]string{"time_zone": "'+00:00'"},
 	}
 	if err := migration.CreateDatabasesIfNotExists("mysql", config.FormatDSN(), dbPrefix, dbs...); err != nil {
 		panic(err)

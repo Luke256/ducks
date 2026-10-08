@@ -2,11 +2,49 @@ package gorm
 
 import (
 	"testing"
+	"time"
 
+	"github.com/Luke256/ducks/model"
 	"github.com/Luke256/ducks/repository"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+	"gorm.io/gorm"
 )
+
+func TestSaleRecordUTC(t *testing.T) {
+	repo := setup(t, common)
+	fixed := time.Date(2026, 10, 8, 0, 5, 12, 123000000, time.FixedZone("JST", 9*60*60))
+	db := repo.db.Session(&gorm.Session{NowFunc: func() time.Time { return fixed }})
+	utcRepo, _, err := NewGormRepository(db, false)
+	require.NoError(t, err)
+	require.Equal(t, fixed, db.NowFunc(), "repository setup must not mutate the caller's clock")
+
+	fes := mustCreateFestival(t, utcRepo, "UTC Festival", "UTC test")
+	item := mustCreateStockItem(t, utcRepo, "UTC Item", "UTC test", "Test", "")
+	stock := mustCreateFestivalStock(t, utcRepo, fes.ID, item.ID, 100, "")
+	created := mustCreateSaleRecord(t, utcRepo, stock.ID, 1)
+	require.Equal(t, fixed.UTC(), created.CreatedAt)
+
+	got, err := utcRepo.GetSaleRecordByID(created.ID)
+	require.NoError(t, err)
+	byStock, err := utcRepo.GetSaleRecordsByFestivalStockID(stock.ID)
+	require.NoError(t, err)
+	queried, err := utcRepo.QuerySaleRecords(fes.ID, item.ID)
+	require.NoError(t, err)
+	for _, records := range [][]model.SaleRecord{{got}, byStock, queried} {
+		require.Len(t, records, 1)
+		require.Equal(t, created.CreatedAt, records[0].CreatedAt)
+	}
+
+	var stored string
+	err = utcRepo.db.Raw("SELECT DATE_FORMAT(created_at, '%Y-%m-%d %H:%i:%s.%f') FROM sale_records WHERE id = ?", created.ID).Scan(&stored).Error
+	require.NoError(t, err)
+	require.Equal(t, "2026-10-07 15:05:12.123000", stored)
+	var sessionZone string
+	require.NoError(t, utcRepo.db.Raw("SELECT @@session.time_zone").Scan(&sessionZone).Error)
+	require.Equal(t, "+00:00", sessionZone)
+}
 
 func TestCreateSaleRecord(t *testing.T) {
 	repo := setup(t, common)

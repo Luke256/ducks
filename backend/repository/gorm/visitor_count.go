@@ -30,7 +30,7 @@ func (r *GormRepository) AddVisitorCount(ctx context.Context, festivalID uuid.UU
 	}
 
 	// 10分ごとのバケットに丸める
-	bucketStart := timestamp.Truncate(10 * time.Minute)
+	bucketStart := timestamp.UTC().Truncate(10 * time.Minute)
 
 	err = r.db.Transaction(func(tx *gorm.DB) error {
 		count, err := gorm.G[model.VisitorCount](tx).
@@ -44,7 +44,7 @@ func (r *GormRepository) AddVisitorCount(ctx context.Context, festivalID uuid.UU
 			if amount < 0 {
 				amount = 0
 			}
-			
+
 			// レコードが存在しない場合は新規作成
 			newCount := model.VisitorCount{
 				FestivalID:  festivalID,
@@ -52,7 +52,7 @@ func (r *GormRepository) AddVisitorCount(ctx context.Context, festivalID uuid.UU
 				Count:       uint(amount),
 				Festival:    fes,
 			}
-			
+
 			if err := gorm.G[model.VisitorCount](tx).Create(ctx, &newCount); err != nil {
 				return wrapGormError(err)
 			}
@@ -62,7 +62,7 @@ func (r *GormRepository) AddVisitorCount(ctx context.Context, festivalID uuid.UU
 			} else {
 				count.Count += uint(amount)
 			}
-			
+
 			// use Update to update the count
 			_, err = gorm.G[model.VisitorCount](tx).
 				Where(&model.VisitorCount{FestivalID: festivalID, BucketStart: bucketStart}, "FestivalID", "BucketStart").
