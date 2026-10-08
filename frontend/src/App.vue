@@ -46,7 +46,6 @@ onMounted(loadFestivals);
         >FESTIVAL TOOLS</span
       ></RouterLink
     >
-    <p class="sidebar-caption">学園祭を、スムーズに。</p>
     <nav aria-label="メインメニュー">
       <RouterLink
         v-for="item in nav"
