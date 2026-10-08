@@ -9,12 +9,13 @@
   "scripts": {
     "dev": "vite --host 0.0.0.0",
     "build": "vue-tsc --noEmit && vite build",
-    "start": "vite preview --host 0.0.0.0",
+    "start": "serve -s dist --no-clipboard --no-port-switching",
     "preview": "vite preview --host 0.0.0.0",
     "lint": "eslint .",
     "test": "vitest run"
   },
   "dependencies": {
+    "serve": "^14.2.6",
     "vue": "^3.5.0",
     "vue-router": "^4.6.0"
   },

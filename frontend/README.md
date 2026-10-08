@@ -63,9 +63,24 @@ npm run build
 
 ## 本番配信
 
-`npm run build` の出力は `dist/` です。静的ファイルをWebサーバーで配信してください。
-以前のNext.js standaloneサーバーは使用しません。`npm start` / `npm run preview` はビルドをローカル確認するためのVite previewです。
-本番環境には次の設定が必要です。
+`npm run build` の出力は `dist/` です。buildpackでNode.jsアプリとして配信する場合は、`frontend` をアプリのルートにして次の順序で実行してください。
+
+```sh
+npm ci --include=dev
+npm run build
+npm prune --omit=dev
+npm start
+```
+
+`npm start` は本番依存の `serve` で `dist/` を配信します。ViteやTypeScriptなどの開発用依存を削除した状態でも起動できます。環境変数 `PORT` を使用し、未設定の場合は3000番で待ち受けます。Vue RouterのURLを直接開いた場合も `index.html` を返します。
+`npm run preview` は開発環境でビルドを確認するためのVite previewです。
+
+buildpackのインストール段階では開発用依存も必要です。`vite: not found` がビルド中に出る場合は `npm ci --omit=dev` や `NPM_CONFIG_PRODUCTION=true` で省かれていないか確認し、`npm ci --include=dev` 相当でインストールしてください。
+Paketo Node.js buildpackの場合は `BP_NODE_RUN_SCRIPTS=build` を設定します。リポジトリのルートからビルドするなら `BP_NODE_PROJECT_PATH=frontend` も設定してください（[Paketo公式ドキュメント](https://paketo.io/docs/howto/nodejs/)）。
+
+APIは静的配信サーバーから転送しません。`VITE_API_URL` に公開APIのURL（例：`https://api.example.com/api/v1`）をビルド時に設定してください。同一オリジンの `/api/v1` を使う場合は、配信基盤側でバックエンドへの転送を設定します。`API_PROXY_TARGET` は開発時のみの設定です。
+
+別のWebサーバーで `dist/` を配信する場合は、次の設定が必要です。
 
 1. Vue RouterのURLを直接開いた場合も `index.html` を返す。
 2. `VITE_API_URL=/api/v1` を使うなら、`/api` をGoバックエンドへ転送する。
