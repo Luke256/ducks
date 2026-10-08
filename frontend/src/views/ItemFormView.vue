@@ -33,6 +33,8 @@ watch(item, (value) => {
 });
 function startEdit() {
   if (item.value) {
+    image.value = null;
+    saveError.value = "";
     Object.assign(form, {
       name: item.value.name,
       category: item.value.category,
@@ -59,6 +61,8 @@ async function save() {
         });
         await router.push(`/sales/items/${created.id}`);
       } else {
+        const body = new FormData();
+        if (image.value) body.append("image", await resizeImage(image.value));
         await api(`/items/${route.params.itemId}`, {
           method: "PUT",
           ...jsonBody({
@@ -67,6 +71,12 @@ async function save() {
             description: form.description,
           }),
         });
+        if (image.value)
+          await api(`/items/${route.params.itemId}/image`, {
+            method: "PUT",
+            body,
+          });
+        image.value = null;
         edit.value = false;
         await reload();
       }
@@ -118,17 +128,23 @@ async function remove() {
         ><label class="field"
           >説明<textarea v-model="form.description" rows="4" /></label
         ><ImageField
-          v-if="isNew"
           label="商品画像"
-          required
+          :required="isNew"
           @change="image = $event"
         /><img
-          v-else-if="item?.image_url"
+          v-if="!image && item?.image_url"
           :src="imageUrl(item.image_url)"
           :alt="item.name"
           class="image-preview"
         />
+        <p v-if="!isNew" class="small muted">
+          新しい画像を選ぶと差し替えます。選ばなければ現在の画像を保持します。
+          この商品の画像はすべてのイベントで共通です。
+        </p>
         <p v-if="saveError" class="error" role="alert">{{ saveError }}</p>
+        <p v-if="saveError && !isNew && image" class="small muted">
+          商品情報だけ保存されている場合があります。画像を確認し、再度保存してください。
+        </p>
         <div class="actions">
           <button class="button" type="submit">
             {{ pending ? "保存中…" : isNew ? "登録する" : "保存する" }}</button

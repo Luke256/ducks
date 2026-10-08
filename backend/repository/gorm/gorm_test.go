@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"testing"
+	"time"
 
 	"github.com/Luke256/ducks/migration"
 	"github.com/Luke256/ducks/model"
@@ -17,10 +18,10 @@ import (
 
 const (
 	dbPrefix = "traq-ducks-test-"
-	common = "common"
-	s1 = "s1"
-	s2 = "s2"
-	s3 = "s3"
+	common   = "common"
+	s1       = "s1"
+	s2       = "s2"
+	s3       = "s3"
 )
 
 var (
@@ -43,6 +44,8 @@ func TestMain(m *testing.M) {
 		Addr:                 fmt.Sprintf("%s:%s", dbHost, dbPort),
 		AllowNativePasswords: true,
 		ParseTime:            true,
+		Loc:                  time.UTC,
+		Params:               map[string]string{"time_zone": "'+00:00'"},
 	}
 
 	if err := migration.CreateDatabasesIfNotExists("mysql", config.FormatDSN(), dbPrefix, dbs...); err != nil {
@@ -52,7 +55,7 @@ func TestMain(m *testing.M) {
 	for _, key := range dbs {
 		dbConfig := *config
 		dbConfig.DBName = fmt.Sprintf("%s%s", dbPrefix, key)
-		
+
 		engine, err := gorm.Open(mysql.New(mysql.Config{
 			DSN: dbConfig.FormatDSN(),
 		}), &gorm.Config{
@@ -136,7 +139,7 @@ func mustCreateStockItem(t *testing.T, repo *GormRepository, name string, descri
 
 func mustCreateFestivalStock(t *testing.T, repo *GormRepository, festivalID, itemID uuid.UUID, price int, description string) model.FestivalStock {
 	t.Helper()
-	
+
 	festivalStock, err := repo.RegisterFestivalStock(festivalID, itemID, price, description)
 	if err != nil {
 		t.Fatalf("failed to register festival stock: %v", err)
@@ -147,7 +150,7 @@ func mustCreateFestivalStock(t *testing.T, repo *GormRepository, festivalID, ite
 
 func mustCreateSaleRecord(t *testing.T, repo *GormRepository, festivalStockID uuid.UUID, amount int) model.SaleRecord {
 	t.Helper()
-	
+
 	saleRecord, err := repo.CreateSaleRecords(repository.SaleData{
 		FestivalStockID: festivalStockID,
 		Quantity:        amount,

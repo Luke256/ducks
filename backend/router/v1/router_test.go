@@ -55,6 +55,8 @@ func TestMain(m *testing.M) {
 		Addr:                 fmt.Sprintf("%s:%s", dbHost, dbPort),
 		AllowNativePasswords: true,
 		ParseTime:            true,
+		Loc:                  time.UTC,
+		Params:               map[string]string{"time_zone": "'+00:00'"},
 	}
 	if err := migration.CreateDatabasesIfNotExists("mysql", config.FormatDSN(), dbPrefix, dbs...); err != nil {
 		panic(err)
@@ -219,4 +221,12 @@ func (e *env) mustCreateSaleRecord(t *testing.T, stockID uuid.UUID, quantity int
 		t.Fatalf("failed to create sale record: %v", err)
 	}
 	return record[0]
+}
+
+func (e *env) mustIncrementVisitorCount(t *testing.T, festivalID uuid.UUID, amount int) {
+	t.Helper()
+	err := e.Repo.AddVisitorCount(t.Context(), festivalID, time.Now(), amount)
+	if err != nil {
+		t.Fatalf("failed to increment visitor count: %v", err)
+	}
 }

@@ -365,7 +365,7 @@ main {
 }
 .quick-links {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(2, 1fr);
   gap: 18px;
   margin-bottom: 28px;
 }
@@ -600,6 +600,9 @@ dd {
   padding-bottom: 12px;
   border-bottom: 1px solid #dfe5eb;
 }
+.category-section h2 > span {
+  margin-inline-start: 8px;
+}
 .cashier-products {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(145px, 1fr));
@@ -738,6 +741,14 @@ dd {
 .change-amount {
   font-size: 0.82rem;
   font-weight: 650;
+}
+.visitor-total {
+  margin-bottom: 24px;
+}
+.visitor-increment {
+  min-width: 140px;
+  min-height: 64px;
+  font-size: 1.5rem;
 }
 .notifications {
   position: fixed;

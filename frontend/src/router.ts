@@ -31,6 +31,11 @@ const router = createRouter({
     },
     { path: "/sales", redirect: "/sales/cashier" },
     {
+      path: "/visitors",
+      component: () => import("./views/VisitorsView.vue"),
+      meta: { title: "来場者数" },
+    },
+    {
       path: "/sales/cashier",
       component: () => import("./views/CashierView.vue"),
       meta: { title: "レジ" },

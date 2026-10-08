@@ -35,7 +35,7 @@ func (h *Handler) CreateSaleRecord(c echo.Context) error {
 	if err := validation.Validate(req.Items); err != nil {
 		return herror.BadRequest("Validation error: " + err.Error())
 	}
-	
+
 	saleItems := make([]sale.SaleRecord, len(req.Items))
 	for i, item := range req.Items {
 		stockID, err := uuid.Parse(item.StockID)
@@ -60,7 +60,7 @@ func (h *Handler) CreateSaleRecord(c echo.Context) error {
 	}
 
 	return c.JSON(201, map[string]any{
-		"items": record,
+		"items": saleRecordResponses(record),
 	})
 }
 
@@ -69,7 +69,7 @@ func (h *Handler) GetSaleRecord(c echo.Context) error {
 	if err != nil {
 		return herror.NotFound("Sale record not found")
 	}
-	
+
 	record, err := h.saleManager.Get(id)
 	if err != nil {
 		switch err {
@@ -81,7 +81,7 @@ func (h *Handler) GetSaleRecord(c echo.Context) error {
 		}
 	}
 
-	return c.JSON(200, record)
+	return c.JSON(200, saleRecordResponse(record))
 }
 
 func (h *Handler) GetSaleRecordsByStockID(c echo.Context) error {
@@ -101,7 +101,7 @@ func (h *Handler) GetSaleRecordsByStockID(c echo.Context) error {
 		}
 	}
 
-	return c.JSON(200, map[string]any{"sales": records})
+	return c.JSON(200, map[string]any{"sales": saleRecordResponses(records)})
 }
 
 func (h *Handler) QuerySaleRecords(c echo.Context) error {
@@ -136,7 +136,20 @@ func (h *Handler) QuerySaleRecords(c echo.Context) error {
 		return herror.InternalServerError("Failed to query sale records")
 	}
 
-	return c.JSON(200, map[string]any{"sales": records})
+	return c.JSON(200, map[string]any{"sales": saleRecordResponses(records)})
+}
+
+func saleRecordResponse(record sale.SaleRecord) sale.SaleRecord {
+	record.CreatedAt = record.CreatedAt.In(japanTime)
+	return record
+}
+
+func saleRecordResponses(records []sale.SaleRecord) []sale.SaleRecord {
+	responses := make([]sale.SaleRecord, len(records))
+	for i, record := range records {
+		responses[i] = saleRecordResponse(record)
+	}
+	return responses
 }
 
 func (h *Handler) DeleteSaleRecord(c echo.Context) error {

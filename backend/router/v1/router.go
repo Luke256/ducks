@@ -1,6 +1,8 @@
 package v1
 
 import (
+	"time"
+
 	"github.com/Luke256/ducks/repository"
 	"github.com/Luke256/ducks/service/festival"
 	festivalstock "github.com/Luke256/ducks/service/festival_stock"
@@ -10,6 +12,8 @@ import (
 	"github.com/Luke256/ducks/utils/storage"
 	"github.com/labstack/echo/v4"
 )
+
+var japanTime = time.FixedZone("JST", 9*60*60)
 
 type Handler struct {
 	r                    repository.Repository
@@ -40,6 +44,7 @@ func (r *Handler) Setup(g *echo.Group) {
 	stockItems := g.Group("/items")
 	festivalStocks := g.Group("/stocks")
 	sales := g.Group("/sales")
+	visitorCounts := g.Group("/visitors")
 
 	// Images
 	images.GET("/:id", r.GetImage)
@@ -81,4 +86,8 @@ func (r *Handler) Setup(g *echo.Group) {
 	festivalStocks.GET("/:festival_stock_id/sales", r.GetSaleRecordsByStockID)
 	sales.GET("", r.QuerySaleRecords)
 	sales.DELETE("/:id", r.DeleteSaleRecord)
+
+	// Visitor Count
+	visitorCounts.GET("/:festival_id", r.GetVisitorCounts)
+	visitorCounts.POST("/:festival_id", r.AddVisitorCount)
 }

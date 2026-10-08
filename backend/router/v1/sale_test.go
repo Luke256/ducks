@@ -2,8 +2,10 @@ package v1
 
 import (
 	"testing"
+	"time"
 
 	"github.com/google/uuid"
+	"github.com/stretchr/testify/require"
 )
 
 func TestCreateSaleRecord(t *testing.T) {
@@ -32,6 +34,13 @@ func TestCreateSaleRecord(t *testing.T) {
 		items := res.Value("items").Array()
 		items.Value(0).Object().Value("stock_id").IsEqual(stock.ID.String())
 		items.Value(0).Object().Value("quantity").IsEqual(2)
+		item := items.Value(0).Object()
+		id, err := uuid.Parse(item.Value("id").String().Raw())
+		require.NoError(t, err)
+		stored, err := env.Repo.GetSaleRecordByID(id)
+		require.NoError(t, err)
+		require.Equal(t, time.UTC, stored.CreatedAt.Location())
+		item.Value("created_at").IsEqual(stored.CreatedAt.In(time.FixedZone("JST", 9*60*60)).Format(time.RFC3339Nano))
 	})
 
 	t.Run("Invalid Stock ID", func(t *testing.T) {
@@ -199,6 +208,7 @@ func TestGetSaleRecord(t *testing.T) {
 		res.Value("id").IsEqual(record.ID.String())
 		res.Value("stock_id").IsEqual(stock.ID)
 		res.Value("quantity").IsEqual(3)
+		res.Value("created_at").IsEqual(record.CreatedAt.In(time.FixedZone("JST", 9*60*60)).Format(time.RFC3339Nano))
 	})
 
 	t.Run("Get Non-Existing Sale Record", func(t *testing.T) {
@@ -229,6 +239,9 @@ func TestGetSaleRecordsByStockID(t *testing.T) {
 
 	sale1 := env.mustCreateSaleRecord(t, stock1.ID, 2)
 	sale2 := env.mustCreateSaleRecord(t, stock1.ID, 5)
+	jst := time.FixedZone("JST", 9*60*60)
+	sale1.CreatedAt = sale1.CreatedAt.In(jst)
+	sale2.CreatedAt = sale2.CreatedAt.In(jst)
 	env.mustCreateSaleRecord(t, stock2.ID, 3)
 
 	t.Run("Get Sale Records by Stock ID", func(t *testing.T) {
@@ -275,6 +288,11 @@ func TestQuerySaleRecords(t *testing.T) {
 	sale2 := env.mustCreateSaleRecord(t, stock1.ID, 3)
 	sale3 := env.mustCreateSaleRecord(t, stock2.ID, 5)
 	sale4 := env.mustCreateSaleRecord(t, stock3.ID, 4)
+	jst := time.FixedZone("JST", 9*60*60)
+	sale1.CreatedAt = sale1.CreatedAt.In(jst)
+	sale2.CreatedAt = sale2.CreatedAt.In(jst)
+	sale3.CreatedAt = sale3.CreatedAt.In(jst)
+	sale4.CreatedAt = sale4.CreatedAt.In(jst)
 
 	t.Run("Query All Sale Records", func(t *testing.T) {
 		res := e.GET("/api/sales").
@@ -351,7 +369,7 @@ func TestDeleteSaleRecord(t *testing.T) {
 
 	sale := env.mustCreateSaleRecord(t, stock.ID, 4)
 
-	t.Run("Delete Sale Record", func (t *testing.T) {
+	t.Run("Delete Sale Record", func(t *testing.T) {
 		e.DELETE("/api/sales/{id}", sale.ID).
 			Expect().
 			Status(204)
@@ -361,7 +379,7 @@ func TestDeleteSaleRecord(t *testing.T) {
 			Status(404)
 	})
 
-	t.Run("Delete Non-Existing Sale Record", func (t *testing.T) {
+	t.Run("Delete Non-Existing Sale Record", func(t *testing.T) {
 		id, err := uuid.NewV7()
 		if err != nil {
 			t.Fatalf("failed to generate uuid: %v", err)
@@ -371,13 +389,13 @@ func TestDeleteSaleRecord(t *testing.T) {
 			Status(404)
 	})
 
-	t.Run("Delete Sale Record with Invalid ID", func (t *testing.T) {
+	t.Run("Delete Sale Record with Invalid ID", func(t *testing.T) {
 		e.DELETE("/api/sales/{id}", "invalid-uuid").
 			Expect().
 			Status(404)
 	})
 
-	t.Run("Delete Sale Record with Zero UUID", func (t *testing.T) {
+	t.Run("Delete Sale Record with Zero UUID", func(t *testing.T) {
 		e.DELETE("/api/sales/{id}", uuid.Nil).
 			Expect().
 			Status(404)

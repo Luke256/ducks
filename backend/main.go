@@ -3,6 +3,7 @@ package main
 import (
 	"log/slog"
 	"os"
+	"time"
 
 	repository "github.com/Luke256/ducks/repository/gorm"
 	"github.com/Luke256/ducks/router"
@@ -63,6 +64,8 @@ func setup() *router.Router {
 		DBName:               dbName,
 		AllowNativePasswords: true,
 		ParseTime:            true,
+		Loc:                  time.UTC,
+		Params:               map[string]string{"time_zone": "'+00:00'"},
 	}
 
 	db, err := gorm.Open(mysql.New(mysql.Config{
