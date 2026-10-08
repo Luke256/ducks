@@ -5,7 +5,7 @@
 
 ## 開発
 
-Node.js 20.19以上（22系は22.12以上）を使用してください。
+Node.js 24系を使用してください。buildpackが別のメジャーバージョンを選ばないよう、`package.json` の `engines.node` を `24.x` に指定しています。
 
 ```sh
 npm ci
@@ -77,6 +77,10 @@ npm start
 
 buildpackのインストール段階では開発用依存も必要です。`vite: not found` がビルド中に出る場合は `npm ci --omit=dev` や `NPM_CONFIG_PRODUCTION=true` で省かれていないか確認し、`npm ci --include=dev` 相当でインストールしてください。
 Paketo Node.js buildpackの場合は `BP_NODE_RUN_SCRIPTS=build` を設定します。リポジトリのルートからビルドするなら `BP_NODE_PROJECT_PATH=frontend` も設定してください（[Paketo公式ドキュメント](https://paketo.io/docs/howto/nodejs/)）。
+
+`node: error while loading shared libraries: libatomic.so.1` は、Node.jsを起動するLinux環境に共有ライブラリが足りないエラーです。[Node.js公式資料](https://github.com/nodejs/node/blob/main/BUILDING.md#official-binary-platforms-and-toolchains)では、Node 25以降の公式Linuxバイナリに `libatomic` が必要とされています。バージョン指定を24系に絞ったうえで、イメージを再ビルドしてください。
+Paketoの `BP_NODE_VERSION` は `package.json` より優先されます。設定済みなら `24.*` に変更するか、上書き設定を外してください。ほかのbuildpackでも、管理画面のNodeバージョン指定があれば24系に合わせ、ログで実際の選択結果を確認します。
+24系でも同じエラーが出る場合は、選ばれたバイナリやベースイメージを確認し、配信環境側で `libatomic` を含むイメージへ更新する必要があります。npmパッケージの追加ではOSの共有ライブラリは補えません。
 
 APIは静的配信サーバーから転送しません。`VITE_API_URL` に公開APIのURL（例：`https://api.example.com/api/v1`）をビルド時に設定してください。同一オリジンの `/api/v1` を使う場合は、配信基盤側でバックエンドへの転送を設定します。`API_PROXY_TARGET` は開発時のみの設定です。
 
