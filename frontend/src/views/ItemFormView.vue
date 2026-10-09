@@ -117,7 +117,7 @@ async function remove() {
         <label class="field">商品名<input v-model="form.name" required maxlength="100" /></label><label
           class="field">カテゴリ<input v-model="form.category" required maxlength="100"
             placeholder="例：graphics/Illustration Anthology" /></label>
-        <p class="small muted">カテゴリはスラッシュ（/）で区切るとサブカテゴリを指定できます。</p>
+        <p class="small muted">スラッシュ（/）で区切るとサブカテゴリを指定できます。</p>
         <label class="field">説明<textarea v-model="form.description"
             rows="4" /></label>
         <h3>商品画像</h3>
