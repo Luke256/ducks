@@ -12,11 +12,13 @@ import (
 )
 
 func TestRegisterPoster(t *testing.T) {
+	t.Parallel()
 	repo := setup(t, common)
 
 	festival := mustCreateFestival(t, repo, "Poster Fest", "Fest for posters")
 
 	t.Run("Register Poster", func(t *testing.T) {
+		t.Parallel()
 		poster, err := repo.RegisterPoster(festival.ID, "PosterReg", "desc", []string{"img-reg-1", "img-reg-2"})
 		assert.NoError(t, err)
 
@@ -29,6 +31,7 @@ func TestRegisterPoster(t *testing.T) {
 }
 
 func TestGetPostersByFestivalID(t *testing.T) {
+	t.Parallel()
 	repo := setup(t, common)
 
 	festival := mustCreateFestival(t, repo, "Poster Fest", "Fest for posters")
@@ -36,6 +39,7 @@ func TestGetPostersByFestivalID(t *testing.T) {
 	posterID2 := mustCreatePoster(t, repo, festival.ID, "PosterTwo", "desc2", "img-list-2")
 
 	t.Run("Get Posters by FestivalID", func(t *testing.T) {
+		t.Parallel()
 		posters, err := repo.GetPostersByFestivalID(festival.ID)
 		assert.NoError(t, err)
 		assert.Len(t, posters, 2)
@@ -55,6 +59,7 @@ func TestGetPostersByFestivalID(t *testing.T) {
 }
 
 func TestGetPosterByID(t *testing.T) {
+	t.Parallel()
 	repo := setup(t, common)
 
 	festival := mustCreateFestival(t, repo, "Poster Fest", "Fest for posters")
@@ -62,6 +67,7 @@ func TestGetPosterByID(t *testing.T) {
 	poster := mustCreatePoster(t, repo, festival.ID, "PosterQuery", "desc", "img-2")
 
 	t.Run("Get Existing Poster", func(t *testing.T) {
+		t.Parallel()
 		p, err := repo.GetPosterByID(poster.ID)
 		assert.NoError(t, err)
 		assert.Equal(t, "PosterQuery", p.PosterName)
@@ -73,6 +79,7 @@ func TestGetPosterByID(t *testing.T) {
 	})
 
 	t.Run("Get Non-Existent Poster", func(t *testing.T) {
+		t.Parallel()
 		nonExistentID := uuid.New()
 		_, err := repo.GetPosterByID(nonExistentID)
 		assert.Equal(t, repository.ErrNotFound, err)
@@ -80,6 +87,7 @@ func TestGetPosterByID(t *testing.T) {
 }
 
 func TestGetPosterByFestivalIDAndPosterName(t *testing.T) {
+	t.Parallel()
 	repo := setup(t, common)
 
 	festival := mustCreateFestival(t, repo, "Poster Fest", "Fest for posters")
@@ -87,6 +95,7 @@ func TestGetPosterByFestivalIDAndPosterName(t *testing.T) {
 	poster := mustCreatePoster(t, repo, festival.ID, "PosterByName", "desc-name", "img-name")
 
 	t.Run("Get Existing Poster by FestivalID and PosterName", func(t *testing.T) {
+		t.Parallel()
 		p, err := repo.GetPosterByFestivalIDAndPosterName(festival.ID, "PosterByName")
 		assert.NoError(t, err)
 		assert.Equal(t, poster.ID, p.ID)
@@ -98,12 +107,14 @@ func TestGetPosterByFestivalIDAndPosterName(t *testing.T) {
 }
 
 func TestUpdatePoster(t *testing.T) {
+	t.Parallel()
 	repo := setup(t, common)
 
 	festival := mustCreateFestival(t, repo, "Poster Fest", "Fest for posters")
 	poster := mustCreatePoster(t, repo, festival.ID, "PosterToUpdate", "old-desc", "old-img")
 
 	t.Run("Update Poster Info", func(t *testing.T) {
+		t.Parallel()
 		err := repo.UpdatePoster(poster.ID, "UpdatedPoster", "new-desc")
 		assert.NoError(t, err)
 		p, err := repo.GetPosterByID(poster.ID)
@@ -114,6 +125,7 @@ func TestUpdatePoster(t *testing.T) {
 	})
 
 	t.Run("Update Non-Existent Poster", func(t *testing.T) {
+		t.Parallel()
 		nonExistentID := uuid.New()
 		err := repo.UpdatePoster(nonExistentID, "NoPoster", "no-desc")
 		assert.Equal(t, repository.ErrNotFound, err)
@@ -121,12 +133,14 @@ func TestUpdatePoster(t *testing.T) {
 }
 
 func TestUpdatePosterStatus(t *testing.T) {
+	t.Parallel()
 	repo := setup(t, common)
 
 	festival := mustCreateFestival(t, repo, "Poster Fest", "Fest for posters")
 	poster := mustCreatePoster(t, repo, festival.ID, "PosterStatus", "status-desc", "status-img")
 
 	t.Run("Update Poster Status", func(t *testing.T) {
+		t.Parallel()
 		err := repo.UpdatePosterStatus(poster.ID, "collected")
 		assert.NoError(t, err)
 		p, err := repo.GetPosterByID(poster.ID)
@@ -136,6 +150,7 @@ func TestUpdatePosterStatus(t *testing.T) {
 	})
 
 	t.Run("Update Non-Existent Poster Status", func(t *testing.T) {
+		t.Parallel()
 		nonExistentID := uuid.New()
 		err := repo.UpdatePosterStatus(nonExistentID, "lost")
 		assert.Equal(t, repository.ErrNotFound, err)
@@ -143,6 +158,7 @@ func TestUpdatePosterStatus(t *testing.T) {
 }
 
 func TestRegisterPosterDoesNotReassignImages(t *testing.T) {
+	t.Parallel()
 	repo := setup(t, common)
 	festival := mustCreateFestival(t, repo, "Image owner", "test")
 	imageID := uuid.NewString()
@@ -158,6 +174,7 @@ func TestRegisterPosterDoesNotReassignImages(t *testing.T) {
 }
 
 func TestUpdatePosterImages(t *testing.T) {
+	t.Parallel()
 	repo := setup(t, common)
 	festival := mustCreateFestival(t, repo, "Image editing", "test")
 	oldID, keptID, foreignID := uuid.NewString(), uuid.NewString(), uuid.NewString()
@@ -197,6 +214,7 @@ func TestUpdatePosterImages(t *testing.T) {
 }
 
 func TestConcurrentPosterImageChangesRespectLimit(t *testing.T) {
+	t.Parallel()
 	repo := setup(t, common)
 	festival := mustCreateFestival(t, repo, "Image limit", "test")
 	ids := make([]string, repository.MaxPosterImages-1)
@@ -235,12 +253,14 @@ func TestConcurrentPosterImageChangesRespectLimit(t *testing.T) {
 }
 
 func TestDeletePoster(t *testing.T) {
+	t.Parallel()
 	repo := setup(t, common)
 
 	festival := mustCreateFestival(t, repo, "Poster Fest", "Fest for posters")
 	poster := mustCreatePoster(t, repo, festival.ID, "PosterToDelete", "del-desc", "del-img")
 
 	t.Run("Delete Existing Poster", func(t *testing.T) {
+		t.Parallel()
 		err := repo.DeletePoster(poster.ID)
 		assert.NoError(t, err)
 		_, err = repo.GetPosterByID(poster.ID)
@@ -248,6 +268,7 @@ func TestDeletePoster(t *testing.T) {
 	})
 
 	t.Run("Delete Non-Existent Poster", func(t *testing.T) {
+		t.Parallel()
 		nonExistentID := uuid.New()
 		err := repo.DeletePoster(nonExistentID)
 		assert.Equal(t, repository.ErrNotFound, err)

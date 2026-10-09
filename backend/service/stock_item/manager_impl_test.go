@@ -54,6 +54,7 @@ func (s *imageStorage) DeleteFile(id string) error {
 }
 
 func TestUpdateImagePreservesStoredImageOnFailure(t *testing.T) {
+	t.Parallel()
 	failure := errors.New("test failure")
 	for _, tc := range []struct {
 		name                            string
@@ -68,6 +69,7 @@ func TestUpdateImagePreservesStoredImageOnFailure(t *testing.T) {
 		{name: "cleanup failure", deleteErr: failure, wantImage: "new", wantFiles: map[string]bool{"old": true, "new": true}},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
 			repo := &imageRepository{item: model.StockItem{ID: uuid.New(), ImageID: "old"}, updateErr: tc.updateErr}
 			files := &imageStorage{files: map[string]bool{"old": true}, uploadErr: tc.uploadErr, deleteErr: tc.deleteErr}
 			err := NewManagerImpl(repo, files).UpdateImage(repo.item.ID, &multipart.FileHeader{})

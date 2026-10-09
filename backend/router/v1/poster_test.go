@@ -14,6 +14,7 @@ import (
 )
 
 func TestPosterMultipartRejectsOversizedRequest(t *testing.T) {
+	t.Parallel()
 	req := httptest.NewRequest(http.MethodPost, "/api/posters", strings.NewReader(""))
 	req.ContentLength = int64(repository.MaxPosterImages*poster.MaxImageSize+(1<<20)) + 1
 	c := echo.New().NewContext(req, httptest.NewRecorder())
@@ -24,12 +25,14 @@ func TestPosterMultipartRejectsOversizedRequest(t *testing.T) {
 }
 
 func TestRegisterPoster(t *testing.T) {
+	t.Parallel()
 	env := setup(t, common)
-	e := env.R(t)
 
 	fes := env.mustCreateFestival(t, "Poster Fest", "Festival for posters")
 
 	t.Run("register poster", func(t *testing.T) {
+		t.Parallel()
+		e := env.R(t)
 
 		resp := e.POST("/api/posters").
 			WithMultipart().
@@ -60,6 +63,8 @@ func TestRegisterPoster(t *testing.T) {
 	})
 
 	t.Run("empty name", func(t *testing.T) {
+		t.Parallel()
+		e := env.R(t)
 		e.POST("/api/posters").
 			WithMultipart().
 			WithForm(map[string]any{
@@ -73,6 +78,8 @@ func TestRegisterPoster(t *testing.T) {
 	})
 
 	t.Run("non-existent festival", func(t *testing.T) {
+		t.Parallel()
+		e := env.R(t)
 		nonExistentFesID := uuid.New()
 		e.POST("/api/posters").
 			WithMultipart().
@@ -87,6 +94,8 @@ func TestRegisterPoster(t *testing.T) {
 	})
 
 	t.Run("missing image", func(t *testing.T) {
+		t.Parallel()
+		e := env.R(t)
 		e.POST("/api/posters").
 			WithMultipart().
 			WithForm(map[string]any{
@@ -99,6 +108,8 @@ func TestRegisterPoster(t *testing.T) {
 	})
 
 	t.Run("empty description", func(t *testing.T) {
+		t.Parallel()
+		e := env.R(t)
 		e.POST("/api/posters").
 			WithMultipart().
 			WithForm(map[string]any{
@@ -112,6 +123,8 @@ func TestRegisterPoster(t *testing.T) {
 	})
 
 	t.Run("too long name", func(t *testing.T) {
+		t.Parallel()
+		e := env.R(t)
 		longName := strings.Repeat("a", 65)
 		e.POST("/api/posters").
 			WithMultipart().
@@ -126,6 +139,8 @@ func TestRegisterPoster(t *testing.T) {
 	})
 
 	t.Run("duplicate poster", func(t *testing.T) {
+		t.Parallel()
+		e := env.R(t)
 		e.POST("/api/posters").
 			WithMultipart().
 			WithForm(map[string]any{
@@ -151,14 +166,16 @@ func TestRegisterPoster(t *testing.T) {
 }
 
 func TestUpdatePosterImages(t *testing.T) {
+	t.Parallel()
 	env := setup(t, s1)
-	e := env.R(t)
 	festival := env.mustCreateFestival(t, "Image edit API", "test")
 	p := env.mustCreatePoster(t, festival.ID, "Editable images", "test")
 	other := env.mustCreatePoster(t, festival.ID, "Foreign images", "test")
 	path := "/api/posters/{id}/images"
 
+	// 同じポスターの編集結果に依存するサブテストは順番に実行する。
 	t.Run("append multiple images", func(t *testing.T) {
+		e := env.R(t)
 		resp := e.PATCH(path, p.ID.String()).WithMultipart().
 			WithFile("image", "a.png", strings.NewReader("")).
 			WithFile("image", "b.png", strings.NewReader("")).
@@ -170,6 +187,7 @@ func TestUpdatePosterImages(t *testing.T) {
 		require.Contains(t, stored.Images, p.Images[0])
 	})
 	t.Run("replace one and retain others", func(t *testing.T) {
+		e := env.R(t)
 		e.PATCH(path, p.ID.String()).WithMultipart().
 			WithFormField("delete_image_ids", p.Images[0].ID).
 			WithFile("image", "replacement.png", strings.NewReader("")).
@@ -179,6 +197,7 @@ func TestUpdatePosterImages(t *testing.T) {
 		require.NotContains(t, stored.Images, p.Images[0])
 	})
 	t.Run("reject foreign image", func(t *testing.T) {
+		e := env.R(t)
 		e.PATCH(path, p.ID.String()).WithMultipart().
 			WithFormField("delete_image_ids", other.Images[0].ID).
 			Expect().Status(400)
@@ -187,6 +206,7 @@ func TestUpdatePosterImages(t *testing.T) {
 		require.Equal(t, other.Images, stored.Images)
 	})
 	t.Run("reject missing and duplicate deletion", func(t *testing.T) {
+		e := env.R(t)
 		stored, err := env.PM.Get(p.ID)
 		require.NoError(t, err)
 		e.PATCH(path, p.ID.String()).WithMultipart().
@@ -196,6 +216,7 @@ func TestUpdatePosterImages(t *testing.T) {
 			WithFormField("delete_image_ids", stored.Images[0].ID).Expect().Status(400)
 	})
 	t.Run("reject deleting all images without uploads", func(t *testing.T) {
+		e := env.R(t)
 		stored, err := env.PM.Get(p.ID)
 		require.NoError(t, err)
 		req := e.PATCH(path, p.ID.String()).WithMultipart()
@@ -207,6 +228,7 @@ func TestUpdatePosterImages(t *testing.T) {
 			JSON().Object().Value("image").IsEqual(stored.Images)
 	})
 	t.Run("replace all images with one new image", func(t *testing.T) {
+		e := env.R(t)
 		stored, err := env.PM.Get(p.ID)
 		require.NoError(t, err)
 		req := e.PATCH(path, p.ID.String()).WithMultipart().
@@ -221,6 +243,7 @@ func TestUpdatePosterImages(t *testing.T) {
 		require.NotContains(t, stored.Images, updated.Images[0])
 	})
 	t.Run("reject deleting the last image", func(t *testing.T) {
+		e := env.R(t)
 		stored, err := env.PM.Get(p.ID)
 		require.NoError(t, err)
 		require.Len(t, stored.Images, 1)
@@ -230,16 +253,24 @@ func TestUpdatePosterImages(t *testing.T) {
 			JSON().Object().Value("image").IsEqual(stored.Images)
 	})
 	t.Run("missing poster", func(t *testing.T) {
+		t.Parallel()
+		e := env.R(t)
 		e.PATCH(path, uuid.NewString()).WithMultipart().WithFile("image", "new.png", strings.NewReader("")).Expect().Status(404)
 		e.PATCH(path, "invalid").WithMultipart().WithFile("image", "new.png", strings.NewReader("")).Expect().Status(404)
 	})
 	t.Run("empty changes", func(t *testing.T) {
+		t.Parallel()
+		e := env.R(t)
 		e.PATCH(path, p.ID.String()).WithMultipart().WithFormField("unused", "value").Expect().Status(400)
 	})
 	t.Run("requires multipart", func(t *testing.T) {
+		t.Parallel()
+		e := env.R(t)
 		e.PATCH(path, p.ID.String()).WithJSON(map[string]any{"delete_image_ids": []string{other.Images[0].ID}}).Expect().Status(400)
 	})
 	t.Run("image count limit", func(t *testing.T) {
+		t.Parallel()
+		e := env.R(t)
 		req := e.PATCH(path, p.ID.String()).WithMultipart()
 		for range repository.MaxPosterImages + 1 {
 			req.WithFile("image", "new.png", strings.NewReader(""))
@@ -247,6 +278,8 @@ func TestUpdatePosterImages(t *testing.T) {
 		req.Expect().Status(400)
 	})
 	t.Run("individual file size limit", func(t *testing.T) {
+		t.Parallel()
+		e := env.R(t)
 		e.PATCH(path, p.ID.String()).WithMultipart().
 			WithFile("image", "large.png", strings.NewReader(strings.Repeat("a", poster.MaxImageSize+1))).
 			Expect().Status(413)
@@ -254,6 +287,7 @@ func TestUpdatePosterImages(t *testing.T) {
 }
 
 func TestListPostersByFestival(t *testing.T) {
+	t.Parallel()
 	env := setup(t, s1)
 	e := env.R(t)
 
@@ -302,13 +336,15 @@ func TestListPostersByFestival(t *testing.T) {
 }
 
 func TestGetPoster(t *testing.T) {
+	t.Parallel()
 	env := setup(t, s1)
-	e := env.R(t)
 
 	fes := env.mustCreateFestival(t, "Get Poster Fest", "Festival for getting posters")
 	poster := env.mustCreatePoster(t, fes.ID, "Gettable Poster", "Poster to be retrieved")
 
 	t.Run("existing poster", func(t *testing.T) {
+		t.Parallel()
+		e := env.R(t)
 		resp := e.GET("/api/posters/{posterID}", poster.ID.String()).
 			Expect().
 			Status(200).
@@ -323,6 +359,8 @@ func TestGetPoster(t *testing.T) {
 	})
 
 	t.Run("non-existent poster", func(t *testing.T) {
+		t.Parallel()
+		e := env.R(t)
 		nonExistentID := uuid.New()
 		e.GET("/api/posters/{posterID}", nonExistentID.String()).
 			Expect().
@@ -331,13 +369,15 @@ func TestGetPoster(t *testing.T) {
 }
 
 func TestGetPosterByFestivalAndName(t *testing.T) {
+	t.Parallel()
 	env := setup(t, common)
-	e := env.R(t)
 
 	fes := env.mustCreateFestival(t, "Name Poster Fest", "Festival for getting posters by name")
 	poster := env.mustCreatePoster(t, fes.ID, "Unique Poster", "Poster with unique name")
 
 	t.Run("existing poster by name", func(t *testing.T) {
+		t.Parallel()
+		e := env.R(t)
 		resp := e.GET("/api/posters/{festivalID}/{posterName}", fes.ID.String(), poster.Name).
 			Expect().
 			Status(200).
@@ -352,12 +392,16 @@ func TestGetPosterByFestivalAndName(t *testing.T) {
 	})
 
 	t.Run("non-existent poster by name", func(t *testing.T) {
+		t.Parallel()
+		e := env.R(t)
 		e.GET("/api/posters/{festivalID}/{posterName}", fes.ID.String(), "NonExistentPoster").
 			Expect().
 			Status(404)
 	})
 
 	t.Run("non-existent festival", func(t *testing.T) {
+		t.Parallel()
+		e := env.R(t)
 		nonExistentFesID := uuid.New()
 		e.GET("/api/posters/{festivalID}/{posterName}", nonExistentFesID.String(), poster.Name).
 			Expect().
@@ -366,13 +410,15 @@ func TestGetPosterByFestivalAndName(t *testing.T) {
 }
 
 func TestUpdatePoster(t *testing.T) {
+	t.Parallel()
 	env := setup(t, s1)
-	e := env.R(t)
 
 	fes := env.mustCreateFestival(t, "Update Poster Fest", "Festival for updating posters")
 	poster := env.mustCreatePoster(t, fes.ID, "Updatable Poster", "Poster to be updated")
 
 	t.Run("update poster", func(t *testing.T) {
+		t.Parallel()
+		e := env.R(t)
 		e.PUT("/api/posters/{posterID}", poster.ID.String()).
 			WithJSON(map[string]any{
 				"name":        "Updated Poster Name",
@@ -395,6 +441,8 @@ func TestUpdatePoster(t *testing.T) {
 	})
 
 	t.Run("update non-existent poster", func(t *testing.T) {
+		t.Parallel()
+		e := env.R(t)
 		e.PUT("/api/posters/00000000-0000-0000-0000-000000000000").
 			WithJSON(map[string]any{
 				"name":        "Name",
@@ -405,6 +453,8 @@ func TestUpdatePoster(t *testing.T) {
 	})
 
 	t.Run("empty name", func(t *testing.T) {
+		t.Parallel()
+		e := env.R(t)
 		e.PUT("/api/posters/{posterID}", poster.ID.String()).
 			WithJSON(map[string]any{
 				"name":        "",
@@ -415,6 +465,8 @@ func TestUpdatePoster(t *testing.T) {
 	})
 
 	t.Run("too long name", func(t *testing.T) {
+		t.Parallel()
+		e := env.R(t)
 		longName := strings.Repeat("b", 65)
 		e.PUT("/api/posters/{posterID}", poster.ID.String()).
 			WithJSON(map[string]any{
@@ -426,6 +478,8 @@ func TestUpdatePoster(t *testing.T) {
 	})
 
 	t.Run("empty description", func(t *testing.T) {
+		t.Parallel()
+		e := env.R(t)
 		e.PUT("/api/posters/{posterID}", poster.ID.String()).
 			WithJSON(map[string]any{
 				"name":        "Name",
@@ -437,13 +491,15 @@ func TestUpdatePoster(t *testing.T) {
 }
 
 func TestUpdatePosterStatus(t *testing.T) {
+	t.Parallel()
 	env := setup(t, s1)
-	e := env.R(t)
 
 	fes := env.mustCreateFestival(t, "Status Poster Fest", "Festival for updating poster status")
 	poster := env.mustCreatePoster(t, fes.ID, "Status Poster", "Poster to update status")
 
 	t.Run("update poster status", func(t *testing.T) {
+		t.Parallel()
+		e := env.R(t)
 		e.PATCH("/api/posters/{posterID}/status", poster.ID.String()).
 			WithJSON(map[string]any{
 				"status": PosterStatusCollected,
@@ -465,6 +521,8 @@ func TestUpdatePosterStatus(t *testing.T) {
 	})
 
 	t.Run("update non-existent poster status", func(t *testing.T) {
+		t.Parallel()
+		e := env.R(t)
 		e.PATCH("/api/posters/00000000-0000-0000-0000-000000000000/status").
 			WithJSON(map[string]any{
 				"status": PosterStatusCollected,
@@ -475,13 +533,15 @@ func TestUpdatePosterStatus(t *testing.T) {
 }
 
 func TestDeletePoster(t *testing.T) {
+	t.Parallel()
 	env := setup(t, s1)
-	e := env.R(t)
 
 	fest := env.mustCreateFestival(t, "Delete Poster Fest", "Festival for deleting posters")
 	poster := env.mustCreatePoster(t, fest.ID, "Deletable Poster", "Poster to be deleted")
 
 	t.Run("delete existing poster", func(t *testing.T) {
+		t.Parallel()
+		e := env.R(t)
 		e.DELETE("/api/posters/{posterID}", poster.ID.String()).
 			Expect().
 			Status(204)
@@ -491,6 +551,8 @@ func TestDeletePoster(t *testing.T) {
 	})
 
 	t.Run("delete non-existent poster", func(t *testing.T) {
+		t.Parallel()
+		e := env.R(t)
 		e.DELETE("/api/posters/00000000-0000-0000-0000-000000000000").
 			Expect().
 			Status(404)

@@ -34,6 +34,7 @@ const (
 	s1       = "s1"
 	s2       = "s2"
 	s3       = "s3"
+	s4       = "s4"
 )
 
 var (
@@ -46,7 +47,7 @@ func TestMain(m *testing.M) {
 	dbHost := utils.GetEnvOrDefault("NS_MARIADB_HOST", "localhost")
 	dbPort := utils.GetEnvOrDefault("NS_MARIADB_PORT", "3307")
 	dbs := []string{
-		common, s1, s2, s3,
+		common, s1, s2, s3, s4,
 	}
 
 	config := &driverMysql.Config{

@@ -99,6 +99,7 @@ func (s *imageStorage) GetFileURL(id string) string {
 }
 
 func TestUpdateImagesPreservesFilesOnFailure(t *testing.T) {
+	t.Parallel()
 	failure := errors.New("test failure")
 	for _, tc := range []struct {
 		name              string
@@ -120,6 +121,7 @@ func TestUpdateImagesPreservesFilesOnFailure(t *testing.T) {
 		{name: "cleanup fails after commit", deleteIDs: []string{"old1"}, failDelete: true, wantIDs: []string{"old2", "new1", "new2"}, wantFiles: map[string]bool{"old1": true, "old2": true, "new1": true, "new2": true}},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
 			id := uuid.New()
 			repo := &imageRepository{poster: model.Poster{ID: id, Images: []model.PosterImage{{ID: "old1", PosterID: id}, {ID: "old2", PosterID: id}}}, updateErr: tc.updateErr, getErr: tc.getErr}
 			files := &imageStorage{files: map[string]bool{"old1": true, "old2": true}, failUpload: tc.failUpload, uploadErr: failure, failDelete: tc.failDelete}
@@ -144,8 +146,10 @@ func TestUpdateImagesPreservesFilesOnFailure(t *testing.T) {
 }
 
 func TestUpdateImagesRejectsDeletingAllFiles(t *testing.T) {
+	t.Parallel()
 	for _, ids := range [][]string{{"old1"}, {"old1", "old2"}} {
 		t.Run(strings.Join(ids, ","), func(t *testing.T) {
+			t.Parallel()
 			id := uuid.New()
 			repo := &imageRepository{poster: model.Poster{ID: id}}
 			files := &imageStorage{files: map[string]bool{}}
@@ -165,6 +169,7 @@ func TestUpdateImagesRejectsDeletingAllFiles(t *testing.T) {
 }
 
 func TestCreateImagesRollsBackUploadedFiles(t *testing.T) {
+	t.Parallel()
 	failure := errors.New("test failure")
 	for _, tc := range []struct {
 		name        string
@@ -177,6 +182,7 @@ func TestCreateImagesRollsBackUploadedFiles(t *testing.T) {
 		{name: "database fails", registerErr: failure, wantErr: failure},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
 			repo := &imageRepository{registerErr: tc.registerErr}
 			files := &imageStorage{files: map[string]bool{}, failUpload: tc.failUpload, uploadErr: failure}
 			poster, err := NewManagerImpl(repo, files).Create("test", uuid.New(), "location", []*multipart.FileHeader{{Filename: "new1"}, {Filename: "new2"}})
@@ -193,6 +199,7 @@ func TestCreateImagesRollsBackUploadedFiles(t *testing.T) {
 }
 
 func TestInvalidUploads(t *testing.T) {
+	t.Parallel()
 	for _, tc := range []struct {
 		name   string
 		images []*multipart.FileHeader
@@ -202,7 +209,10 @@ func TestInvalidUploads(t *testing.T) {
 		{name: "too many", images: make([]*multipart.FileHeader, repository.MaxPosterImages+1), want: ErrInvalidImages},
 		{name: "too large", images: []*multipart.FileHeader{{Size: MaxImageSize + 1}}, want: ErrImageTooLarge},
 	} {
-		t.Run(tc.name, func(t *testing.T) { require.ErrorIs(t, validateUploads(tc.images), tc.want) })
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			require.ErrorIs(t, validateUploads(tc.images), tc.want)
+		})
 	}
 	files := &imageStorage{files: map[string]bool{}, failUpload: 1, uploadErr: compressor.ErrInvalidImage}
 	_, err := NewManagerImpl(&imageRepository{}, files).Create("test", uuid.New(), "location", []*multipart.FileHeader{{Filename: "bad"}})
@@ -210,6 +220,7 @@ func TestInvalidUploads(t *testing.T) {
 }
 
 func TestDeletePosterPreservesFilesOnDatabaseFailure(t *testing.T) {
+	t.Parallel()
 	failure := errors.New("test failure")
 	repo := &imageRepository{poster: model.Poster{Images: []model.PosterImage{{ID: "old"}}}, deleteErr: failure}
 	files := &imageStorage{files: map[string]bool{"old": true}}

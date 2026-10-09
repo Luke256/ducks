@@ -9,6 +9,7 @@ import (
 )
 
 func TestVisitorCountUTC(t *testing.T) {
+	t.Parallel()
 	repo := setup(t, common)
 	festival := mustCreateFestival(t, repo, "UTC Visitor Festival", "UTC test")
 	timestamp := time.Date(2026, 10, 8, 0, 9, 59, 0, time.FixedZone("JST", 9*60*60))
@@ -27,6 +28,7 @@ func TestVisitorCountUTC(t *testing.T) {
 }
 
 func TestRepeatedVisitorCountIncrement(t *testing.T) {
+	t.Parallel()
 	repo := setup(t, common)
 	festival := mustCreateFestival(t, repo, "Repeated Visitor Festival", "")
 	timestamp := time.Date(2026, 10, 8, 1, 0, 0, 0, time.UTC)

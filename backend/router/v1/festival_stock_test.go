@@ -7,30 +7,34 @@ import (
 )
 
 func TestRegisterFestivalStock(t *testing.T) {
+	t.Parallel()
 	env := setup(t, common)
-	e := env.R(t)
 
 	festival := env.mustCreateFestival(t, "Test Festival", "A festival for testing")
 	stockItem := env.mustCreateStockItem(t, "Test Stock Item", "A stock item for testing", "Category1")
 
 	t.Run("Register Festival Stock", func(t *testing.T) {
+		t.Parallel()
+		e := env.R(t)
 		res := e.POST("/api/festivals/{festival_id}/stocks", festival.ID).
 			WithJSON(map[string]any{
-				"item_id": stockItem.ID,
-				"price":   1500,
+				"item_id":     stockItem.ID,
+				"price":       1500,
 				"description": "Stock Description",
 			}).
 			Expect().
 			Status(201).
 			JSON().
 			Object()
-			
+
 		res.Value("festival_id").IsEqual(festival.ID.String())
 		res.Value("price").IsEqual(1500)
 		res.Value("description").IsEqual("Stock Description")
 	})
 
 	t.Run("Register Festival Stock with Zero Price", func(t *testing.T) {
+		t.Parallel()
+		e := env.R(t)
 		res := e.POST("/api/festivals/{festival_id}/stocks", festival.ID).
 			WithJSON(map[string]any{"item_id": stockItem.ID, "price": 0}).
 			Expect().Status(201).JSON().Object()
@@ -51,18 +55,18 @@ func TestRegisterFestivalStock(t *testing.T) {
 			name:       "Invalid Festival ID Format",
 			festivalID: "invalid-uuid",
 			payload: map[string]any{
-				"item_id": stockItem.ID,
-				"price":   1500,
+				"item_id":     stockItem.ID,
+				"price":       1500,
 				"description": "Stock Description",
 			},
 			expectCode: 404,
 		},
 		{
-			name: 	 "Non-existent Festival ID",
+			name:       "Non-existent Festival ID",
 			festivalID: uuid.New().String(),
 			payload: map[string]any{
-				"item_id": stockItem.ID,
-				"price":   1500,
+				"item_id":     stockItem.ID,
+				"price":       1500,
 				"description": "Stock Description",
 			},
 			expectCode: 404,
@@ -71,8 +75,8 @@ func TestRegisterFestivalStock(t *testing.T) {
 			name:       "Zero Festival ID",
 			festivalID: uuid.Nil.String(),
 			payload: map[string]any{
-				"item_id": stockItem.ID,
-				"price":   1500,
+				"item_id":     stockItem.ID,
+				"price":       1500,
 				"description": "Stock Description",
 			},
 			expectCode: 404,
@@ -81,7 +85,7 @@ func TestRegisterFestivalStock(t *testing.T) {
 			name:       "Missing Item ID",
 			festivalID: festival.ID.String(),
 			payload: map[string]any{
-				"price": 1500,
+				"price":       1500,
 				"description": "Stock Description",
 			},
 			expectCode: 400,
@@ -90,8 +94,8 @@ func TestRegisterFestivalStock(t *testing.T) {
 			name:       "Invalid Item ID Format",
 			festivalID: festival.ID.String(),
 			payload: map[string]any{
-				"item_id": "invalid-uuid",
-				"price":   1500,
+				"item_id":     "invalid-uuid",
+				"price":       1500,
 				"description": "Stock Description",
 			},
 			expectCode: 404,
@@ -100,8 +104,8 @@ func TestRegisterFestivalStock(t *testing.T) {
 			name:       "Non-existent Item ID",
 			festivalID: festival.ID.String(),
 			payload: map[string]any{
-				"item_id": uuid.New().String(),
-				"price":   1500,
+				"item_id":     uuid.New().String(),
+				"price":       1500,
 				"description": "Stock Description",
 			},
 			expectCode: 404,
@@ -110,8 +114,8 @@ func TestRegisterFestivalStock(t *testing.T) {
 			name:       "Zero Item ID",
 			festivalID: festival.ID.String(),
 			payload: map[string]any{
-				"item_id": uuid.Nil.String(),
-				"price":   1500,
+				"item_id":     uuid.Nil.String(),
+				"price":       1500,
 				"description": "Stock Description",
 			},
 			expectCode: 404,
@@ -120,7 +124,7 @@ func TestRegisterFestivalStock(t *testing.T) {
 			name:       "Missing Price",
 			festivalID: festival.ID.String(),
 			payload: map[string]any{
-				"item_id": stockItem.ID,
+				"item_id":     stockItem.ID,
 				"description": "Stock Description",
 			},
 			expectCode: 400,
@@ -144,11 +148,11 @@ func TestRegisterFestivalStock(t *testing.T) {
 			expectCode: 400,
 		},
 		{
-			name: "Empty Description",
+			name:       "Empty Description",
 			festivalID: festival.ID.String(),
 			payload: map[string]any{
-				"item_id": stockItem.ID,
-				"price":   1500,
+				"item_id":     stockItem.ID,
+				"price":       1500,
 				"description": "",
 			},
 			expectCode: 201,
@@ -157,6 +161,8 @@ func TestRegisterFestivalStock(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			e := env.R(t)
 			e.POST("/api/festivals/{festival_id}/stocks", tc.festivalID).
 				WithJSON(tc.payload).
 				Expect().
@@ -166,14 +172,16 @@ func TestRegisterFestivalStock(t *testing.T) {
 }
 
 func TestGetFestivalStock(t *testing.T) {
+	t.Parallel()
 	env := setup(t, common)
-	e := env.R(t)
 
 	fes := env.mustCreateFestival(t, "Test Festival", "A festival for testing")
 	item := env.mustCreateStockItem(t, "Test Stock Item", "A stock item for testing", "Category1")
 	fesStock := env.mustCreateFestivalStock(t, fes.ID, item.ID, 2000, "Stock Description")
 
-	t.Run("Get Festival Stock", func (t *testing.T) {
+	t.Run("Get Festival Stock", func(t *testing.T) {
+		t.Parallel()
+		e := env.R(t)
 		res := e.GET("/api/stocks/{festival_stock_id}", fesStock.ID).
 			Expect().
 			Status(200).
@@ -187,13 +195,17 @@ func TestGetFestivalStock(t *testing.T) {
 		res.Value("description").IsEqual("Stock Description")
 	})
 
-	t.Run("Get Festival Stock - Not Found", func (t *testing.T) {
+	t.Run("Get Festival Stock - Not Found", func(t *testing.T) {
+		t.Parallel()
+		e := env.R(t)
 		e.GET("/api/stocks/{festival_stock_id}", uuid.New()).
 			Expect().
 			Status(404)
 	})
 
-	t.Run("Get Festival Stock - Invalid ID", func (t *testing.T) {
+	t.Run("Get Festival Stock - Invalid ID", func(t *testing.T) {
+		t.Parallel()
+		e := env.R(t)
 		e.GET("/api/stocks/{festival_stock_id}", "invalid-uuid").
 			Expect().
 			Status(404)
@@ -201,8 +213,8 @@ func TestGetFestivalStock(t *testing.T) {
 }
 
 func TestQueryFestivalStocks(t *testing.T) {
+	t.Parallel()
 	env := setup(t, s2)
-	e := env.R(t)
 
 	fes1 := env.mustCreateFestival(t, "Festival One", "First festival")
 	fes2 := env.mustCreateFestival(t, "Festival Two", "Second festival")
@@ -211,7 +223,7 @@ func TestQueryFestivalStocks(t *testing.T) {
 	itemB := env.mustCreateStockItem(t, "Item B", "Second item", "Cat2")
 
 	st1 := env.mustCreateFestivalStock(t, fes1.ID, itemA.ID, 1000, "Stock Description")
-	st2 :=env.mustCreateFestivalStock(t, fes1.ID, itemB.ID, 1500, "Stock Description")
+	st2 := env.mustCreateFestivalStock(t, fes1.ID, itemB.ID, 1500, "Stock Description")
 	env.mustCreateFestivalStock(t, fes2.ID, itemA.ID, 2000, "Stock Description")
 
 	stock1, err := env.FSM.Get(st1.ID)
@@ -223,7 +235,9 @@ func TestQueryFestivalStocks(t *testing.T) {
 		t.Fatalf("Failed to get stock2: %v", err)
 	}
 
-	t.Run("Query Festival Stocks by Festival ID", func (t *testing.T) {
+	t.Run("Query Festival Stocks by Festival ID", func(t *testing.T) {
+		t.Parallel()
+		e := env.R(t)
 		res := e.GET("/api/festivals/{festival_id}/stocks", fes1.ID).
 			Expect().
 			Status(200).
@@ -234,7 +248,9 @@ func TestQueryFestivalStocks(t *testing.T) {
 		res.Value("stocks").Array().ContainsOnly(stock1, stock2)
 	})
 
-	t.Run("Query Festival Stocks - With Category Filter", func (t *testing.T) {
+	t.Run("Query Festival Stocks - With Category Filter", func(t *testing.T) {
+		t.Parallel()
+		e := env.R(t)
 		res := e.GET("/api/festivals/{festival_id}/stocks", fes1.ID).
 			WithQuery("category", "Cat1").
 			Expect().
@@ -248,14 +264,16 @@ func TestQueryFestivalStocks(t *testing.T) {
 }
 
 func TestUpdateFestivalStock(t *testing.T) {
+	t.Parallel()
 	env := setup(t, common)
-	e := env.R(t)
 
 	fes := env.mustCreateFestival(t, "Test Festival", "A festival for testing")
 	item := env.mustCreateStockItem(t, "Test Stock Item", "A stock item for testing", "Category1")
 	fesStock := env.mustCreateFestivalStock(t, fes.ID, item.ID, 2000, "Stock Description")
 
 	t.Run("Update Festival Stock Price", func(t *testing.T) {
+		t.Parallel()
+		e := env.R(t)
 		e.PUT("/api/stocks/{festival_stock_id}", fesStock.ID).
 			WithJSON(map[string]any{
 				"description": "Updated Stock Description",
@@ -273,6 +291,8 @@ func TestUpdateFestivalStock(t *testing.T) {
 	})
 
 	t.Run("Update Festival Stock Price - Not Found", func(t *testing.T) {
+		t.Parallel()
+		e := env.R(t)
 		e.PUT("/api/stocks/{festival_stock_id}", uuid.New()).
 			WithJSON(map[string]any{
 				"description": "Updated Stock Description",
@@ -282,6 +302,8 @@ func TestUpdateFestivalStock(t *testing.T) {
 	})
 
 	t.Run("Update Festival Stock Price - Invalid ID", func(t *testing.T) {
+		t.Parallel()
+		e := env.R(t)
 		e.PUT("/api/stocks/{festival_stock_id}", "invalid-uuid").
 			WithJSON(map[string]any{
 				"description": "Updated Stock Description",
@@ -291,6 +313,8 @@ func TestUpdateFestivalStock(t *testing.T) {
 	})
 
 	t.Run("Update Festival Stock Price - Zero ID", func(t *testing.T) {
+		t.Parallel()
+		e := env.R(t)
 		e.PUT("/api/stocks/{festival_stock_id}", uuid.Nil).
 			WithJSON(map[string]any{
 				"description": "Updated Stock Description",
@@ -301,14 +325,16 @@ func TestUpdateFestivalStock(t *testing.T) {
 }
 
 func TestDeleteFestivalStock(t *testing.T) {
+	t.Parallel()
 	env := setup(t, common)
-	e := env.R(t)
 
 	fes := env.mustCreateFestival(t, "Test Festival", "A festival for testing")
 	item := env.mustCreateStockItem(t, "Test Stock Item", "A stock item for testing", "Category1")
 	fesStock := env.mustCreateFestivalStock(t, fes.ID, item.ID, 2000, "Stock Description")
 
 	t.Run("Delete Festival Stock - Not Implemented", func(t *testing.T) {
+		t.Parallel()
+		e := env.R(t)
 		e.DELETE("/api/stocks/{festival_stock_id}", fesStock.ID).
 			Expect().
 			Status(204)
@@ -319,18 +345,24 @@ func TestDeleteFestivalStock(t *testing.T) {
 	})
 
 	t.Run("Delete Festival Stock - Not Found", func(t *testing.T) {
+		t.Parallel()
+		e := env.R(t)
 		e.DELETE("/api/stocks/{festival_stock_id}", uuid.New()).
 			Expect().
 			Status(404)
 	})
 
 	t.Run("Delete Festival Stock - Invalid ID", func(t *testing.T) {
+		t.Parallel()
+		e := env.R(t)
 		e.DELETE("/api/stocks/{festival_stock_id}", "invalid-uuid").
 			Expect().
 			Status(404)
 	})
 
 	t.Run("Delete Festival Stock - Zero ID", func(t *testing.T) {
+		t.Parallel()
+		e := env.R(t)
 		e.DELETE("/api/stocks/{festival_stock_id}", uuid.Nil).
 			Expect().
 			Status(404)

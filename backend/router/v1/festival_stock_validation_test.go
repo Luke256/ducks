@@ -6,6 +6,7 @@ import (
 )
 
 func TestRegisterFestivalStockPriceValidation(t *testing.T) {
+	t.Parallel()
 	for _, tc := range []struct {
 		name  string
 		body  string
@@ -20,6 +21,7 @@ func TestRegisterFestivalStockPriceValidation(t *testing.T) {
 		{"string", `{"item_id":"item", "price":"0"}`, false},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
 			req := RegisterFestivalStockRequest{FestivalID: "festival"}
 			err := json.Unmarshal([]byte(tc.body), &req)
 			if err == nil {

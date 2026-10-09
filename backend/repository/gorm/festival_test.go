@@ -9,6 +9,7 @@ import (
 )
 
 func TestRegisterFestival(t *testing.T) {
+	t.Parallel()
 	repo := setup(t, common)
 
 	id, err := repo.RegisterFestival("Test Fest", "A fun festival")
@@ -17,11 +18,13 @@ func TestRegisterFestival(t *testing.T) {
 }
 
 func TestGetFestivalByID(t *testing.T) {
+	t.Parallel()
 	repo := setup(t, common)
 
 	festival := mustCreateFestival(t, repo, "Sample Fest", "Sample Description")
 
 	t.Run("Get Existing Festival", func(t *testing.T) {
+		t.Parallel()
 		festival, err := repo.GetFestivalByID(festival.ID)
 		assert.NoError(t, err)
 		assert.Equal(t, "Sample Fest", festival.Name)
@@ -29,12 +32,14 @@ func TestGetFestivalByID(t *testing.T) {
 	})
 
 	t.Run("Get Non-Existent Festival", func(t *testing.T) {
+		t.Parallel()
 		nonExistentID := uuid.New()
 		_, err := repo.GetFestivalByID(nonExistentID)
 		assert.Equal(t, repository.ErrNotFound, err)
 	})
 
 	t.Run("Get Zero UUID Festival", func(t *testing.T) {
+		t.Parallel()
 		zeroID := uuid.Nil
 		_, err := repo.GetFestivalByID(zeroID)
 		assert.Equal(t, repository.ErrNotFound, err)
@@ -42,6 +47,7 @@ func TestGetFestivalByID(t *testing.T) {
 }
 
 func TestGetAllFestivals(t *testing.T) {
+	t.Parallel()
 	repo := setup(t, s1)
 
 	festival1 := mustCreateFestival(t, repo, "Fest One", "First festival")
@@ -65,11 +71,13 @@ func TestGetAllFestivals(t *testing.T) {
 }
 
 func TestUpdateFestival(t *testing.T) {
+	t.Parallel()
 	repo := setup(t, common)
 
 	festival := mustCreateFestival(t, repo, "Old Fest", "Old Description")
 
 	t.Run("Update Festival", func(t *testing.T) {
+		t.Parallel()
 		err := repo.UpdateFestival(festival.ID, "New Fest", "New Description")
 		assert.NoError(t, err)
 		updatedFestival, err := repo.GetFestivalByID(festival.ID)
@@ -79,6 +87,7 @@ func TestUpdateFestival(t *testing.T) {
 	})
 
 	t.Run("Update Non-Existent Festival", func(t *testing.T) {
+		t.Parallel()
 		nonExistentID := uuid.New()
 		err := repo.UpdateFestival(nonExistentID, "Ghost Fest", "No Description")
 		assert.Equal(t, repository.ErrNotFound, err)
@@ -86,11 +95,13 @@ func TestUpdateFestival(t *testing.T) {
 }
 
 func TestDeleteFestival(t *testing.T) {
+	t.Parallel()
 	repo := setup(t, common)
 
 	festival := mustCreateFestival(t, repo, "Delete Fest", "To be deleted")
 
 	t.Run("Delete Existing Festival", func(t *testing.T) {
+		t.Parallel()
 		err := repo.DeleteFestival(festival.ID)
 		assert.NoError(t, err)
 		_, err = repo.GetFestivalByID(festival.ID)
@@ -98,6 +109,7 @@ func TestDeleteFestival(t *testing.T) {
 	})
 
 	t.Run("Delete Non-Existent Festival", func(t *testing.T) {
+		t.Parallel()
 		nonExistentID := uuid.New()
 		err := repo.DeleteFestival(nonExistentID)
 		assert.Equal(t, repository.ErrNotFound, err)

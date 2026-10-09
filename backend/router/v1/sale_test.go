@@ -9,14 +9,16 @@ import (
 )
 
 func TestCreateSaleRecord(t *testing.T) {
+	t.Parallel()
 	env := setup(t, common)
-	e := env.R(t)
 
 	fes := env.mustCreateFestival(t, "Test Festival", "Description")
 	stock_item := env.mustCreateStockItem(t, "Test Stock Item", "Category", "")
 	stock := env.mustCreateFestivalStock(t, fes.ID, stock_item.ID, 100, "")
 
 	t.Run("Create Sale Record", func(t *testing.T) {
+		t.Parallel()
+		e := env.R(t)
 		res := e.POST("/api/sales").
 			WithJSON(map[string]any{
 				"items": []map[string]any{
@@ -44,6 +46,8 @@ func TestCreateSaleRecord(t *testing.T) {
 	})
 
 	t.Run("Invalid Stock ID", func(t *testing.T) {
+		t.Parallel()
+		e := env.R(t)
 		e.POST("/api/sales").
 			WithJSON(map[string]any{
 				"items": []map[string]any{
@@ -58,6 +62,8 @@ func TestCreateSaleRecord(t *testing.T) {
 	})
 
 	t.Run("Unexisting Stock ID", func(t *testing.T) {
+		t.Parallel()
+		e := env.R(t)
 		id, err := uuid.NewV7()
 		if err != nil {
 			t.Fatalf("failed to generate uuid: %v", err)
@@ -76,6 +82,8 @@ func TestCreateSaleRecord(t *testing.T) {
 	})
 
 	t.Run("Missing Stock ID", func(t *testing.T) {
+		t.Parallel()
+		e := env.R(t)
 		e.POST("/api/sales").
 			WithJSON(map[string]any{
 				"items": []map[string]any{
@@ -89,6 +97,8 @@ func TestCreateSaleRecord(t *testing.T) {
 	})
 
 	t.Run("Negative Quantity", func(t *testing.T) {
+		t.Parallel()
+		e := env.R(t)
 		e.POST("/api/sales").
 			WithJSON(map[string]any{
 				"items": []map[string]any{
@@ -103,6 +113,8 @@ func TestCreateSaleRecord(t *testing.T) {
 	})
 
 	t.Run("Zero Quantity", func(t *testing.T) {
+		t.Parallel()
+		e := env.R(t)
 		e.POST("/api/sales").
 			WithJSON(map[string]any{
 				"items": []map[string]any{
@@ -117,6 +129,8 @@ func TestCreateSaleRecord(t *testing.T) {
 	})
 
 	t.Run("Missing Quantity", func(t *testing.T) {
+		t.Parallel()
+		e := env.R(t)
 		e.POST("/api/sales").
 			WithJSON(map[string]any{
 				"items": []map[string]any{
@@ -130,6 +144,8 @@ func TestCreateSaleRecord(t *testing.T) {
 	})
 
 	t.Run("Empty Items", func(t *testing.T) {
+		t.Parallel()
+		e := env.R(t)
 		e.POST("/api/sales").
 			WithJSON(map[string]any{
 				"items": []map[string]any{},
@@ -139,6 +155,8 @@ func TestCreateSaleRecord(t *testing.T) {
 	})
 
 	t.Run("Missing Items", func(t *testing.T) {
+		t.Parallel()
+		e := env.R(t)
 		e.POST("/api/sales").
 			WithJSON(map[string]any{}).
 			Expect().
@@ -146,6 +164,8 @@ func TestCreateSaleRecord(t *testing.T) {
 	})
 
 	t.Run("Non-Existent Stock ID", func(t *testing.T) {
+		t.Parallel()
+		e := env.R(t)
 		id, err := uuid.NewV7()
 		if err != nil {
 			t.Fatalf("failed to generate uuid: %v", err)
@@ -164,6 +184,8 @@ func TestCreateSaleRecord(t *testing.T) {
 	})
 
 	t.Run("Create Multiple Sale Records", func(t *testing.T) {
+		t.Parallel()
+		e := env.R(t)
 		res := e.POST("/api/sales").
 			WithJSON(map[string]any{
 				"items": []map[string]any{
@@ -190,8 +212,8 @@ func TestCreateSaleRecord(t *testing.T) {
 }
 
 func TestGetSaleRecord(t *testing.T) {
+	t.Parallel()
 	env := setup(t, common)
-	e := env.R(t)
 
 	fes := env.mustCreateFestival(t, "Test Festival", "Description")
 	stock_item := env.mustCreateStockItem(t, "Test Stock Item", "Category", "")
@@ -199,6 +221,8 @@ func TestGetSaleRecord(t *testing.T) {
 	record := env.mustCreateSaleRecord(t, stock.ID, 3)
 
 	t.Run("Get Existing Sale Record", func(t *testing.T) {
+		t.Parallel()
+		e := env.R(t)
 		res := e.GET("/api/sales/{id}", record.ID).
 			Expect().
 			Status(200).
@@ -212,6 +236,8 @@ func TestGetSaleRecord(t *testing.T) {
 	})
 
 	t.Run("Get Non-Existing Sale Record", func(t *testing.T) {
+		t.Parallel()
+		e := env.R(t)
 		id, err := uuid.NewV7()
 		if err != nil {
 			t.Fatalf("failed to generate uuid: %v", err)
@@ -222,6 +248,8 @@ func TestGetSaleRecord(t *testing.T) {
 	})
 
 	t.Run("Invalid Sale Record ID", func(t *testing.T) {
+		t.Parallel()
+		e := env.R(t)
 		e.GET("/api/sales/{id}", "invalid-uuid").
 			Expect().
 			Status(404)
@@ -229,8 +257,8 @@ func TestGetSaleRecord(t *testing.T) {
 }
 
 func TestGetSaleRecordsByStockID(t *testing.T) {
+	t.Parallel()
 	env := setup(t, common)
-	e := env.R(t)
 
 	fes := env.mustCreateFestival(t, "Test Festival", "Description")
 	stock_item := env.mustCreateStockItem(t, "Test Stock Item", "Category", "")
@@ -245,6 +273,8 @@ func TestGetSaleRecordsByStockID(t *testing.T) {
 	env.mustCreateSaleRecord(t, stock2.ID, 3)
 
 	t.Run("Get Sale Records by Stock ID", func(t *testing.T) {
+		t.Parallel()
+		e := env.R(t)
 		res := e.GET("/api/stocks/{stock_id}/sales", stock1.ID).
 			Expect().
 			Status(200).
@@ -255,6 +285,8 @@ func TestGetSaleRecordsByStockID(t *testing.T) {
 	})
 
 	t.Run("Get Sale Records by Non-Existing Stock ID", func(t *testing.T) {
+		t.Parallel()
+		e := env.R(t)
 		id, err := uuid.NewV7()
 		if err != nil {
 			t.Fatalf("failed to generate uuid: %v", err)
@@ -265,6 +297,8 @@ func TestGetSaleRecordsByStockID(t *testing.T) {
 	})
 
 	t.Run("Invalid Stock ID", func(t *testing.T) {
+		t.Parallel()
+		e := env.R(t)
 		e.GET("/api/stocks/{stock_id}/sales", "invalid-uuid").
 			Expect().
 			Status(404)
@@ -272,8 +306,8 @@ func TestGetSaleRecordsByStockID(t *testing.T) {
 }
 
 func TestQuerySaleRecords(t *testing.T) {
+	t.Parallel()
 	env := setup(t, s3)
-	e := env.R(t)
 
 	fes1 := env.mustCreateFestival(t, "Festival 1", "Description 1")
 	fes2 := env.mustCreateFestival(t, "Festival 2", "Description 2")
@@ -295,6 +329,8 @@ func TestQuerySaleRecords(t *testing.T) {
 	sale4.CreatedAt = sale4.CreatedAt.In(jst)
 
 	t.Run("Query All Sale Records", func(t *testing.T) {
+		t.Parallel()
+		e := env.R(t)
 		res := e.GET("/api/sales").
 			Expect().
 			Status(200).
@@ -305,6 +341,8 @@ func TestQuerySaleRecords(t *testing.T) {
 	})
 
 	t.Run("Query Sale Records by Festival ID", func(t *testing.T) {
+		t.Parallel()
+		e := env.R(t)
 		res := e.GET("/api/sales").
 			WithQuery("festival_id", fes1.ID.String()).
 			Expect().
@@ -316,6 +354,8 @@ func TestQuerySaleRecords(t *testing.T) {
 	})
 
 	t.Run("Query Sale Records by Stock Item ID", func(t *testing.T) {
+		t.Parallel()
+		e := env.R(t)
 		res := e.GET("/api/sales").
 			WithQuery("stock_item_id", stock_item1.ID.String()).
 			Expect().
@@ -327,6 +367,8 @@ func TestQuerySaleRecords(t *testing.T) {
 	})
 
 	t.Run("Query Sale Records by Festival ID and Stock Item ID", func(t *testing.T) {
+		t.Parallel()
+		e := env.R(t)
 		res := e.GET("/api/sales").
 			WithQuery("festival_id", fes1.ID.String()).
 			WithQuery("stock_item_id", stock_item1.ID.String()).
@@ -339,6 +381,8 @@ func TestQuerySaleRecords(t *testing.T) {
 	})
 
 	t.Run("Query Sale Records with Invalid Festival ID", func(t *testing.T) {
+		t.Parallel()
+		e := env.R(t)
 		res := e.GET("/api/sales").
 			WithQuery("festival_id", "invalid-uuid").
 			Expect().
@@ -349,6 +393,8 @@ func TestQuerySaleRecords(t *testing.T) {
 	})
 
 	t.Run("Query Sale Records with Invalid Stock Item ID", func(t *testing.T) {
+		t.Parallel()
+		e := env.R(t)
 		res := e.GET("/api/sales").
 			WithQuery("stock_item_id", "invalid-uuid").
 			Expect().
@@ -360,8 +406,8 @@ func TestQuerySaleRecords(t *testing.T) {
 }
 
 func TestDeleteSaleRecord(t *testing.T) {
+	t.Parallel()
 	env := setup(t, common)
-	e := env.R(t)
 
 	fes := env.mustCreateFestival(t, "Test Festival", "Description")
 	stock_item := env.mustCreateStockItem(t, "Test Stock Item", "Category", "")
@@ -370,6 +416,8 @@ func TestDeleteSaleRecord(t *testing.T) {
 	sale := env.mustCreateSaleRecord(t, stock.ID, 4)
 
 	t.Run("Delete Sale Record", func(t *testing.T) {
+		t.Parallel()
+		e := env.R(t)
 		e.DELETE("/api/sales/{id}", sale.ID).
 			Expect().
 			Status(204)
@@ -380,6 +428,8 @@ func TestDeleteSaleRecord(t *testing.T) {
 	})
 
 	t.Run("Delete Non-Existing Sale Record", func(t *testing.T) {
+		t.Parallel()
+		e := env.R(t)
 		id, err := uuid.NewV7()
 		if err != nil {
 			t.Fatalf("failed to generate uuid: %v", err)
@@ -390,12 +440,16 @@ func TestDeleteSaleRecord(t *testing.T) {
 	})
 
 	t.Run("Delete Sale Record with Invalid ID", func(t *testing.T) {
+		t.Parallel()
+		e := env.R(t)
 		e.DELETE("/api/sales/{id}", "invalid-uuid").
 			Expect().
 			Status(404)
 	})
 
 	t.Run("Delete Sale Record with Zero UUID", func(t *testing.T) {
+		t.Parallel()
+		e := env.R(t)
 		e.DELETE("/api/sales/{id}", uuid.Nil).
 			Expect().
 			Status(404)

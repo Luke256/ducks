@@ -13,6 +13,7 @@ import (
 )
 
 func TestSaleRecordUTC(t *testing.T) {
+	t.Parallel()
 	repo := setup(t, common)
 	fixed := time.Date(2026, 10, 8, 0, 5, 12, 123000000, time.FixedZone("JST", 9*60*60))
 	db := repo.db.Session(&gorm.Session{NowFunc: func() time.Time { return fixed }})
@@ -47,6 +48,7 @@ func TestSaleRecordUTC(t *testing.T) {
 }
 
 func TestCreateSaleRecord(t *testing.T) {
+	t.Parallel()
 	repo := setup(t, common)
 
 	fes := mustCreateFestival(t, repo, "Test Festival", "A festival for testing")
@@ -54,6 +56,7 @@ func TestCreateSaleRecord(t *testing.T) {
 	fesStock := mustCreateFestivalStock(t, repo, fes.ID, stockItem.ID, 100, "Stock Description")
 
 	t.Run("Create Sale Record", func(t *testing.T) {
+		t.Parallel()
 		saleRecord, err := repo.CreateSaleRecords(repository.SaleData{
 			FestivalStockID: fesStock.ID,
 			Quantity:        5,
@@ -64,6 +67,7 @@ func TestCreateSaleRecord(t *testing.T) {
 	})
 
 	t.Run("Create Multiple Sale Records", func(t *testing.T) {
+		t.Parallel()
 		saleRecords, err := repo.CreateSaleRecords(
 			repository.SaleData{
 				FestivalStockID: fesStock.ID,
@@ -81,6 +85,7 @@ func TestCreateSaleRecord(t *testing.T) {
 	})
 
 	t.Run("Create Sale Record with Non-Existent Festival Stock", func(t *testing.T) {
+		t.Parallel()
 		_, err := repo.CreateSaleRecords(repository.SaleData{
 			FestivalStockID: uuid.New(),
 			Quantity:        5,
@@ -91,6 +96,7 @@ func TestCreateSaleRecord(t *testing.T) {
 }
 
 func TestGetSaleRecordByID(t *testing.T) {
+	t.Parallel()
 	repo := setup(t, common)
 
 	fes := mustCreateFestival(t, repo, "Test Festival", "A festival for testing")
@@ -99,6 +105,7 @@ func TestGetSaleRecordByID(t *testing.T) {
 	saleRecord := mustCreateSaleRecord(t, repo, fesStock.ID, 10)
 
 	t.Run("Get Sale Record By ID", func(t *testing.T) {
+		t.Parallel()
 		got, err := repo.GetSaleRecordByID(saleRecord.ID)
 		assert.NoError(t, err)
 		assert.Equal(t, saleRecord.ID, got.ID)
@@ -107,12 +114,14 @@ func TestGetSaleRecordByID(t *testing.T) {
 	})
 
 	t.Run("Get Non-Existent Sale Record By ID", func(t *testing.T) {
+		t.Parallel()
 		_, err := repo.GetSaleRecordByID(uuid.New())
 		assert.Equal(t, repository.ErrNotFound, err)
 	})
 }
 
 func TestGetSaleRecordsByFestivalStockID(t *testing.T) {
+	t.Parallel()
 	repo := setup(t, common)
 
 	fes := mustCreateFestival(t, repo, "Test Festival", "A festival for testing")
@@ -125,6 +134,7 @@ func TestGetSaleRecordsByFestivalStockID(t *testing.T) {
 	mustCreateSaleRecord(t, repo, fesStock2.ID, 30)
 
 	t.Run("Get Sale Records By Festival Stock ID", func(t *testing.T) {
+		t.Parallel()
 		records, err := repo.GetSaleRecordsByFestivalStockID(fesStock.ID)
 		assert.NoError(t, err)
 		assert.Len(t, records, 2)
@@ -138,12 +148,14 @@ func TestGetSaleRecordsByFestivalStockID(t *testing.T) {
 	})
 
 	t.Run("Get Sale Records By Non-Existent Festival Stock ID", func(t *testing.T) {
+		t.Parallel()
 		_, err := repo.GetSaleRecordsByFestivalStockID(uuid.New())
 		assert.Equal(t, repository.ErrNotFound, err)
 	})
 }
 
 func TestQuerySaleRecords(t *testing.T) {
+	t.Parallel()
 	repo := setup(t, s3)
 
 	fes1 := mustCreateFestival(t, repo, "Festival One", "First festival")
@@ -161,12 +173,14 @@ func TestQuerySaleRecords(t *testing.T) {
 	saleRecord3 := mustCreateSaleRecord(t, repo, fes2StockA.ID, 7)
 
 	t.Run("Query All Sale Records", func(t *testing.T) {
+		t.Parallel()
 		records, err := repo.QuerySaleRecords(uuid.Nil, uuid.Nil)
 		assert.NoError(t, err)
 		assert.Len(t, records, 3)
 	})
 
 	t.Run("Query Sale Records by Festival ID", func(t *testing.T) {
+		t.Parallel()
 		records, err := repo.QuerySaleRecords(fes1.ID, uuid.Nil)
 		assert.NoError(t, err)
 		assert.Len(t, records, 2)
@@ -181,6 +195,7 @@ func TestQuerySaleRecords(t *testing.T) {
 	})
 
 	t.Run("Query Sale Records by Stock Item ID", func(t *testing.T) {
+		t.Parallel()
 		records, err := repo.QuerySaleRecords(uuid.Nil, itemA.ID)
 		assert.NoError(t, err)
 		assert.Len(t, records, 2)
@@ -195,6 +210,7 @@ func TestQuerySaleRecords(t *testing.T) {
 	})
 
 	t.Run("Query Sale Records by Festival ID and Stock Item ID", func(t *testing.T) {
+		t.Parallel()
 		records, err := repo.QuerySaleRecords(fes1.ID, itemB.ID)
 		assert.NoError(t, err)
 		assert.Len(t, records, 1)
@@ -203,6 +219,7 @@ func TestQuerySaleRecords(t *testing.T) {
 }
 
 func TestDeleteSaleRecord(t *testing.T) {
+	t.Parallel()
 	repo := setup(t, common)
 
 	fes := mustCreateFestival(t, repo, "Test Festival", "A festival for testing")
@@ -211,6 +228,7 @@ func TestDeleteSaleRecord(t *testing.T) {
 	saleRecord := mustCreateSaleRecord(t, repo, fesStock.ID, 10)
 
 	t.Run("Delete Sale Record", func(t *testing.T) {
+		t.Parallel()
 		err := repo.DeleteSaleRecord(saleRecord.ID)
 		assert.NoError(t, err)
 
@@ -219,6 +237,7 @@ func TestDeleteSaleRecord(t *testing.T) {
 	})
 
 	t.Run("Delete Non-Existent Sale Record", func(t *testing.T) {
+		t.Parallel()
 		err := repo.DeleteSaleRecord(uuid.New())
 		assert.Equal(t, repository.ErrNotFound, err)
 	})

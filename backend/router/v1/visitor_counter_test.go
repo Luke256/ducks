@@ -9,12 +9,14 @@ import (
 )
 
 func TestIncrementVisitorCount(t *testing.T) {
+	t.Parallel()
 	env := setup(t, common)
-	e := env.R(t)
 
 	festival := env.mustCreateFestival(t, "Test Festival", "A festival for testing")
 
 	t.Run("Increment Visitor Count - Success", func(t *testing.T) {
+		t.Parallel()
+		e := env.R(t)
 		e.POST("/api/visitors/{festival_id}", festival.ID).
 			WithJSON(map[string]any{
 				"amount": 5,
@@ -24,6 +26,8 @@ func TestIncrementVisitorCount(t *testing.T) {
 	})
 
 	t.Run("Increment Visitor Count - Invalid Festival ID", func(t *testing.T) {
+		t.Parallel()
+		e := env.R(t)
 		e.POST("/api/visitors/{festival_id}", "invalid-uuid").
 			WithJSON(map[string]any{
 				"amount": 5,
@@ -33,6 +37,8 @@ func TestIncrementVisitorCount(t *testing.T) {
 	})
 
 	t.Run("Increment Visitor Count - Festival Not Found", func(t *testing.T) {
+		t.Parallel()
+		e := env.R(t)
 		e.POST("/api/visitors/{festival_id}", uuid.New()).
 			WithJSON(map[string]any{
 				"amount": 5,
@@ -43,8 +49,8 @@ func TestIncrementVisitorCount(t *testing.T) {
 }
 
 func TestGetVisitorCounts(t *testing.T) {
+	t.Parallel()
 	env := setup(t, common)
-	e := env.R(t)
 
 	festival := env.mustCreateFestival(t, "Test Festival", "A festival for testing")
 
@@ -53,6 +59,8 @@ func TestGetVisitorCounts(t *testing.T) {
 	require.NoError(t, env.Repo.AddVisitorCount(t.Context(), festival.ID, timestamp, 10))
 
 	t.Run("Get Visitor Counts - Success", func(t *testing.T) {
+		t.Parallel()
+		e := env.R(t)
 		res := e.GET("/api/visitors/{festival_id}", festival.ID).
 			Expect().
 			Status(200).
@@ -71,12 +79,16 @@ func TestGetVisitorCounts(t *testing.T) {
 	})
 
 	t.Run("Get Visitor Counts - Invalid Festival ID", func(t *testing.T) {
+		t.Parallel()
+		e := env.R(t)
 		e.GET("/api/visitors/{festival_id}", "invalid-uuid").
 			Expect().
 			Status(400)
 	})
 
 	t.Run("Get Visitor Counts - Festival Not Found", func(t *testing.T) {
+		t.Parallel()
+		e := env.R(t)
 		e.GET("/api/visitors/{festival_id}", uuid.New()).
 			Expect().
 			Status(200).JSON().Object().Value("counts").Array().Length().IsEqual(0)

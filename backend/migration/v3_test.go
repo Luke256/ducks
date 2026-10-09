@@ -42,6 +42,7 @@ func migrationTestDB(t *testing.T) *gorm.DB {
 }
 
 func TestV3MigratesExistingImages(t *testing.T) {
+	t.Parallel()
 	db := migrationTestDB(t)
 	require.NoError(t, db.AutoMigrate(&model.Poster{}, &model.PosterImage{}))
 	require.NoError(t, db.Exec("ALTER TABLE posters ADD COLUMN image_id TEXT NOT NULL").Error)
@@ -74,6 +75,7 @@ func TestV3MigratesExistingImages(t *testing.T) {
 }
 
 func TestV3CopiesImages(t *testing.T) {
+	t.Parallel()
 	db := migrationTestDB(t)
 	require.NoError(t, db.AutoMigrate(&model.Poster{}))
 	require.NoError(t, db.Exec("ALTER TABLE posters ADD COLUMN image_id TEXT NOT NULL").Error)
@@ -94,6 +96,7 @@ func TestV3CopiesImages(t *testing.T) {
 }
 
 func TestMigrateFreshSchemaIncludesPosterImages(t *testing.T) {
+	t.Parallel()
 	db := migrationTestDB(t)
 	init, err := Migrate(db)
 	require.NoError(t, err)
@@ -108,6 +111,7 @@ func TestMigrateFreshSchemaIncludesPosterImages(t *testing.T) {
 }
 
 func TestV3CopyFailureKeepsLegacyImages(t *testing.T) {
+	t.Parallel()
 	db := migrationTestDB(t)
 	require.NoError(t, db.AutoMigrate(&model.Poster{}))
 	require.NoError(t, db.Exec("ALTER TABLE posters ADD COLUMN image_id TEXT NOT NULL").Error)
