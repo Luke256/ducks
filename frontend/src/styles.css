@@ -30,6 +30,10 @@ input[type="file"] {
 button {
   color: inherit;
 }
+button,
+.button {
+  touch-action: manipulation;
+}
 button:disabled,
 fieldset:disabled button,
 input:disabled,
