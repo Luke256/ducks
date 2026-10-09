@@ -87,7 +87,7 @@ function updateStatus(id: string, next: PosterStatus) {
           <tr v-for="poster in filtered" :key="poster.id">
             <td>
               <div class="item-cell">
-                <img v-if="poster.image_url[0]" :src="imageUrl(poster.image_url[0])" alt="" class="thumbnail"
+                <img v-if="poster.image[0]" :src="imageUrl(poster.image[0].url)" alt="" class="thumbnail"
                   loading="lazy" />
                 <div>
                   <RouterLink :to="`/poster/detail/${poster.id}`" class="text-link">{{ poster.name }}</RouterLink>

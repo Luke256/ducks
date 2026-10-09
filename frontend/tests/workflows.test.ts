@@ -38,7 +38,10 @@ const poster: Poster = {
     name: "講義棟 01",
     description: "正面入口",
     status: "uncollected",
-    image_url: ["/api/v1/images/image1", "/api/v1/images/image2"],
+    image: [
+        { id: "image1", url: "/api/v1/images/image1" },
+        { id: "image2", url: "/api/v1/images/image2" },
+    ],
     festival: event,
 };
 const records = [
@@ -50,11 +53,26 @@ const requests: { path: string; options: RequestInit }[] = [];
 let fail = "";
 let visitorCounts: VisitorCount[];
 let itemImageUrl: string;
+let posterImageNumber = 0;
 function fixture(input: string, options: RequestInit = {}) {
     const path = input.slice(apiBase.length);
     requests.push({ path, options });
     if (path === fail)
         return Promise.resolve(new Response("test failure", { status: 500 }));
+    if (path === "/posters/p1" && options.method === "PUT")
+        Object.assign(poster, JSON.parse(options.body as string));
+    if (path === "/posters/p1/images" && options.method === "PATCH") {
+        const body = options.body as FormData;
+        const deleted = body.getAll("delete_image_ids");
+        poster.image = [
+            ...poster.image.filter((image) => !deleted.includes(image.id)),
+            ...body.getAll("image").map(() => {
+                const id = `uploaded-${++posterImageNumber}`;
+                return { id, url: `/api/v1/images/${id}` };
+            }),
+        ];
+        return Promise.resolve(Response.json({ image: poster.image }));
+    }
     if (path === "/items/i1/image" && options.method === "PUT")
         itemImageUrl = "/api/v1/images/image2";
     if (path === "/visitors/f1" && options.method === "POST") {
@@ -120,22 +138,27 @@ function mutations(path: string) {
         (r) => r.path === path && r.options.method && r.options.method !== "GET",
     );
 }
-async function upload() {
-    const file = new File(["image"], "photo.png", { type: "image/png" });
+async function upload(files = [new File(["image"], "photo.png", { type: "image/png" })]) {
     const input = wrapper.find("input[type=file]");
     Object.defineProperty(input.element, "files", {
         configurable: true,
-        value: [file],
+        value: files,
     });
     await input.trigger("change");
-    return file;
+    return files[0];
 }
 beforeEach(() => {
     requests.length = 0;
     fail = "";
     stock.price = 500;
     itemImageUrl = item.image_url;
-    poster.image_url = ["/api/v1/images/image1", "/api/v1/images/image2"];
+    poster.name = "講義棟 01";
+    poster.description = "正面入口";
+    poster.image = [
+        { id: "image1", url: "/api/v1/images/image1" },
+        { id: "image2", url: "/api/v1/images/image2" },
+    ];
+    posterImageNumber = 0;
     visitorCounts = [
         { festival_id: "f1", bucket_start: "2026-10-08T10:10:00+09:00", count: 5 },
         { festival_id: "f1", bucket_start: "2026-10-08T10:00:00+09:00", count: 3 },
@@ -557,7 +580,7 @@ describe("ポスター画像", () => {
         ["1枚", ["/api/v1/images/image1"]],
         ["複数枚", ["/api/v1/images/image1", "https://example.com/image2.jpg"]],
     ] as [string, string[]][])("%sの配列を受け取り、一覧と詳細に表示する", async (_, urls) => {
-        poster.image_url = urls;
+        poster.image = urls.map((url, index) => ({ id: `image${index + 1}`, url }));
         await open("/poster");
         const thumbnails = wrapper.findAll("tbody .thumbnail");
         expect(thumbnails).toHaveLength(urls.length ? 1 : 0);
@@ -572,6 +595,222 @@ describe("ポスター画像", () => {
             expect(link.attributes("target")).toBe("_blank");
             expect(link.attributes("rel")).toBe("noopener");
         }
+    });
+
+    it("複数の写真を圧縮して同じimageフィールドで登録する", async () => {
+        await open("/poster/new");
+        await wrapper.find("form input:not([type])").setValue("ポスターA");
+        await wrapper.find("textarea").setValue("正面入口");
+        expect(wrapper.find("input[type=file]").attributes("multiple")).toBeDefined();
+        const files = [
+            new File(["first"], "first.png", { type: "image/png" }),
+            new File(["second"], "second.png", { type: "image/png" }),
+        ];
+        const compressed = files.map((file) => new File(["compressed"], `${file.name}.webp`, { type: "image/webp" }));
+        vi.mocked(resizeImage).mockResolvedValueOnce(compressed[0]).mockResolvedValueOnce(compressed[1]);
+        await upload(files);
+        expect(wrapper.findAll(".image-selection .image-preview")).toHaveLength(2);
+        await wrapper.find("form").trigger("submit");
+        await flushPromises();
+        const request = mutations("/posters")[0];
+        expect(request.options.headers).toBeUndefined();
+        const uploaded = (request.options.body as FormData).getAll("image");
+        expect(uploaded).toHaveLength(2);
+        for (let i = 0; i < compressed.length; i++) expect(uploaded[i]).toBe(compressed[i]);
+        expect(resizeImage).toHaveBeenNthCalledWith(1, files[0]);
+        expect(resizeImage).toHaveBeenNthCalledWith(2, files[1]);
+        expect(router.currentRoute.value.path).toBe("/poster");
+        expect(URL.revokeObjectURL).toHaveBeenCalled();
+    });
+
+    it.each([0, 11])("登録時に写真が%s枚の場合は送信しない", async (count) => {
+        await open("/poster/new");
+        await wrapper.find("form input:not([type])").setValue("ポスターA");
+        await wrapper.find("textarea").setValue("正面入口");
+        if (count) await upload(Array.from({ length: count }, (_, i) => new File(["image"], `${i}.png`, { type: "image/png" })));
+        await wrapper.find("form").trigger("submit");
+        await flushPromises();
+        expect(mutations("/posters")).toHaveLength(0);
+        expect(resizeImage).not.toHaveBeenCalled();
+        expect(wrapper.find("form .error").exists()).toBe(true);
+    });
+
+    it("選択した写真を追加・取り消しでき、上限の10枚を登録できる", async () => {
+        await open("/poster/new");
+        await wrapper.find("form input:not([type])").setValue("ポスターA");
+        await wrapper.find("textarea").setValue("正面入口");
+        const removed = await upload();
+        await wrapper.find('.image-selection button').trigger("click");
+        expect(wrapper.find("input[type=file]").attributes("required")).toBeDefined();
+        const files = Array.from({ length: 10 }, (_, i) => new File(["image"], `${i}.png`, { type: "image/png" }));
+        await upload(files.slice(0, 5));
+        await upload(files.slice(5));
+        expect(wrapper.findAll(".image-selection .image-preview")).toHaveLength(10);
+        expect(wrapper.find("input[type=file]").attributes("required")).toBeUndefined();
+        await wrapper.find("form").trigger("submit");
+        await flushPromises();
+        expect((mutations("/posters")[0].options.body as FormData).getAll("image")).toEqual(files);
+        expect(vi.mocked(resizeImage).mock.calls.some(([file]) => file === removed)).toBe(false);
+    });
+
+    it("名前と設置場所だけを編集すると写真を変更しない", async () => {
+        await open("/poster/detail/p1");
+        await button("編集する").trigger("click");
+        await wrapper.find("form input:not([type])").setValue("変更したポスター");
+        await wrapper.find("form").trigger("submit");
+        await flushPromises();
+        expect(JSON.parse(mutations("/posters/p1")[0].options.body as string)).toEqual({ name: "変更したポスター", description: "正面入口" });
+        expect(mutations("/posters/p1/images")).toHaveLength(0);
+        expect(wrapper.findAll(".detail-image")).toHaveLength(2);
+    });
+
+    it("写真だけを複数追加し、既存の写真を保持する", async () => {
+        await open("/poster/detail/p1");
+        await button("編集する").trigger("click");
+        const files = Array.from({ length: 8 }, (_, i) => new File(["image"], `${i}.png`, { type: "image/png" }));
+        await upload(files);
+        await wrapper.find("form").trigger("submit");
+        await flushPromises();
+        const request = mutations("/posters/p1/images")[0];
+        const body = request.options.body as FormData;
+        expect(request.options.method).toBe("PATCH");
+        expect(request.options.headers).toBeUndefined();
+        expect(body.getAll("image")).toEqual(files);
+        expect(body.getAll("delete_image_ids")).toEqual([]);
+        expect(mutations("/posters/p1")).toHaveLength(0);
+        const urls = wrapper.findAll(".detail-image").map((img) => img.attributes("src"));
+        expect(urls).toHaveLength(10);
+        expect(urls.slice(0, 2)).toEqual([imageUrl("/api/v1/images/image1"), imageUrl("/api/v1/images/image2")]);
+        expect(urls[2]).toContain("/images/uploaded-1");
+    });
+
+    it("指定した写真だけを削除し、残りの写真を保持する", async () => {
+        await open("/poster/detail/p1");
+        await button("編集する").trigger("click");
+        await wrapper.find('input[type=checkbox][value=image1]').setValue(true);
+        await wrapper.find("form").trigger("submit");
+        await flushPromises();
+        const body = mutations("/posters/p1/images")[0].options.body as FormData;
+        expect(body.getAll("delete_image_ids")).toEqual(["image1"]);
+        expect(body.getAll("image")).toEqual([]);
+        expect(resizeImage).not.toHaveBeenCalled();
+        expect(wrapper.findAll(".detail-image").map((img) => img.attributes("src"))).toEqual([imageUrl("/api/v1/images/image2")]);
+    });
+
+    it("全写真の削除と新しい写真の追加を同時に送って差し替える", async () => {
+        await open("/poster/detail/p1");
+        await button("編集する").trigger("click");
+        for (const checkbox of wrapper.findAll("form input[type=checkbox]")) await checkbox.setValue(true);
+        const file = await upload();
+        await wrapper.find("form").trigger("submit");
+        await flushPromises();
+        const body = mutations("/posters/p1/images")[0].options.body as FormData;
+        expect(body.getAll("delete_image_ids")).toEqual(["image1", "image2"]);
+        expect(body.getAll("image")).toEqual([file]);
+        expect(wrapper.findAll(".detail-image")).toHaveLength(1);
+        expect(wrapper.find(".detail-image").attributes("src")).toContain("/images/uploaded-1");
+    });
+
+    it.each([1, 2])("残っている%s枚の写真をすべて削除する変更は送信しない", async (count) => {
+        poster.image = poster.image.slice(0, count);
+        await open("/poster/detail/p1");
+        await button("編集する").trigger("click");
+        await wrapper.find("form input:not([type])").setValue("変更したポスター");
+        for (const checkbox of wrapper.findAll("form input[type=checkbox]")) await checkbox.setValue(true);
+        expect(button("保存する").attributes("disabled")).toBeDefined();
+        await wrapper.find("form").trigger("submit");
+        await flushPromises();
+        expect(mutations("/posters/p1")).toHaveLength(0);
+        expect(mutations("/posters/p1/images")).toHaveLength(0);
+        expect(wrapper.find("form").text()).toContain("写真を1枚以上残す");
+    });
+
+    it("編集後の写真が11枚になる追加は送信しない", async () => {
+        await open("/poster/detail/p1");
+        await button("編集する").trigger("click");
+        await upload(Array.from({ length: 9 }, (_, i) => new File(["image"], `${i}.png`, { type: "image/png" })));
+        expect(button("保存する").attributes("disabled")).toBeDefined();
+        await wrapper.find("form").trigger("submit");
+        await flushPromises();
+        expect(mutations("/posters/p1/images")).toHaveLength(0);
+        expect(resizeImage).not.toHaveBeenCalled();
+        expect(wrapper.find("form").text()).toContain("写真は10枚まで");
+    });
+
+    it("キャンセルすると写真の追加・削除指定を破棄する", async () => {
+        await open("/poster/detail/p1");
+        await button("編集する").trigger("click");
+        await wrapper.find('input[type=checkbox][value=image1]').setValue(true);
+        await upload();
+        await button("編集をキャンセル").trigger("click");
+        expect(URL.revokeObjectURL).toHaveBeenCalledWith("blob:preview");
+        await button("編集する").trigger("click");
+        expect(wrapper.find("form input[type=checkbox]").element).toHaveProperty("checked", false);
+        expect(wrapper.findAll("form .image-preview")).toHaveLength(2);
+        await wrapper.find("form").trigger("submit");
+        await flushPromises();
+        expect(mutations("/posters/p1/images")).toHaveLength(0);
+    });
+
+    it("圧縮失敗時はポスター情報も送信せず、選択を保持する", async () => {
+        await open("/poster/detail/p1");
+        await button("編集する").trigger("click");
+        await wrapper.find("form input:not([type])").setValue("変更したポスター");
+        await upload();
+        vi.mocked(resizeImage).mockRejectedValueOnce(new Error("画像の圧縮に失敗しました"));
+        await wrapper.find("form").trigger("submit");
+        await flushPromises();
+        expect(mutations("/posters/p1")).toHaveLength(0);
+        expect(mutations("/posters/p1/images")).toHaveLength(0);
+        expect(wrapper.find("form .image-preview[src='blob:preview']").exists()).toBe(true);
+        expect(wrapper.find("form").text()).toContain("画像の圧縮に失敗しました");
+    });
+
+    it("写真の保存失敗時に選択を保持し、保存済みの名前を再送せず再試行する", async () => {
+        await open("/poster/detail/p1");
+        await button("編集する").trigger("click");
+        await wrapper.find("form input:not([type])").setValue("変更したポスター");
+        await wrapper.find('input[type=checkbox][value=image1]').setValue(true);
+        const file = await upload();
+        fail = "/posters/p1/images";
+        await wrapper.find("form").trigger("submit");
+        await flushPromises();
+        expect(wrapper.find("form input[type=checkbox]").element).toHaveProperty("checked", true);
+        expect(wrapper.find("form .image-preview[src='blob:preview']").exists()).toBe(true);
+        expect(wrapper.find("form").text()).toContain("ポスター名・設置場所は保存済みです");
+        fail = "";
+        await wrapper.find("form").trigger("submit");
+        await flushPromises();
+        expect(mutations("/posters/p1")).toHaveLength(1);
+        expect(mutations("/posters/p1/images")).toHaveLength(2);
+        const body = mutations("/posters/p1/images")[1].options.body as FormData;
+        expect(body.getAll("image")).toEqual([file]);
+        expect(body.getAll("delete_image_ids")).toEqual(["image1"]);
+        expect(wrapper.findAll(".detail-image").map((img) => img.attributes("src"))).toEqual([imageUrl("/api/v1/images/image2"), imageUrl("/api/v1/images/uploaded-1")]);
+    });
+
+    it("写真の保存中は二重送信とキャンセルを防ぐ", async () => {
+        await open("/poster/detail/p1");
+        await button("編集する").trigger("click");
+        await upload();
+        let resolve!: (response: Response) => void;
+        vi.mocked(fetch).mockImplementation((input, options) =>
+            String(input).endsWith("/posters/p1/images") && options?.method === "PATCH"
+                ? new Promise<Response>((done) => {
+                    requests.push({ path: "/posters/p1/images", options });
+                    resolve = done;
+                })
+                : fixture(String(input), options),
+        );
+        await wrapper.find("form").trigger("submit");
+        await flushPromises();
+        expect(wrapper.find("fieldset").attributes("disabled")).toBeDefined();
+        expect(button("編集をキャンセル").attributes("disabled")).toBeDefined();
+        await wrapper.find("form").trigger("submit");
+        expect(mutations("/posters/p1/images")).toHaveLength(1);
+        resolve(Response.json({ image: poster.image }));
+        await flushPromises();
+        expect(wrapper.find("form").exists()).toBe(false);
     });
 });
 
