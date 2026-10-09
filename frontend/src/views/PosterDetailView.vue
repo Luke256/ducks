@@ -76,9 +76,11 @@ async function remove() {
       <section class="panel">
         <h2>設置場所</h2>
         <p class="description">{{ poster.description }}</p>
-        <a v-if="poster.image_url" :href="imageUrl(poster.image_url)" target="_blank" rel="noopener"
-          aria-label="設置場所の写真を拡大"><img :src="imageUrl(poster.image_url)" :alt="`${poster.name}の設置場所`"
-            class="detail-image" /></a>
+        <div v-if="poster.image_url.length" class="poster-images">
+          <a v-for="(url, index) in poster.image_url" :key="url" :href="imageUrl(url)" target="_blank" rel="noopener"
+            :aria-label="`設置場所の写真${index + 1}を拡大`"><img :src="imageUrl(url)"
+              :alt="`${poster.name}の設置場所（写真${index + 1}）`" class="detail-image" loading="lazy" /></a>
+        </div>
       </section>
       <section class="panel">
         <h2>回収状況</h2>

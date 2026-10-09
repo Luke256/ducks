@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"mime/multipart"
 
+	"github.com/Luke256/ducks/model"
 	"github.com/Luke256/ducks/repository"
 	"github.com/Luke256/ducks/service/festival"
 	"github.com/Luke256/ducks/utils/storage"
@@ -57,7 +58,7 @@ func (m *ManagerImpl) Create(name string, festivalID uuid.UUID, description stri
 		ID:          poster.ID,
 		Name:        poster.PosterName,
 		Description: poster.Description,
-		ImageURL:    m.storage.GetFileURL(poster.ImageID),
+		ImageURLs:   m.GetPosterImageURLs(poster.Images),
 		Status:      poster.Status,
 		Festival:    festival.Festival{ID: fes.ID, Name: fes.Name, Description: fes.Description},
 	}, nil
@@ -78,7 +79,7 @@ func (m *ManagerImpl) Get(id uuid.UUID) (Poster, error) {
 		ID:          poster.ID,
 		Name:        poster.PosterName,
 		Description: poster.Description,
-		ImageURL:    m.storage.GetFileURL(poster.ImageID),
+		ImageURLs:   m.GetPosterImageURLs(poster.Images),
 		Status:      poster.Status,
 		Festival:    festival.Festival{ID: poster.Festival.ID, Name: poster.Festival.Name, Description: poster.Festival.Description},
 	}, nil
@@ -101,7 +102,7 @@ func (m *ManagerImpl) GetByFestival(festivalID uuid.UUID) ([]Poster, error) {
 			ID:          p.ID,
 			Name:        p.PosterName,
 			Description: p.Description,
-			ImageURL:    m.storage.GetFileURL(p.ImageID),
+			ImageURLs:    m.GetPosterImageURLs(p.Images),
 			Status:      p.Status,
 			Festival:    festival.Festival{ID: p.Festival.ID, Name: p.Festival.Name, Description: p.Festival.Description},
 		}
@@ -125,7 +126,7 @@ func (m *ManagerImpl) GetByName(festivalID uuid.UUID, name string) (Poster, erro
 		ID:          poster.ID,
 		Name:        poster.PosterName,
 		Description: poster.Description,
-		ImageURL:    m.storage.GetFileURL(poster.ImageID),
+		ImageURLs:   m.GetPosterImageURLs(poster.Images),
 		Status:      poster.Status,
 		Festival:    festival.Festival{ID: poster.Festival.ID, Name: poster.Festival.Name, Description: poster.Festival.Description},
 	}, nil
@@ -169,9 +170,11 @@ func (m *ManagerImpl) Delete(id uuid.UUID) error {
 		}
 	}
 
-	err = m.storage.DeleteFile(poster.ImageID)
-	if err != nil {
-		return fmt.Errorf("failed to delete poster image from storage: %w", err)
+	for _, img := range poster.Images {
+		err = m.storage.DeleteFile(img.ID)
+		if err != nil {
+			return fmt.Errorf("failed to delete poster image from storage: %w", err)
+		}
 	}
 
 	err = m.repo.DeletePoster(id)
@@ -184,4 +187,12 @@ func (m *ManagerImpl) Delete(id uuid.UUID) error {
 		}
 	}
 	return nil
+}
+
+func (m *ManagerImpl) GetPosterImageURLs(images []model.PosterImage) []string {
+	imageURLs := make([]string, len(images))
+	for i, img := range images {
+		imageURLs[i] = m.storage.GetFileURL(img.ID)
+	}
+	return imageURLs
 }

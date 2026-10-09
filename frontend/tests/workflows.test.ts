@@ -3,7 +3,7 @@ import { mount, flushPromises, type VueWrapper } from "@vue/test-utils";
 import { nextTick } from "vue";
 import App from "@/App.vue";
 import router from "@/router";
-import { apiBase } from "@/lib/api";
+import { apiBase, imageUrl } from "@/lib/api";
 import {
     currentFestivalId,
     festivals,
@@ -13,6 +13,7 @@ import {
 } from "@/state";
 import { resizeImage } from "@/utils/resizeImage";
 import type { VisitorCount } from "@/types/visitorCount";
+import type { Poster } from "@/types/poster";
 vi.mock("@/utils/resizeImage", () => ({
     resizeImage: vi.fn(async (file: File) => file),
 }));
@@ -32,12 +33,12 @@ const stock = {
     description: "限定商品",
     item,
 };
-const poster = {
+const poster: Poster = {
     id: "p1",
     name: "講義棟 01",
     description: "正面入口",
     status: "uncollected",
-    image_url: "/api/v1/images/image1",
+    image_url: ["/api/v1/images/image1", "/api/v1/images/image2"],
     festival: event,
 };
 const records = [
@@ -134,6 +135,7 @@ beforeEach(() => {
     fail = "";
     stock.price = 500;
     itemImageUrl = item.image_url;
+    poster.image_url = ["/api/v1/images/image1", "/api/v1/images/image2"];
     visitorCounts = [
         { festival_id: "f1", bucket_start: "2026-10-08T10:10:00+09:00", count: 5 },
         { festival_id: "f1", bucket_start: "2026-10-08T10:00:00+09:00", count: 3 },
@@ -546,6 +548,30 @@ describe("商品画像の変更", () => {
         resolve(new Response(null, { status: 204 }));
         await flushPromises();
         expect(wrapper.find("form").exists()).toBe(false);
+    });
+});
+
+describe("ポスター画像", () => {
+    it.each([
+        ["画像なし", []],
+        ["1枚", ["/api/v1/images/image1"]],
+        ["複数枚", ["/api/v1/images/image1", "https://example.com/image2.jpg"]],
+    ] as [string, string[]][])("%sの配列を受け取り、一覧と詳細に表示する", async (_, urls) => {
+        poster.image_url = urls;
+        await open("/poster");
+        const thumbnails = wrapper.findAll("tbody .thumbnail");
+        expect(thumbnails).toHaveLength(urls.length ? 1 : 0);
+        if (urls.length) expect(thumbnails[0].attributes("src")).toBe(imageUrl(urls[0]));
+
+        await router.push("/poster/detail/p1");
+        await flushPromises();
+        expect(wrapper.findAll(".detail-image").map((img) => img.attributes("src"))).toEqual(urls.map(imageUrl));
+        const links = wrapper.findAll(".poster-images a");
+        expect(links.map((link) => link.attributes("href"))).toEqual(urls.map(imageUrl));
+        for (const link of links) {
+            expect(link.attributes("target")).toBe("_blank");
+            expect(link.attributes("rel")).toBe("noopener");
+        }
     });
 });
 

@@ -23,7 +23,7 @@ type Poster struct {
 	ID          uuid.UUID         `json:"id"`
 	Name        string            `json:"name"`
 	Description string            `json:"description"`
-	ImageURL    string            `json:"image_url"`
+	ImageURLs   []string          `json:"image_url"`
 	Status      string            `json:"status"`
 	Festival    festival.Festival `json:"festival"`
 }

@@ -608,6 +608,11 @@ tfoot th {
     margin-bottom: 28px;
 }
 
+.poster-images {
+    display: grid;
+    gap: 16px;
+}
+
 .detail-image {
     display: block;
     width: 100%;

@@ -59,7 +59,7 @@ func TestGetPosterByID(t *testing.T) {
 		assert.NoError(t, err)
 		assert.Equal(t, "PosterQuery", p.PosterName)
 		assert.Equal(t, "desc", p.Description)
-		assert.Equal(t, "img-2", p.ImageID)
+		assert.Equal(t, "img-2", p.Images[0].ID)
 		assert.Equal(t, festival.ID, p.FestivalID)
 		assert.Equal(t, festival.ID, p.Festival.ID)
 	})
@@ -83,7 +83,7 @@ func TestGetPosterByFestivalIDAndPosterName(t *testing.T) {
 		assert.NoError(t, err)
 		assert.Equal(t, poster.ID, p.ID)
 		assert.Equal(t, "desc-name", p.Description)
-		assert.Equal(t, "img-name", p.ImageID)
+		assert.Equal(t, "img-name", p.Images[0].ID)
 		assert.Equal(t, festival.ID, p.Festival.ID)
 	})
 }

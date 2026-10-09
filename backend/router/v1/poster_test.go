@@ -156,7 +156,7 @@ func TestListPostersByFestival(t *testing.T) {
 			},
 			"name":        poster1.Name,
 			"description": poster1.Description,
-			"image_url":   poster1.ImageURL,
+			"image_url":   poster1.ImageURLs,
 			"status":      poster1.Status,
 		},
 		map[string]any{
@@ -168,7 +168,7 @@ func TestListPostersByFestival(t *testing.T) {
 			},
 			"name":        poster2.Name,
 			"description": poster2.Description,
-			"image_url":   poster2.ImageURL,
+			"image_url":   poster2.ImageURLs,
 			"status":      poster2.Status,
 		},
 	)
@@ -191,7 +191,7 @@ func TestGetPoster(t *testing.T) {
 		resp.Value("festival").Object().Value("id").IsEqual(fes.ID.String())
 		resp.Value("name").IsEqual(poster.Name)
 		resp.Value("description").IsEqual(poster.Description)
-		resp.Value("image_url").IsEqual(poster.ImageURL)
+		resp.Value("image_url").IsEqual(poster.ImageURLs)
 		resp.Value("status").IsEqual(poster.Status)
 	})
 
@@ -220,7 +220,7 @@ func TestGetPosterByFestivalAndName(t *testing.T) {
 		resp.Value("festival").Object().Value("id").IsEqual(fes.ID.String())
 		resp.Value("name").IsEqual(poster.Name)
 		resp.Value("description").IsEqual(poster.Description)
-		resp.Value("image_url").IsEqual(poster.ImageURL)
+		resp.Value("image_url").IsEqual(poster.ImageURLs)
 		resp.Value("status").IsEqual(poster.Status)
 	})
 
@@ -263,7 +263,7 @@ func TestUpdatePoster(t *testing.T) {
 		resp.Value("festival").Object().Value("id").IsEqual(fes.ID.String())
 		resp.Value("name").IsEqual("Updated Poster Name")
 		resp.Value("description").IsEqual("Updated description.")
-		resp.Value("image_url").IsEqual(poster.ImageURL)
+		resp.Value("image_url").IsEqual(poster.ImageURLs)
 		resp.Value("status").IsEqual(poster.Status)
 	})
 
@@ -333,7 +333,7 @@ func TestUpdatePosterStatus(t *testing.T) {
 		resp.Value("festival").Object().Value("id").IsEqual(fes.ID.String())
 		resp.Value("name").IsEqual(poster.Name)
 		resp.Value("description").IsEqual(poster.Description)
-		resp.Value("image_url").IsEqual(poster.ImageURL)
+		resp.Value("image_url").IsEqual(poster.ImageURLs)
 		resp.Value("status").IsEqual(PosterStatusCollected)
 	})
 

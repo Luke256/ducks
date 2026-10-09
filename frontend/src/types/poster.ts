@@ -12,7 +12,7 @@ type Poster = {
     id: string;
     name: string;
     description: string;
-    image_url: string;
+    image_url: string[];
     status: PosterStatus;
     festival: Festival;
 };

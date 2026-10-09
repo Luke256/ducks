@@ -21,8 +21,13 @@ func (r *GormRepository) RegisterPoster(festivalID uuid.UUID, posterName, descri
 		FestivalID:  festivalID,
 		PosterName:  posterName,
 		Description: description,
-		ImageID:     imageID,
 		Status:      "uncollected",
+		Images: []model.PosterImage{
+			{
+				ID:       imageID,
+				PosterID: posterID,
+			},
+		},
 	}
 
 	ctx := context.Background()
@@ -38,6 +43,7 @@ func (r *GormRepository) GetPostersByFestivalID(festivalID uuid.UUID) ([]model.P
 	posters, err := gorm.G[model.Poster](r.db).
 		Where(&model.Poster{FestivalID: festivalID}, "FestivalID").
 		Preload("Festival", nil).
+		Preload("Images", nil).
 		Find(ctx)
 	if err != nil {
 		return nil, wrapGormError(err)
@@ -51,6 +57,7 @@ func (r *GormRepository) GetPosterByID(posterID uuid.UUID) (model.Poster, error)
 	poster, err := gorm.G[model.Poster](r.db).
 		Where(&model.Poster{ID: posterID}, "ID").
 		Preload("Festival", nil).
+		Preload("Images", nil).
 		First(ctx)
 	if err != nil {
 		return model.Poster{}, wrapGormError(err)
@@ -64,6 +71,7 @@ func (r *GormRepository) GetPosterByFestivalIDAndPosterName(festivalID uuid.UUID
 	poster, err := gorm.G[model.Poster](r.db).
 		Where(&model.Poster{FestivalID: festivalID, PosterName: posterName}, "FestivalID", "PosterName").
 		Preload("Festival", nil).
+		Preload("Images", nil).
 		First(ctx)
 	if err != nil {
 		return model.Poster{}, wrapGormError(err)
