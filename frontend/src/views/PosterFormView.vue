@@ -52,7 +52,8 @@ async function save() {
       <label class="field">ポスター名<input v-model="form.name" required maxlength="64" placeholder="例：42" /></label><label
         class="field">設置場所<textarea v-model="form.description" required maxlength="1024" rows="3"
           placeholder="回収する人が場所を特定できるように記載" /></label>
-      <ImagesField v-model="images" label="設置場所の写真" required />
+      <h3>設置場所の写真</h3>
+      <ImagesField v-model="images" label="写真を追加" required />
       <p class="muted small">写真は1〜{{ maxPosterImages }}枚登録できます（選択中：{{ images.length }}枚）。画像はアップロード前に圧縮されます。</p>
       <p v-if="error" class="error" role="alert">{{ error }}</p>
       <div class="actions">

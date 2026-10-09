@@ -141,16 +141,8 @@ async function remove() {
           class="field">設置場所<textarea v-model="form.description" required maxlength="1024" rows="4" />
         </label>
         <h3>設置場所の写真</h3>
-        <div class="image-selection">
-          <figure v-for="(image, index) in poster.image" :key="image.id">
-            <img :src="imageUrl(image.url)" :alt="`登録済みの写真${index + 1}`" class="image-preview" />
-            <figcaption>
-              <label class="image-delete"><input v-model="deleteImageIds" type="checkbox" :value="image.id" />写真{{ index + 1 }}を削除する</label>
-            </figcaption>
-          </figure>
-        </div>
-        <ImagesField v-model="images" label="写真を追加" />
-        <p class="muted small">保存後の写真：{{ imageCount }} / {{ maxPosterImages }}枚。削除する写真を選び、新しい写真を追加すると差し替えられます。画像はアップロード前に圧縮されます。</p>
+        <ImagesField v-model="images" v-model:delete-image-ids="deleteImageIds" :existing="poster.image" label="写真を追加" />
+        <p class="muted small">保存後の写真：{{ imageCount }} / {{ maxPosterImages }}枚。画像はアップロード前に圧縮されます。</p>
         <p v-if="imageCount < 1" class="error" role="alert">写真を1枚以上残すか、新しい写真を追加してください。</p>
         <p v-else-if="imageCount > maxPosterImages" class="error" role="alert">写真は{{ maxPosterImages }}枚まで登録できます。</p>
         <p v-if="saveError" class="error" role="alert">{{ saveError }}</p>

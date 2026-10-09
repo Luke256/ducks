@@ -602,6 +602,8 @@ describe("ポスター画像", () => {
         await wrapper.find("form input:not([type])").setValue("ポスターA");
         await wrapper.find("textarea").setValue("正面入口");
         expect(wrapper.find("input[type=file]").attributes("multiple")).toBeDefined();
+        expect(wrapper.find(".image-add-button").text()).toBe("＋写真を追加");
+        expect(wrapper.find("input[type=file]").attributes("aria-label")).toBe("写真を追加");
         const files = [
             new File(["first"], "first.png", { type: "image/png" }),
             new File(["second"], "second.png", { type: "image/png" }),
@@ -635,7 +637,7 @@ describe("ポスター画像", () => {
         expect(wrapper.find("form .error").exists()).toBe(true);
     });
 
-    it("選択した写真を追加・取り消しでき、上限の10枚を登録できる", async () => {
+    it("選択した写真を追加・削除でき、上限の10枚を登録できる", async () => {
         await open("/poster/new");
         await wrapper.find("form input:not([type])").setValue("ポスターA");
         await wrapper.find("textarea").setValue("正面入口");
@@ -651,6 +653,51 @@ describe("ポスター画像", () => {
         await flushPromises();
         expect((mutations("/posters")[0].options.body as FormData).getAll("image")).toEqual(files);
         expect(vi.mocked(resizeImage).mock.calls.some(([file]) => file === removed)).toBe(false);
+    });
+
+    it("既存写真は削除対象の表示を切り替え、追加写真は確認後に一覧から取り除く", async () => {
+        await open("/poster/detail/p1");
+        await button("編集する").trigger("click");
+        const files = [
+            new File(["first"], "first.png", { type: "image/png" }),
+            new File(["second"], "second.png", { type: "image/png" }),
+        ];
+        await upload(files);
+        expect(wrapper.findAll("form .image-selection")).toHaveLength(1);
+        expect(wrapper.findAll("form .image-selection figure")).toHaveLength(4);
+        const controls = wrapper.findAll(".image-selection button");
+        expect(controls.map((control) => control.text())).toEqual(Array(4).fill("削除"));
+        expect(controls.every((control) => control.classes().includes("secondary"))).toBe(true);
+        const existing = wrapper.find('button[aria-label="登録済みの写真1を削除する"]');
+        await existing.trigger("click");
+        expect(wrapper.findAll("form .image-selection figure")).toHaveLength(4);
+        expect(wrapper.findAll(".marked-for-deletion")).toHaveLength(1);
+        expect(wrapper.text()).not.toContain("削除予定");
+        expect(existing.text()).toBe("元に戻す");
+        await existing.trigger("click");
+        expect(wrapper.find(".marked-for-deletion").exists()).toBe(false);
+        expect(existing.text()).toBe("削除");
+        await existing.trigger("click");
+        const cancelAddition = wrapper.findAll("form .image-selection figure")[2].find("button");
+        vi.mocked(window.confirm).mockReturnValueOnce(false);
+        await cancelAddition.trigger("click");
+        expect(window.confirm).toHaveBeenCalledWith("「first.png」を削除しますか？");
+        expect(wrapper.findAll("form .image-selection figure")).toHaveLength(4);
+        expect(URL.revokeObjectURL).not.toHaveBeenCalled();
+        await cancelAddition.trigger("click");
+        const photos = wrapper.findAll("form .image-selection figure");
+        expect(photos).toHaveLength(3);
+        expect(photos[2].text()).toContain("second.png");
+        expect(photos[2].find("button").text()).toBe("削除");
+        expect(photos[2].classes()).not.toContain("marked-for-deletion");
+        expect(URL.revokeObjectURL).toHaveBeenCalled();
+        await wrapper.find("form").trigger("submit");
+        await flushPromises();
+        const body = mutations("/posters/p1/images")[0].options.body as FormData;
+        expect(body.getAll("delete_image_ids")).toEqual(["image1"]);
+        expect(body.getAll("image")).toHaveLength(1);
+        expect(body.get("image")).toBe(files[1]);
+        expect(vi.mocked(resizeImage).mock.calls.some(([file]) => file === files[0])).toBe(false);
     });
 
     it("名前と設置場所だけを編集すると写真を変更しない", async () => {
@@ -687,7 +734,7 @@ describe("ポスター画像", () => {
     it("指定した写真だけを削除し、残りの写真を保持する", async () => {
         await open("/poster/detail/p1");
         await button("編集する").trigger("click");
-        await wrapper.find('input[type=checkbox][value=image1]').setValue(true);
+        await wrapper.find('button[aria-label="登録済みの写真1を削除する"]').trigger("click");
         await wrapper.find("form").trigger("submit");
         await flushPromises();
         const body = mutations("/posters/p1/images")[0].options.body as FormData;
@@ -700,7 +747,7 @@ describe("ポスター画像", () => {
     it("全写真の削除と新しい写真の追加を同時に送って差し替える", async () => {
         await open("/poster/detail/p1");
         await button("編集する").trigger("click");
-        for (const checkbox of wrapper.findAll("form input[type=checkbox]")) await checkbox.setValue(true);
+        for (const control of wrapper.findAll('form button[aria-label^="登録済みの写真"]')) await control.trigger("click");
         const file = await upload();
         await wrapper.find("form").trigger("submit");
         await flushPromises();
@@ -716,7 +763,7 @@ describe("ポスター画像", () => {
         await open("/poster/detail/p1");
         await button("編集する").trigger("click");
         await wrapper.find("form input:not([type])").setValue("変更したポスター");
-        for (const checkbox of wrapper.findAll("form input[type=checkbox]")) await checkbox.setValue(true);
+        for (const control of wrapper.findAll('form button[aria-label^="登録済みの写真"]')) await control.trigger("click");
         expect(button("保存する").attributes("disabled")).toBeDefined();
         await wrapper.find("form").trigger("submit");
         await flushPromises();
@@ -740,12 +787,12 @@ describe("ポスター画像", () => {
     it("キャンセルすると写真の追加・削除指定を破棄する", async () => {
         await open("/poster/detail/p1");
         await button("編集する").trigger("click");
-        await wrapper.find('input[type=checkbox][value=image1]').setValue(true);
+        await wrapper.find('button[aria-label="登録済みの写真1を削除する"]').trigger("click");
         await upload();
         await button("編集をキャンセル").trigger("click");
         expect(URL.revokeObjectURL).toHaveBeenCalledWith("blob:preview");
         await button("編集する").trigger("click");
-        expect(wrapper.find("form input[type=checkbox]").element).toHaveProperty("checked", false);
+        expect(wrapper.find('form button[aria-label^="登録済みの写真"]').text()).toBe("削除");
         expect(wrapper.findAll("form .image-preview")).toHaveLength(2);
         await wrapper.find("form").trigger("submit");
         await flushPromises();
@@ -770,12 +817,13 @@ describe("ポスター画像", () => {
         await open("/poster/detail/p1");
         await button("編集する").trigger("click");
         await wrapper.find("form input:not([type])").setValue("変更したポスター");
-        await wrapper.find('input[type=checkbox][value=image1]').setValue(true);
+        await wrapper.find('button[aria-label="登録済みの写真1を削除する"]').trigger("click");
         const file = await upload();
         fail = "/posters/p1/images";
         await wrapper.find("form").trigger("submit");
         await flushPromises();
-        expect(wrapper.find("form input[type=checkbox]").element).toHaveProperty("checked", true);
+        expect(wrapper.find('form button[aria-label^="登録済みの写真"]').text()).toBe("元に戻す");
+        expect(wrapper.find(".marked-for-deletion").exists()).toBe(true);
         expect(wrapper.find("form .image-preview[src='blob:preview']").exists()).toBe(true);
         expect(wrapper.find("form").text()).toContain("ポスター名・設置場所は保存済みです");
         fail = "";
