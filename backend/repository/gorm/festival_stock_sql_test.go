@@ -11,6 +11,7 @@ import (
 )
 
 func TestRegisterFestivalStockIncludesZeroPrice(t *testing.T) {
+	t.Parallel()
 	db, err := gorm.Open(mysql.New(mysql.Config{
 		DSN:                       "root@tcp(localhost:3307)/ducks",
 		SkipInitializeWithVersion: true,

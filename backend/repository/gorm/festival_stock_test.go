@@ -10,12 +10,14 @@ import (
 )
 
 func TestRegisterFestivalStock(t *testing.T) {
+	t.Parallel()
 	repo := setup(t, common)
 
 	fes := mustCreateFestival(t, repo, "Fest for Stock", "Festival Description")
 	item := mustCreateStockItem(t, repo, "Stock Item", "Item Description", "Category", "image_id")
 
 	t.Run("Register Festival Stock", func(t *testing.T) {
+		t.Parallel()
 		festivalStock, err := repo.RegisterFestivalStock(fes.ID, item.ID, 500, "Stock Description")
 		assert.NoError(t, err)
 		assert.NotZero(t, festivalStock.ID)
@@ -27,6 +29,7 @@ func TestRegisterFestivalStock(t *testing.T) {
 }
 
 func TestGetFestivalStockByID(t *testing.T) {
+	t.Parallel()
 	repo := setup(t, common)
 
 	fes := mustCreateFestival(t, repo, "Fest for Stock", "Festival Description")
@@ -34,6 +37,7 @@ func TestGetFestivalStockByID(t *testing.T) {
 	fesStock := mustCreateFestivalStock(t, repo, fes.ID, item.ID, 500, "Stock Description")
 
 	t.Run("Get Festival Stock By ID", func(t *testing.T) {
+		t.Parallel()
 		retrievedStock, err := repo.GetFestivalStockByID(fesStock.ID)
 		assert.NoError(t, err)
 		assert.Equal(t, fesStock.ID, retrievedStock.ID)
@@ -44,6 +48,7 @@ func TestGetFestivalStockByID(t *testing.T) {
 	})
 
 	t.Run("Get Non-Existent Festival Stock By ID", func(t *testing.T) {
+		t.Parallel()
 		id, err := uuid.NewV7()
 		assert.NoError(t, err)
 		_, err = repo.GetFestivalStockByID(id)
@@ -52,6 +57,7 @@ func TestGetFestivalStockByID(t *testing.T) {
 	})
 
 	t.Run("Get Festival Stock By Zero UUID", func(t *testing.T) {
+		t.Parallel()
 		_, err := repo.GetFestivalStockByID(uuid.Nil)
 		assert.Error(t, err)
 		assert.Equal(t, repository.ErrNotFound, err)
@@ -59,6 +65,7 @@ func TestGetFestivalStockByID(t *testing.T) {
 }
 
 func TestQueryFestivalStocks(t *testing.T) {
+	t.Parallel()
 	repo := setup(t, s2)
 
 	fes1 := mustCreateFestival(t, repo, "Fest for Stock", "Festival Description")
@@ -72,6 +79,7 @@ func TestQueryFestivalStocks(t *testing.T) {
 	stock4 := mustCreateFestivalStock(t, repo, fes2.ID, item1.ID, 700, "Stock Description 4")
 
 	t.Run("Query All Festival Stocks", func(t *testing.T) {
+		t.Parallel()
 		stocks, err := repo.QueryFestivalStocks(uuid.Nil, "")
 		assert.NoError(t, err)
 		assert.Len(t, stocks, 4)
@@ -95,6 +103,7 @@ func TestQueryFestivalStocks(t *testing.T) {
 	})
 
 	t.Run("Query Festival Stocks by Festival ID", func(t *testing.T) {
+		t.Parallel()
 		stocks, err := repo.QueryFestivalStocks(fes1.ID, "")
 		assert.NoError(t, err)
 		assert.Len(t, stocks, 3)
@@ -109,6 +118,7 @@ func TestQueryFestivalStocks(t *testing.T) {
 	})
 
 	t.Run("Query Festival Stocks by Category", func(t *testing.T) {
+		t.Parallel()
 		stocks, err := repo.QueryFestivalStocks(uuid.Nil, "Category1")
 		assert.NoError(t, err)
 		assert.Len(t, stocks, 3)
@@ -123,6 +133,7 @@ func TestQueryFestivalStocks(t *testing.T) {
 	})
 
 	t.Run("Query Festival Stocks by Festival ID and Category", func(t *testing.T) {
+		t.Parallel()
 		stocks, err := repo.QueryFestivalStocks(fes1.ID, "Category1")
 		assert.NoError(t, err)
 		assert.Len(t, stocks, 2)
@@ -137,6 +148,7 @@ func TestQueryFestivalStocks(t *testing.T) {
 }
 
 func TestUpdateFestivalStockPrice(t *testing.T) {
+	t.Parallel()
 	repo := setup(t, common)
 
 	fes := mustCreateFestival(t, repo, "Fest for Stock", "Festival Description")
@@ -144,6 +156,7 @@ func TestUpdateFestivalStockPrice(t *testing.T) {
 	fesStock := mustCreateFestivalStock(t, repo, fes.ID, item.ID, 500, "Stock Description")
 
 	t.Run("Update Festival Stock Price", func(t *testing.T) {
+		t.Parallel()
 		err := repo.UpdateFestivalStock(fesStock.ID, "Updated Stock Description")
 		assert.NoError(t, err)
 
@@ -154,6 +167,7 @@ func TestUpdateFestivalStockPrice(t *testing.T) {
 	})
 
 	t.Run("Update Non-Existent Festival Stock Price", func(t *testing.T) {
+		t.Parallel()
 		id, err := uuid.NewV7()
 		assert.NoError(t, err)
 		err = repo.UpdateFestivalStock(id, "Updated Stock Description")
@@ -162,6 +176,7 @@ func TestUpdateFestivalStockPrice(t *testing.T) {
 	})
 
 	t.Run("Update Festival Stock Price with Zero UUID", func(t *testing.T) {
+		t.Parallel()
 		err := repo.UpdateFestivalStock(uuid.Nil, "Updated Stock Description")
 		assert.Error(t, err)
 		assert.Equal(t, repository.ErrNotFound, err)
@@ -169,6 +184,7 @@ func TestUpdateFestivalStockPrice(t *testing.T) {
 }
 
 func TestDeleteFestivalStock(t *testing.T) {
+	t.Parallel()
 	repo := setup(t, common)
 
 	fes := mustCreateFestival(t, repo, "Fest for Stock", "Festival Description")
@@ -176,6 +192,7 @@ func TestDeleteFestivalStock(t *testing.T) {
 	fesStock := mustCreateFestivalStock(t, repo, fes.ID, item.ID, 500, "Stock Description")
 
 	t.Run("Delete Festival Stock", func(t *testing.T) {
+		t.Parallel()
 		err := repo.DeleteFestivalStock(fesStock.ID)
 		assert.NoError(t, err)
 
@@ -185,6 +202,7 @@ func TestDeleteFestivalStock(t *testing.T) {
 	})
 
 	t.Run("Delete Non-Existent Festival Stock", func(t *testing.T) {
+		t.Parallel()
 		id, err := uuid.NewV7()
 		assert.NoError(t, err)
 		err = repo.DeleteFestivalStock(id)
@@ -192,6 +210,7 @@ func TestDeleteFestivalStock(t *testing.T) {
 	})
 
 	t.Run("Delete Festival Stock with Zero UUID", func(t *testing.T) {
+		t.Parallel()
 		err := repo.DeleteFestivalStock(uuid.Nil)
 		assert.Equal(t, repository.ErrNotFound, err)
 	})

@@ -62,6 +62,7 @@ func (r *Handler) Setup(g *echo.Group) {
 	posters.GET("/:id", r.GetPoster)
 	posters.GET("/:festival_id/:poster_name", r.GetPosterByFestivalAndName)
 	posters.PUT("/:id", r.EditPoster)
+	posters.PATCH("/:id/images", r.UpdatePosterImages)
 	posters.PATCH("/:id/status", r.UpdatePosterStatus)
 	posters.DELETE("/:id", r.DeletePoster)
 

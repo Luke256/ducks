@@ -50,7 +50,7 @@ async function create() {
   <form v-if="formOpen" class="panel form-panel" @submit.prevent="create">
     <h2>新しいイベント</h2>
     <fieldset :disabled="pending">
-      <label class="field">イベント名<input v-model="form.name" required placeholder="例：工大祭 2026" /></label><label
+      <label class="field">イベント名<input v-model="form.name" required placeholder="例：工大祭26" /></label><label
         class="field">概要<textarea v-model="form.description" rows="3" placeholder="開催内容や運営メモ" />
       </label>
       <p v-if="error" class="error" role="alert">{{ error }}</p>

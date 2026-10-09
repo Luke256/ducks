@@ -407,9 +407,16 @@ main {
     font-weight: 650;
 }
 
-.badge.selected {
+.badge.selected,
+.category-tags .badge.primary {
     background: #fff1b8;
     color: #705713;
+}
+
+.category-tags {
+    display: inline-flex;
+    flex-wrap: wrap;
+    gap: 6px;
 }
 
 .text-link {
@@ -608,6 +615,11 @@ tfoot th {
     margin-bottom: 28px;
 }
 
+.poster-images {
+    display: grid;
+    gap: 16px;
+}
+
 .detail-image {
     display: block;
     width: 100%;
@@ -624,6 +636,61 @@ tfoot th {
     display: block;
     border-radius: 8px;
     margin-bottom: 22px;
+}
+
+.image-selection {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 180px), 1fr));
+    gap: 16px;
+    margin-bottom: 22px;
+}
+
+.image-selection figure {
+    margin: 0;
+    min-width: 0;
+}
+
+.image-selection .image-preview {
+    width: 100%;
+    height: 160px;
+    margin-bottom: 8px;
+}
+
+.image-selection figcaption {
+    overflow-wrap: anywhere;
+}
+
+.marked-for-deletion .image-preview {
+    outline: 2px solid #c98f8f;
+    outline-offset: 2px;
+}
+
+.image-add-button {
+    position: relative;
+    cursor: pointer;
+    margin-bottom: 22px;
+}
+
+.image-add-button input {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    min-height: 0;
+    padding: 0;
+    opacity: 0;
+    cursor: inherit;
+}
+
+.image-add-button:focus-within {
+    outline: 3px solid #2864a6;
+    outline-offset: 3px;
+}
+
+fieldset:disabled .image-add-button {
+    cursor: default;
+    opacity: 0.5;
+    pointer-events: none;
 }
 
 dl {
@@ -756,6 +823,8 @@ dd {
 }
 
 .product-photo img {
+    position: absolute;
+    inset: 0;
     width: 100%;
     height: 100%;
     object-fit: contain;

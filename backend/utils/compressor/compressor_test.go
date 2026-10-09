@@ -6,6 +6,7 @@ import (
 )
 
 func TestCompressImage_PNG(t *testing.T) {
+	t.Parallel()
 	f, err := os.Open("../../test/test.png")
 	if err != nil {
 		t.Fatalf("failed to open test.png: %v", err)
@@ -33,6 +34,7 @@ func TestCompressImage_PNG(t *testing.T) {
 }
 
 func TestCompressImage_JPEG(t *testing.T) {
+	t.Parallel()
 	f, err := os.Open("../../test/test.jpg")
 	if err != nil {
 		t.Fatalf("failed to open test.jpg: %v", err)

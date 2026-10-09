@@ -13,6 +13,7 @@ func Migrations() []*gormigrate.Migration {
 	return []*gormigrate.Migration{
 		v1(), // v1 販売管理システムの追加
 		v2(), // v2 来客数管理システムの追加
+		v3(), // v3 ポスター画像の複数枚対応
 	}
 }
 
@@ -22,6 +23,7 @@ func Migrations() []*gormigrate.Migration {
 func AllTables() []any {
 	return []any{
 		&model.Poster{},
+		&model.PosterImage{},
 		&model.Festival{},
 		&model.StockItem{},
 		&model.FestivalStock{},

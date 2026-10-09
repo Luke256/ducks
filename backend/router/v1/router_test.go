@@ -2,6 +2,7 @@ package v1
 
 import (
 	"fmt"
+	"mime/multipart"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -33,6 +34,7 @@ const (
 	s1       = "s1"
 	s2       = "s2"
 	s3       = "s3"
+	s4       = "s4"
 )
 
 var (
@@ -45,7 +47,7 @@ func TestMain(m *testing.M) {
 	dbHost := utils.GetEnvOrDefault("NS_MARIADB_HOST", "localhost")
 	dbPort := utils.GetEnvOrDefault("NS_MARIADB_PORT", "3307")
 	dbs := []string{
-		common, s1, s2, s3,
+		common, s1, s2, s3, s4,
 	}
 
 	config := &driverMysql.Config{
@@ -186,7 +188,7 @@ func (e *env) mustCreateFestival(t *testing.T, name string, description string) 
 
 func (e *env) mustCreatePoster(t *testing.T, festivalID uuid.UUID, name string, description string) poster.Poster {
 	t.Helper()
-	poster, err := e.PM.Create(name, festivalID, description, nil)
+	poster, err := e.PM.Create(name, festivalID, description, []*multipart.FileHeader{{Filename: "test.png"}})
 	if err != nil {
 		t.Fatalf("failed to create poster: %v", err)
 	}

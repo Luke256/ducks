@@ -6,6 +6,7 @@ import { useResource, listOf } from "@/composables/useResource";
 import { useMutation } from "@/composables/useMutation";
 import { api, jsonBody, imageUrl } from "@/lib/api";
 import { saleItems } from "@/lib/sales";
+import { categoryTags } from "@/lib/categories";
 import type { Stock } from "@/types/stock";
 import ResourceState from "@/components/ResourceState.vue";
 const {
@@ -26,17 +27,18 @@ const category = ref("");
 const received = ref<number | "">("");
 const { pending, error: saleError, run } = useMutation();
 const categories = computed(() =>
-  [...new Set((stocks.value || []).map((s) => s.item.category))].sort(),
+  [...new Set((stocks.value || []).flatMap((s) => categoryTags(s.item.category)))].sort(),
 );
 const groups = computed(() => {
-  const result: Record<string, Stock[]> = {};
+  const result: Record<string, Stock[]> = Object.create(null);
   for (const stock of stocks.value || []) {
+    const tags = categoryTags(stock.item.category);
     if (
-      (category.value && stock.item.category !== category.value) ||
+      (category.value && !tags.includes(category.value)) ||
       !`${stock.item.name} ${stock.description}`.includes(search.value.trim())
     )
       continue;
-    (result[stock.item.category] ||= []).push(stock);
+    (result[tags[0] || "未分類"] ||= []).push(stock);
   }
   return Object.entries(result)
     .sort(([a], [b]) => a.localeCompare(b, "ja"))

@@ -1,10 +1,14 @@
 package v1
 
 import (
+	"errors"
 	"log/slog"
+	"mime/multipart"
+	"net/http"
 
+	"github.com/Luke256/ducks/repository"
 	"github.com/Luke256/ducks/service/poster"
-	"github.com/go-ozzo/ozzo-validation/v4"
+	validation "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
 )
@@ -51,11 +55,11 @@ type UpdatePosterStatusRequest struct {
 func (r UpdatePosterStatusRequest) Validate() error {
 	return validation.ValidateStruct(&r,
 		validation.Field(&r.ID, validation.Required),
-		validation.Field(&r.Status, 
+		validation.Field(&r.Status,
 			validation.Required,
 			validation.In(
-				PosterStatusUncollected, 
-				PosterStatusCollected, 
+				PosterStatusUncollected,
+				PosterStatusCollected,
 				PosterStatusLost,
 			),
 		),
@@ -63,6 +67,11 @@ func (r UpdatePosterStatusRequest) Validate() error {
 }
 
 func (h *Handler) RegisterPoster(c echo.Context) error {
+	form, err := posterMultipart(c)
+	if err != nil {
+		return err
+	}
+	defer form.RemoveAll()
 	var req RegisterPosterRequest
 	if err := c.Bind(&req); err != nil {
 		return c.String(400, "Invalid request")
@@ -77,16 +86,11 @@ func (h *Handler) RegisterPoster(c echo.Context) error {
 		return c.String(404, "Festival not found")
 	}
 
-	image, err := c.FormFile("image")
-	if err != nil {
-		return c.String(400, "Invalid image file: "+err.Error())
-	}
-
 	p, err := h.posterManager.Create(
 		req.PosterName,
 		fesID,
 		req.Description,
-		image,
+		form.File["image"],
 	)
 	if err != nil {
 		switch err {
@@ -94,13 +98,61 @@ func (h *Handler) RegisterPoster(c echo.Context) error {
 			return c.String(404, "Festival not found")
 		case poster.ErrAlreadyExists:
 			return c.String(409, "Poster already exists")
+		case poster.ErrInvalidImages:
+			return c.String(400, "Invalid images: provide 1 to 10 images")
+		case poster.ErrImageTooLarge:
+			return c.String(413, "Image exceeds 10 MiB")
 		default:
 			slog.Error("Failed to register poster", "error", err)
-			return c.String(500, "Failed to register poster: "+ err.Error())
+			return c.String(500, "Failed to register poster: "+err.Error())
 		}
 	}
 
 	return c.JSON(201, p)
+}
+
+func posterMultipart(c echo.Context) (*multipart.Form, error) {
+	maxBytes := int64(repository.MaxPosterImages*poster.MaxImageSize + (1 << 20))
+	if c.Request().ContentLength > maxBytes {
+		return nil, echo.NewHTTPError(413, "Upload exceeds request size limit")
+	}
+	c.Request().Body = http.MaxBytesReader(c.Response(), c.Request().Body, maxBytes)
+	form, err := c.MultipartForm()
+	if err != nil {
+		var tooLarge *http.MaxBytesError
+		if errors.As(err, &tooLarge) {
+			return nil, echo.NewHTTPError(413, "Upload exceeds request size limit")
+		}
+		return nil, echo.NewHTTPError(400, "Invalid multipart request")
+	}
+	return form, nil
+}
+
+func (h *Handler) UpdatePosterImages(c echo.Context) error {
+	posterID, err := uuid.Parse(c.Param("id"))
+	if err != nil {
+		return c.String(404, "Poster not found")
+	}
+	form, err := posterMultipart(c)
+	if err != nil {
+		return err
+	}
+	defer form.RemoveAll()
+	images, err := h.posterManager.UpdateImages(posterID, form.File["image"], form.Value["delete_image_ids"])
+	if err != nil {
+		switch {
+		case errors.Is(err, poster.ErrNotFound):
+			return c.String(404, "Poster not found")
+		case errors.Is(err, poster.ErrInvalidImages):
+			return c.String(400, "Invalid image changes")
+		case errors.Is(err, poster.ErrImageTooLarge):
+			return c.String(413, "Image exceeds 10 MiB")
+		default:
+			slog.Error("Failed to update poster images", "error", err)
+			return c.String(500, "Failed to update poster images")
+		}
+	}
+	return c.JSON(200, map[string]any{"image": images})
 }
 
 func (h *Handler) ListPostersByFestival(c echo.Context) error {

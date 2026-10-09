@@ -7,18 +7,19 @@ import (
 	"github.com/google/uuid"
 )
 
-
 func TestRegisterStockItem(t *testing.T) {
+	t.Parallel()
 	env := setup(t, common)
-	e := env.R(t)
 
 	t.Run("RegisterStockItem", func(t *testing.T) {
+		t.Parallel()
+		e := env.R(t)
 		req := e.POST("/api/items").
 			WithMultipart().
 			WithForm(map[string]any{
-				"name":  "Sample Stock Item",
+				"name":        "Sample Stock Item",
 				"description": "This is a sample stock item.",
-				"category": "Sample Category",
+				"category":    "Sample Category",
 			}).
 			WithFile("image", "sample_image.png", strings.NewReader("")).
 			Expect().
@@ -33,12 +34,14 @@ func TestRegisterStockItem(t *testing.T) {
 	})
 
 	t.Run("Empty Name", func(t *testing.T) {
+		t.Parallel()
+		e := env.R(t)
 		e.POST("/api/items").
 			WithMultipart().
 			WithForm(map[string]any{
-				"name":  "",
+				"name":        "",
 				"description": "This is a sample stock item.",
-				"category": "Sample Category",
+				"category":    "Sample Category",
 			}).
 			WithFile("image", "sample_image.png", strings.NewReader("")).
 			Expect().
@@ -46,24 +49,28 @@ func TestRegisterStockItem(t *testing.T) {
 	})
 
 	t.Run("Missing Image", func(t *testing.T) {
+		t.Parallel()
+		e := env.R(t)
 		e.POST("/api/items").
 			WithMultipart().
 			WithForm(map[string]any{
-				"name":  "Sample Stock Item",
+				"name":        "Sample Stock Item",
 				"description": "This is a sample stock item.",
-				"category": "Sample Category",
+				"category":    "Sample Category",
 			}).
 			Expect().
 			Status(400)
 	})
 
 	t.Run("Empty Category", func(t *testing.T) {
+		t.Parallel()
+		e := env.R(t)
 		e.POST("/api/items").
 			WithMultipart().
 			WithForm(map[string]any{
-				"name":  "Sample Stock Item",
+				"name":        "Sample Stock Item",
 				"description": "This is a sample stock item.",
-				"category": "",
+				"category":    "",
 			}).
 			WithFile("image", "sample_image.png", strings.NewReader("")).
 			Expect().
@@ -72,12 +79,14 @@ func TestRegisterStockItem(t *testing.T) {
 }
 
 func TestGetStockItem(t *testing.T) {
+	t.Parallel()
 	env := setup(t, common)
-	e := env.R(t)
 
 	item := env.mustCreateStockItem(t, "Test Item", "This is a test item.", "Test Category")
 
 	t.Run("GetStockItem", func(t *testing.T) {
+		t.Parallel()
+		e := env.R(t)
 		resp := e.GET("/api/items/{id}", item.ID.String()).
 			Expect().
 			Status(200).
@@ -92,6 +101,8 @@ func TestGetStockItem(t *testing.T) {
 	})
 
 	t.Run("GetStockItem Not Found", func(t *testing.T) {
+		t.Parallel()
+		e := env.R(t)
 		id, err := uuid.NewV7()
 		if err != nil {
 			t.Fatalf("failed to generate uuid: %v", err)
@@ -102,12 +113,16 @@ func TestGetStockItem(t *testing.T) {
 	})
 
 	t.Run("GetStockItem Zero ID", func(t *testing.T) {
+		t.Parallel()
+		e := env.R(t)
 		e.GET("/api/items/{id}", "00000000-0000-0000-0000-000000000000").
 			Expect().
 			Status(404)
 	})
 
 	t.Run("GetStockItem Invalid ID", func(t *testing.T) {
+		t.Parallel()
+		e := env.R(t)
 		e.GET("/api/items/{id}", "invalid-uuid").
 			Expect().
 			Status(404)
@@ -115,14 +130,16 @@ func TestGetStockItem(t *testing.T) {
 }
 
 func TestQueryStockItems(t *testing.T) {
+	t.Parallel()
 	env := setup(t, s1)
-	e := env.R(t)
 
 	item1 := env.mustCreateStockItem(t, "Item 1", "Description 1", "Category A")
 	item2 := env.mustCreateStockItem(t, "Item 2", "Description 2", "Category A")
 	item3 := env.mustCreateStockItem(t, "Item 3", "Description 3", "Category B")
 
 	t.Run("QueryStockItems", func(t *testing.T) {
+		t.Parallel()
+		e := env.R(t)
 		resp := e.GET("/api/items").
 			Expect().
 			Status(200).
@@ -133,6 +150,8 @@ func TestQueryStockItems(t *testing.T) {
 	})
 
 	t.Run("QueryStockItems with Category Filter", func(t *testing.T) {
+		t.Parallel()
+		e := env.R(t)
 		resp := e.GET("/api/items").
 			WithQuery("category", "Category A").
 			Expect().
@@ -145,12 +164,14 @@ func TestQueryStockItems(t *testing.T) {
 }
 
 func TestEditStockItem(t *testing.T) {
+	t.Parallel()
 	env := setup(t, common)
-	e := env.R(t)
 
 	item := env.mustCreateStockItem(t, "Original Name", "Original Description", "Original Category")
 
 	t.Run("EditStockItem", func(t *testing.T) {
+		t.Parallel()
+		e := env.R(t)
 		e.PUT("/api/items/{id}", item.ID.String()).
 			WithJSON(map[string]any{
 				"name":        "Updated Name",
@@ -159,7 +180,7 @@ func TestEditStockItem(t *testing.T) {
 			}).
 			Expect().
 			Status(204)
-		
+
 		res := e.GET("/api/items/{id}", item.ID.String()).
 			Expect().
 			Status(200).
@@ -173,6 +194,8 @@ func TestEditStockItem(t *testing.T) {
 	})
 
 	t.Run("EditStockItem Not Found", func(t *testing.T) {
+		t.Parallel()
+		e := env.R(t)
 		id, err := uuid.NewV7()
 		if err != nil {
 			t.Fatalf("failed to generate uuid: %v", err)
@@ -188,6 +211,8 @@ func TestEditStockItem(t *testing.T) {
 	})
 
 	t.Run("EditStockItem Zero ID", func(t *testing.T) {
+		t.Parallel()
+		e := env.R(t)
 		e.PUT("/api/items/{id}", "00000000-0000-0000-0000-000000000000").
 			WithJSON(map[string]any{
 				"name":        "Updated Name",
@@ -199,6 +224,8 @@ func TestEditStockItem(t *testing.T) {
 	})
 
 	t.Run("EditStockItem Invalid ID", func(t *testing.T) {
+		t.Parallel()
+		e := env.R(t)
 		e.PUT("/api/items/{id}", "invalid-uuid").
 			WithJSON(map[string]any{
 				"name":        "Updated Name",
@@ -211,12 +238,14 @@ func TestEditStockItem(t *testing.T) {
 }
 
 func TestUpdateStockItemImage(t *testing.T) {
+	t.Parallel()
 	env := setup(t, common)
-	e := env.R(t)
 
 	item := env.mustCreateStockItem(t, "Item with Image", "Description", "Category")
 
 	t.Run("UpdateStockItemImage", func(t *testing.T) {
+		t.Parallel()
+		e := env.R(t)
 		e.PUT("/api/items/{id}/image", item.ID.String()).
 			WithMultipart().
 			WithFile("image", "new_image.png", strings.NewReader("")).
@@ -225,6 +254,8 @@ func TestUpdateStockItemImage(t *testing.T) {
 	})
 
 	t.Run("UpdateStockItemImage Not Found", func(t *testing.T) {
+		t.Parallel()
+		e := env.R(t)
 		id, err := uuid.NewV7()
 		if err != nil {
 			t.Fatalf("failed to generate uuid: %v", err)
@@ -238,6 +269,8 @@ func TestUpdateStockItemImage(t *testing.T) {
 	})
 
 	t.Run("UpdateStockItemImage Zero ID", func(t *testing.T) {
+		t.Parallel()
+		e := env.R(t)
 		e.PUT("/api/items/{id}/image", "00000000-0000-0000-0000-000000000000").
 			WithMultipart().
 			WithFile("image", "new_image.png", strings.NewReader("")).
@@ -246,6 +279,8 @@ func TestUpdateStockItemImage(t *testing.T) {
 	})
 
 	t.Run("UpdateStockItemImage Invalid ID", func(t *testing.T) {
+		t.Parallel()
+		e := env.R(t)
 		e.PUT("/api/items/{id}/image", "invalid-uuid").
 			WithMultipart().
 			WithFile("image", "new_image.png", strings.NewReader("")).
@@ -255,12 +290,14 @@ func TestUpdateStockItemImage(t *testing.T) {
 }
 
 func TestDeleteStockItem(t *testing.T) {
+	t.Parallel()
 	env := setup(t, common)
-	e := env.R(t)
 
 	item := env.mustCreateStockItem(t, "Item to Delete", "Description", "Category")
 
 	t.Run("DeleteStockItem", func(t *testing.T) {
+		t.Parallel()
+		e := env.R(t)
 		e.DELETE("/api/items/{id}", item.ID.String()).
 			Expect().
 			Status(204)
@@ -271,6 +308,8 @@ func TestDeleteStockItem(t *testing.T) {
 	})
 
 	t.Run("DeleteStockItem Not Found", func(t *testing.T) {
+		t.Parallel()
+		e := env.R(t)
 		id, err := uuid.NewV7()
 		if err != nil {
 			t.Fatalf("failed to generate uuid: %v", err)
@@ -281,12 +320,16 @@ func TestDeleteStockItem(t *testing.T) {
 	})
 
 	t.Run("DeleteStockItem Zero ID", func(t *testing.T) {
+		t.Parallel()
+		e := env.R(t)
 		e.DELETE("/api/items/{id}", "00000000-0000-0000-0000-000000000000").
 			Expect().
 			Status(404)
 	})
 
 	t.Run("DeleteStockItem Invalid ID", func(t *testing.T) {
+		t.Parallel()
+		e := env.R(t)
 		e.DELETE("/api/items/{id}", "invalid-uuid").
 			Expect().
 			Status(404)

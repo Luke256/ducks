@@ -10,9 +10,11 @@ import (
 )
 
 func TestRegisterStockItem(t *testing.T) {
+	t.Parallel()
 	repo := setup(t, common)
 
 	t.Run("Register Stock Item", func(t *testing.T) {
+		t.Parallel()
 		item, err := repo.RegisterStockItem("Test Item", "This is a test item", "Category1", "img-123")
 
 		assert.NoError(t, err)
@@ -25,11 +27,13 @@ func TestRegisterStockItem(t *testing.T) {
 }
 
 func TestGetStockItemByID(t *testing.T) {
+	t.Parallel()
 	repo := setup(t, common)
 
 	item := mustCreateStockItem(t, repo, "Sample Item", "Sample Description", "CategoryA", "img-456")
 
 	t.Run("Get Stock Item By ID", func(t *testing.T) {
+		t.Parallel()
 		fetchedItem, err := repo.GetStockItemByID(item.ID)
 
 		assert.NoError(t, err)
@@ -41,12 +45,14 @@ func TestGetStockItemByID(t *testing.T) {
 	})
 
 	t.Run("Get Stock Item By Invalid ID", func(t *testing.T) {
+		t.Parallel()
 		_, err := repo.GetStockItemByID(uuid.New())
 
 		assert.Equal(t, repository.ErrNotFound, err)
 	})
 
 	t.Run("Get Stock Item By Zero UUID", func(t *testing.T) {
+		t.Parallel()
 		_, err := repo.GetStockItemByID(uuid.Nil)
 
 		assert.Equal(t, repository.ErrNotFound, err)
@@ -54,6 +60,7 @@ func TestGetStockItemByID(t *testing.T) {
 }
 
 func TestQueryStockItems(t *testing.T) {
+	t.Parallel()
 	repo := setup(t, s1)
 
 	var createdItems = []model.StockItem{
@@ -63,11 +70,12 @@ func TestQueryStockItems(t *testing.T) {
 	}
 
 	t.Run("Query All Items", func(t *testing.T) {
+		t.Parallel()
 		items, err := repo.QueryStockItems("")
-		
+
 		assert.NoError(t, err)
 		assert.Len(t, items, 3)
-		
+
 		itemIDs := make(map[uuid.UUID]bool)
 		for _, item := range items {
 			itemIDs[item.ID] = true
@@ -81,18 +89,19 @@ func TestQueryStockItems(t *testing.T) {
 				}
 			}
 		}
-		
+
 		for _, createdItem := range createdItems {
 			assert.True(t, itemIDs[createdItem.ID], "Expected item ID not found: %s", createdItem.ID)
 		}
 	})
 
 	t.Run("Query Items by Category", func(t *testing.T) {
+		t.Parallel()
 		items, err := repo.QueryStockItems("Cat1")
-		
+
 		assert.NoError(t, err)
 		assert.Len(t, items, 2)
-		
+
 		itemIDs := make(map[uuid.UUID]bool)
 		for _, item := range items {
 			itemIDs[item.ID] = true
@@ -105,11 +114,13 @@ func TestQueryStockItems(t *testing.T) {
 }
 
 func TestUpdateStockItem(t *testing.T) {
+	t.Parallel()
 	repo := setup(t, common)
 
 	item := mustCreateStockItem(t, repo, "Old Name", "Old Description", "OldCategory", "old-img")
 
 	t.Run("Update Stock Item", func(t *testing.T) {
+		t.Parallel()
 		updatedItem, err := repo.UpdateStockItem(item.ID, "New Name", "New Description", "NewCategory", "new-img")
 
 		assert.NoError(t, err)
@@ -121,12 +132,14 @@ func TestUpdateStockItem(t *testing.T) {
 	})
 
 	t.Run("Update Non-Existent Stock Item", func(t *testing.T) {
+		t.Parallel()
 		_, err := repo.UpdateStockItem(uuid.New(), "Name", "Description", "Category", "img")
 
 		assert.Equal(t, repository.ErrNotFound, err)
 	})
 
 	t.Run("Update Stock Item with Zero UUID", func(t *testing.T) {
+		t.Parallel()
 		_, err := repo.UpdateStockItem(uuid.Nil, "Name", "Description", "Category", "img")
 
 		assert.Equal(t, repository.ErrNotFound, err)
@@ -134,11 +147,13 @@ func TestUpdateStockItem(t *testing.T) {
 }
 
 func TestDeleteStockItem(t *testing.T) {
+	t.Parallel()
 	repo := setup(t, common)
 
 	item := mustCreateStockItem(t, repo, "To Be Deleted", "Description", "Category", "img-del")
 
 	t.Run("Delete Stock Item", func(t *testing.T) {
+		t.Parallel()
 		err := repo.DeleteStockItem(item.ID)
 
 		assert.NoError(t, err)
@@ -148,12 +163,14 @@ func TestDeleteStockItem(t *testing.T) {
 	})
 
 	t.Run("Delete Non-Existent Stock Item", func(t *testing.T) {
+		t.Parallel()
 		err := repo.DeleteStockItem(uuid.New())
 
 		assert.Equal(t, repository.ErrNotFound, err)
 	})
 
 	t.Run("Delete Stock Item with Zero UUID", func(t *testing.T) {
+		t.Parallel()
 		err := repo.DeleteStockItem(uuid.Nil)
 
 		assert.Equal(t, repository.ErrNotFound, err)
