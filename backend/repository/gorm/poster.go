@@ -4,7 +4,6 @@ import (
 	"context"
 
 	"github.com/Luke256/ducks/model"
-	"github.com/Luke256/ducks/repository"
 	"github.com/google/uuid"
 
 	"gorm.io/gorm"
@@ -81,35 +80,26 @@ func (r *GormRepository) GetPosterByFestivalIDAndPosterName(festivalID uuid.UUID
 
 func (r *GormRepository) UpdatePoster(posterID uuid.UUID, posterName, description string) error {
 	ctx := context.Background()
-	rows, err := gorm.G[model.Poster](r.db).
+	_, err := gorm.G[model.Poster](r.db).
 		Where(&model.Poster{ID: posterID}, "ID").
 		Select("PosterName", "Description").
 		Updates(ctx, model.Poster{PosterName: posterName, Description: description})
-	if rows == 0 {
-		return repository.ErrNotFound
-	}
 	return wrapGormError(err)
 }
 
 func (r *GormRepository) UpdatePosterStatus(posterID uuid.UUID, status string) error {
 	ctx := context.Background()
-	rows, err := gorm.G[model.Poster](r.db).
+	_, err := gorm.G[model.Poster](r.db).
 		Where(&model.Poster{ID: posterID}, "ID").
 		Updates(ctx, model.Poster{Status: status})
-	if rows == 0 {
-		return repository.ErrNotFound
-	}
 	return wrapGormError(err)
 }
 
 func (r *GormRepository) DeletePoster(posterID uuid.UUID) error {
 	ctx := context.Background()
-	rowsAffected, err := gorm.G[model.Poster](r.db).
+	_, err := gorm.G[model.Poster](r.db).
 		Where(&model.Poster{ID: posterID}, "ID").
 		Delete(ctx)
-	if rowsAffected == 0 {
-		return repository.ErrNotFound
-	}
 
 	return wrapGormError(err)
 }
