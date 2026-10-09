@@ -124,7 +124,7 @@ async function remove() {
             v-model="form.category"
             required
             maxlength="100"
-            placeholder="例：アクリルキーホルダー" /></label
+            placeholder="例：sound" /></label
         ><label class="field"
           >説明<textarea v-model="form.description" rows="4" /></label
         ><ImageField
