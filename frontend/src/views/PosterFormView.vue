@@ -50,7 +50,7 @@ async function save() {
           v-model="form.name"
           required
           maxlength="64"
-          placeholder="例：講義棟入口 01" /></label
+          placeholder="例：42" /></label
       ><label class="field"
         >設置場所<textarea
           v-model="form.description"
