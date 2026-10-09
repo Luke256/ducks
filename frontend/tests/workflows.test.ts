@@ -484,6 +484,48 @@ describe("登録・編集", () => {
     });
 });
 describe("商品画像の変更", () => {
+    it("画像の選択と取り消しをポスターと同じデザインで行い、取り消すと現在の画像に戻す", async () => {
+        await open("/sales/items/i1");
+        await button("編集する").trigger("click");
+        expect(wrapper.find(".image-add-button").text()).toBe("＋画像を変更");
+        expect(wrapper.find("input[type=file]").attributes("aria-label")).toBe("画像を変更");
+        expect(wrapper.find(".image-selection .image-preview").attributes("src")).toContain("/images/image1");
+        expect(wrapper.find(".image-selection button").exists()).toBe(false);
+        await upload();
+        const removeImage = wrapper.find('button[aria-label="追加する商品画像の選択を取り消す"]');
+        expect(removeImage.text()).toBe("取り消し");
+        expect(removeImage.classes()).toContain("secondary");
+        vi.mocked(window.confirm).mockReturnValueOnce(false);
+        await removeImage.trigger("click");
+        expect(window.confirm).toHaveBeenCalledWith("「photo.png」の選択を取り消しますか？");
+        expect(wrapper.find(".image-preview").attributes("src")).toBe("blob:preview");
+        expect(URL.revokeObjectURL).not.toHaveBeenCalled();
+        await removeImage.trigger("click");
+        expect(wrapper.find(".image-selection .image-preview").attributes("src")).toContain("/images/image1");
+        expect(URL.revokeObjectURL).toHaveBeenCalledWith("blob:preview");
+        await wrapper.find("form").trigger("submit");
+        await flushPromises();
+        expect(mutations("/items/i1/image")).toHaveLength(0);
+    });
+    it("新規商品では選択画像の取り消し後に画像を必須とし、同じ画像を再選択できる", async () => {
+        await open("/sales/items/new");
+        const inputs = wrapper.findAll("form input:not([type=file])");
+        await inputs[0].setValue("新商品");
+        await inputs[1].setValue("グッズ");
+        expect(wrapper.find(".image-add-button").text()).toBe("＋画像を追加");
+        const file = await upload();
+        expect(wrapper.find("input[type=file]").attributes("required")).toBeUndefined();
+        await wrapper.find('button[aria-label="追加する商品画像の選択を取り消す"]').trigger("click");
+        expect(wrapper.find(".image-selection").exists()).toBe(false);
+        expect(wrapper.find("input[type=file]").attributes("required")).toBeDefined();
+        await wrapper.find("form").trigger("submit");
+        await flushPromises();
+        expect(mutations("/items")).toHaveLength(0);
+        await upload([file]);
+        await wrapper.find("form").trigger("submit");
+        await flushPromises();
+        expect((mutations("/items")[0].options.body as FormData).get("image")).toBe(file);
+    });
     it("差し替え画像を圧縮して送信し、詳細とレジに新画像を表示する", async () => {
         await open("/sales/items/i1");
         await button("編集する").trigger("click");

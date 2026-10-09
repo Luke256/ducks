@@ -116,8 +116,9 @@ async function remove() {
           class="field">カテゴリ<input v-model="form.category" required maxlength="100"
             placeholder="例：sound" /></label><label class="field">説明<textarea v-model="form.description"
             rows="4" /></label>
-        <ImageField label="商品画像" :required="isNew" @change="image = $event" /><img v-if="!image && item?.image_url"
-          :src="imageUrl(item.image_url)" :alt="item.name" class="image-preview" />
+        <h3>商品画像</h3>
+        <ImageField :label="image || item?.image_url ? '画像を変更' : '画像を追加'" :existing="item?.image_url"
+          :required="isNew" @change="image = $event" />
         <p v-if="!isNew" class="small muted">
           新しい画像を選ぶと差し替えます。選ばなければ現在の画像を保持します。
           この商品の画像はすべてのイベントで共通です。
