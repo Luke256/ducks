@@ -29,7 +29,11 @@ const filtered = computed(() =>
     (p) =>
       (!status.value || p.status === status.value) &&
       `${p.name} ${p.description}`.includes(search.value.trim()),
-  ),
+    ).sort((a, b) => {
+      const aNum = parseInt(a.name.match(/\d+/)?.[0] || "0", 10);
+      const bNum = parseInt(b.name.match(/\d+/)?.[0] || "0", 10);
+      return aNum - bNum;
+    }),
 );
 function updateStatus(id: string, next: PosterStatus) {
   posters.value = (posters.value || []).map((p) =>
