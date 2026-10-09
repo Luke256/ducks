@@ -72,10 +72,10 @@ async function save() {
           !festivalId ||
           !form.item_id ||
           !Number.isSafeInteger(form.price) ||
-          form.price < 1
+          form.price < 0
         )
           throw new Error(
-            "イベント・商品・1円以上の整数の価格を入力してください。",
+            "イベント・商品・0円以上の整数の価格を入力してください。",
           );
         const created = await api<Stock>(`/festivals/${festivalId}/stocks`, {
           method: "POST",
@@ -169,7 +169,7 @@ async function remove() {
               v-model.number="form.price"
               type="number"
               required
-              min="1"
+              min="0"
               step="1"
               inputmode="numeric" /></label></template
         ><label class="field"

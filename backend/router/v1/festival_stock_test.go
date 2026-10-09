@@ -30,6 +30,16 @@ func TestRegisterFestivalStock(t *testing.T) {
 		res.Value("description").IsEqual("Stock Description")
 	})
 
+	t.Run("Register Festival Stock with Zero Price", func(t *testing.T) {
+		res := e.POST("/api/festivals/{festival_id}/stocks", festival.ID).
+			WithJSON(map[string]any{"item_id": stockItem.ID, "price": 0}).
+			Expect().Status(201).JSON().Object()
+
+		res.Value("price").IsEqual(0)
+		e.GET("/api/stocks/{festival_stock_id}", res.Value("id").String().Raw()).
+			Expect().Status(200).JSON().Object().Value("price").IsEqual(0)
+	})
+
 	// Invalid Requests
 	tests := []struct {
 		name       string
@@ -113,6 +123,24 @@ func TestRegisterFestivalStock(t *testing.T) {
 				"item_id": stockItem.ID,
 				"description": "Stock Description",
 			},
+			expectCode: 400,
+		},
+		{
+			name:       "Null Price",
+			festivalID: festival.ID.String(),
+			payload:    map[string]any{"item_id": stockItem.ID, "price": nil},
+			expectCode: 400,
+		},
+		{
+			name:       "Negative Price",
+			festivalID: festival.ID.String(),
+			payload:    map[string]any{"item_id": stockItem.ID, "price": -1},
+			expectCode: 400,
+		},
+		{
+			name:       "Fractional Price",
+			festivalID: festival.ID.String(),
+			payload:    map[string]any{"item_id": stockItem.ID, "price": 0.5},
 			expectCode: 400,
 		},
 		{

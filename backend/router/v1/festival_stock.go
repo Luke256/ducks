@@ -13,7 +13,7 @@ import (
 type RegisterFestivalStockRequest struct {
 	FestivalID  string `param:"festival_id"`
 	StockItemID string `json:"item_id"`
-	Price       int    `json:"price"`
+	Price       *int   `json:"price"`
 	Description string `json:"description"`
 }
 
@@ -21,7 +21,7 @@ func (r RegisterFestivalStockRequest) Validate() error {
 	return validation.ValidateStruct(&r,
 		validation.Field(&r.FestivalID, validation.Required),
 		validation.Field(&r.StockItemID, validation.Required),
-		validation.Field(&r.Price, validation.Required),
+		validation.Field(&r.Price, validation.NotNil, validation.Min(0)),
 	)
 }
 
@@ -67,7 +67,7 @@ func (h *Handler) RegisterFestivalStock(c echo.Context) error {
 		return herror.NotFound("Stock item not found")
 	}
 
-	festivalStock, err := h.festivalStockManager.Create(fesID, itemID, req.Price, req.Description)
+	festivalStock, err := h.festivalStockManager.Create(fesID, itemID, *req.Price, req.Description)
 	if err != nil {
 		switch err {
 		case festival.ErrNotFound:

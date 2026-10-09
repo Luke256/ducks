@@ -132,6 +132,7 @@ async function upload() {
 beforeEach(() => {
   requests.length = 0;
   fail = "";
+  stock.price = 500;
   itemImageUrl = item.image_url;
   visitorCounts = [
     { festival_id: "f1", bucket_start: "2026-10-08T10:10:00+09:00", count: 5 },
@@ -386,17 +387,35 @@ describe("登録・編集", () => {
     ).toMatchObject({ name: "改名", category: "グッズ" });
     expect(mutations("/items/i1/image")).toHaveLength(0);
   });
-  it("販売商品を指定イベントに登録し、価格を数値で送信する", async () => {
+  it.each([750, 0])(
+    "販売商品を指定イベントに登録し、価格%s円を数値で送信する",
+    async (price) => {
+      stock.price = price;
+      await open("/sales/stocks/new");
+      await wrapper.find("form select[required]").setValue("i1");
+      const priceInput = wrapper.find("input[type=number]");
+      await priceInput.setValue(price);
+      expect((priceInput.element as HTMLInputElement).checkValidity()).toBe(true);
+      await wrapper.find("textarea").setValue("補足");
+      await wrapper.find("form").trigger("submit");
+      await flushPromises();
+      expect(
+        JSON.parse(mutations("/festivals/f1/stocks")[0].options.body as string),
+      ).toEqual({ item_id: "i1", price, description: "補足" });
+      expect(router.currentRoute.value.path).toBe("/sales/stocks/s1");
+      expect(wrapper.find(".price-large").text()).toBe(`${price} 円`);
+    },
+  );
+  it.each([-1, 0.5, ""])("販売価格%sは登録しない", async (price) => {
     await open("/sales/stocks/new");
     await wrapper.find("form select[required]").setValue("i1");
-    await wrapper.find("input[type=number]").setValue(750);
-    await wrapper.find("textarea").setValue("補足");
+    const priceInput = wrapper.find("input[type=number]");
+    await priceInput.setValue(price);
+    expect((priceInput.element as HTMLInputElement).checkValidity()).toBe(false);
     await wrapper.find("form").trigger("submit");
     await flushPromises();
-    expect(
-      JSON.parse(mutations("/festivals/f1/stocks")[0].options.body as string),
-    ).toEqual({ item_id: "i1", price: 750, description: "補足" });
-    expect(router.currentRoute.value.path).toBe("/sales/stocks/s1");
+    expect(mutations("/festivals/f1/stocks")).toHaveLength(0);
+    expect(wrapper.find("form").text()).toContain("0円以上の整数");
   });
   it("イベント・ポスター・商品・販売商品の削除を維持する", async () => {
     for (const [path, editLabel, deleteLabel, endpoint, destination] of [
@@ -554,6 +573,26 @@ describe("ポスター回収", () => {
   });
 });
 describe("レジ・売上", () => {
+  it("0円の商品を表示して会計し、売上履歴にも0円で表示する", async () => {
+    stock.price = 0;
+    await open("/sales/cashier");
+    expect(wrapper.find(".product-price").text()).toBe("0 円");
+    await wrapper.find(".cashier-product").trigger("click");
+    expect(wrapper.find(".receipt-total").text()).toContain("0 円");
+    await wrapper.find(".receipt input").setValue(0);
+    expect(button("会計を確定する").attributes("disabled")).toBeUndefined();
+    await button("会計を確定する").trigger("click");
+    await flushPromises();
+    expect(JSON.parse(mutations("/sales")[0].options.body as string)).toEqual({
+      items: [{ stock_id: "s1", quantity: 1 }],
+    });
+    expect(wrapper.find(".receipt-line").exists()).toBe(false);
+    await router.push("/sales/orders");
+    await flushPromises();
+    expect(wrapper.find(".summary strong").text()).toBe("0 円");
+    expect(wrapper.find("tbody tr").text()).toContain("0 円");
+    expect(wrapper.find("tbody tr").text()).not.toContain("価格不明");
+  });
   it("空の会計を防ぎ、数量調整とお釣りを計算し、成功後にクリアする", async () => {
     await open("/sales/cashier");
     expect(button("会計を確定する").attributes("disabled")).toBeDefined();
