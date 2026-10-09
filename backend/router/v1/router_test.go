@@ -2,6 +2,7 @@ package v1
 
 import (
 	"fmt"
+	"mime/multipart"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -186,7 +187,7 @@ func (e *env) mustCreateFestival(t *testing.T, name string, description string) 
 
 func (e *env) mustCreatePoster(t *testing.T, festivalID uuid.UUID, name string, description string) poster.Poster {
 	t.Helper()
-	poster, err := e.PM.Create(name, festivalID, description, nil)
+	poster, err := e.PM.Create(name, festivalID, description, []*multipart.FileHeader{{Filename: "test.png"}})
 	if err != nil {
 		t.Fatalf("failed to create poster: %v", err)
 	}

@@ -118,7 +118,7 @@ func mustCreateFestival(t *testing.T, repo *GormRepository, name string, descrip
 func mustCreatePoster(t *testing.T, repo *GormRepository, festivalID uuid.UUID, posterName string, description string, imageID string) model.Poster {
 	t.Helper()
 
-	poster, err := repo.RegisterPoster(festivalID, posterName, description, imageID)
+	poster, err := repo.RegisterPoster(festivalID, posterName, description, []string{imageID})
 	if err != nil {
 		t.Fatalf("failed to register poster: %v", err)
 	}
