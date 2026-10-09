@@ -51,47 +51,25 @@ function updateStatus(id: string, next: PosterStatus) {
   </p>
   <template v-else>
     <div v-if="posters" class="summary-grid">
-      <button
-        v-for="(label, key) in PosterStatusLabels"
-        :key="key"
-        :class="['panel summary', key, { chosen: status === key }]"
-        @click="status = status === key ? '' : key"
-      >
-        <span>{{ label }}</span
-        ><strong
-          >{{ posters.filter((p) => p.status === key).length
-          }}<small> 枚</small></strong
-        >
+      <button v-for="(label, key) in PosterStatusLabels" :key="key"
+        :class="['panel summary', key, { chosen: status === key }]" @click="status = status === key ? '' : key">
+        <span>{{ label }}</span><strong>{{posters.filter((p) => p.status === key).length
+        }}<small> 枚</small></strong>
       </button>
     </div>
     <div class="toolbar">
-      <label class="search-field"
-        >ポスター検索<input
-          v-model="search"
-          type="search"
-          placeholder="名前・設置場所で検索" /></label
-      ><label class="filter-field"
-        >回収状況<select v-model="status">
+      <label class="search-field">ポスター検索<input v-model="search" type="search" placeholder="名前・設置場所で検索" /></label><label
+        class="filter-field">回収状況<select v-model="status">
           <option value="">すべての回収状況</option>
-          <option
-            v-for="(label, key) in PosterStatusLabels"
-            :key="key"
-            :value="key"
-          >
+          <option v-for="(label, key) in PosterStatusLabels" :key="key" :value="key">
             {{ label }}
           </option>
-        </select></label
-      ><button class="button secondary" :disabled="loading" @click="reload()">
+        </select></label><button class="button secondary" :disabled="loading" @click="reload()">
         更新
       </button>
     </div>
-    <ResourceState
-      :loading="loading"
-      :error="error"
-      :empty="!filtered.length"
-      empty-text="条件に一致するポスターがありません。"
-      @retry="reload()"
-    />
+    <ResourceState :loading="loading" :error="error" :empty="!filtered.length" empty-text="条件に一致するポスターがありません。"
+      @retry="reload()" />
     <div v-if="filtered.length" class="panel table-scroll">
       <table>
         <thead>
@@ -105,38 +83,21 @@ function updateStatus(id: string, next: PosterStatus) {
           <tr v-for="poster in filtered" :key="poster.id">
             <td>
               <div class="item-cell">
-                <img
-                  v-if="poster.image_url"
-                  :src="imageUrl(poster.image_url)"
-                  alt=""
-                  class="thumbnail"
-                  loading="lazy"
-                />
+                <img v-if="poster.image_url" :src="imageUrl(poster.image_url)" alt="" class="thumbnail"
+                  loading="lazy" />
                 <div>
-                  <RouterLink
-                    :to="`/poster/detail/${poster.id}`"
-                    class="text-link"
-                    >{{ poster.name }}</RouterLink
-                  >
+                  <RouterLink :to="`/poster/detail/${poster.id}`" class="text-link">{{ poster.name }}</RouterLink>
                   <p class="muted description">{{ poster.description }}</p>
                 </div>
               </div>
             </td>
             <td>
-              <PosterStatusPicker
-                :poster-id="poster.id"
-                :status="poster.status"
-                :name="poster.name"
-                @updated="updateStatus(poster.id, $event)"
-              />
+              <PosterStatusPicker :poster-id="poster.id" :status="poster.status" :name="poster.name"
+                @updated="updateStatus(poster.id, $event)" />
             </td>
             <td>
-              <RouterLink
-                :to="`/poster/detail/${poster.id}`"
-                class="text-link"
-                :aria-label="`${poster.name}の詳細`"
-                >詳細 →</RouterLink
-              >
+              <RouterLink :to="`/poster/detail/${poster.id}`" class="text-link" :aria-label="`${poster.name}の詳細`">詳細 →
+              </RouterLink>
             </td>
           </tr>
         </tbody>

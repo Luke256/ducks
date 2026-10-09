@@ -24,18 +24,9 @@ async function change(event: Event) {
 }
 </script>
 <template>
-  <select
-    :value="status"
-    :disabled="pending || disabled"
-    :aria-label="`${name}の回収状況`"
-    :class="['status-select', status]"
-    @change="change"
-  >
-    <option
-      v-for="(label, value) in PosterStatusLabels"
-      :key="value"
-      :value="value"
-    >
+  <select :value="status" :disabled="pending || disabled" :aria-label="`${name}の回収状況`"
+    :class="['status-select', status]" @change="change">
+    <option v-for="(label, value) in PosterStatusLabels" :key="value" :value="value">
       {{ label }}
     </option>
   </select>

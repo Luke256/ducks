@@ -67,46 +67,38 @@ function selectEvent() {
           {{ event.description || "概要は登録されていません。" }}
         </p>
       </div>
-      <button
-        class="button secondary"
-        :disabled="pending"
-        @click="edit ? (edit = false) : startEdit()"
-      >
+      <button class="button secondary" :disabled="pending" @click="edit ? (edit = false) : startEdit()">
         {{ edit ? "編集をキャンセル" : "イベントを編集" }}
       </button>
     </div>
     <div class="quick-links">
-      <RouterLink to="/poster" class="panel" @click="selectEvent"
-        ><span class="eyebrow">POSTERS</span>
+      <RouterLink to="/poster" class="panel" @click="selectEvent"><span class="eyebrow">POSTERS</span>
         <h2>ポスター管理 →</h2>
-        <p class="muted">設置場所と回収状況を確認</p></RouterLink
-      ><RouterLink to="/sales/cashier" class="panel" @click="selectEvent"
-        ><span class="eyebrow">CASHIER</span>
+        <p class="muted">設置場所と回収状況を確認</p>
+      </RouterLink>
+      <RouterLink to="/sales/cashier" class="panel" @click="selectEvent"><span class="eyebrow">CASHIER</span>
         <h2>レジを開く →</h2>
-        <p class="muted">商品を選んで会計</p></RouterLink
-      ><RouterLink to="/sales/orders" class="panel" @click="selectEvent"
-        ><span class="eyebrow">SALES</span>
+        <p class="muted">商品を選んで会計</p>
+      </RouterLink>
+      <RouterLink to="/sales/orders" class="panel" @click="selectEvent"><span class="eyebrow">SALES</span>
         <h2>売上履歴 →</h2>
-        <p class="muted">販売数と売上を確認</p></RouterLink
-      ><RouterLink to="/visitors" class="panel" @click="selectEvent"
-        ><span class="eyebrow">VISITORS</span>
+        <p class="muted">販売数と売上を確認</p>
+      </RouterLink>
+      <RouterLink to="/visitors" class="panel" @click="selectEvent"><span class="eyebrow">VISITORS</span>
         <h2>来場者数 →</h2>
-        <p class="muted">人数のカウントと履歴を確認</p></RouterLink
-      >
+        <p class="muted">人数のカウントと履歴を確認</p>
+      </RouterLink>
     </div>
     <form v-if="edit" class="panel form-panel" @submit.prevent="save">
       <h2>イベントを編集</h2>
       <fieldset :disabled="pending">
-        <label class="field"
-          >イベント名<input v-model="form.name" required /></label
-        ><label class="field"
-          >概要<textarea v-model="form.description" rows="4" />
+        <label class="field">イベント名<input v-model="form.name" required /></label><label class="field">概要<textarea
+            v-model="form.description" rows="4" />
         </label>
         <p v-if="saveError" class="error" role="alert">{{ saveError }}</p>
         <div class="actions">
           <button class="button" type="submit">
-            {{ pending ? "保存中…" : "保存する" }}</button
-          ><button class="button danger" type="button" @click="remove">
+            {{ pending ? "保存中…" : "保存する" }}</button><button class="button danger" type="button" @click="remove">
             イベントを削除
           </button>
         </div>

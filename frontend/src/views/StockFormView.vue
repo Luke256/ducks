@@ -109,14 +109,11 @@ async function remove() {
 }
 </script>
 <template>
-  <RouterLink to="/sales/stocks" class="back-link">← 販売商品一覧</RouterLink
-  ><ResourceState
-    :loading="loading || itemsLoading"
-    :error="error || itemsError"
-    @retry="isNew ? reloadItems() : reload()"
-  />
-  <template v-if="isNew || stock"
-    ><div class="page-heading">
+  <RouterLink to="/sales/stocks" class="back-link">← 販売商品一覧</RouterLink>
+  <ResourceState :loading="loading || itemsLoading" :error="error || itemsError"
+    @retry="isNew ? reloadItems() : reload()" />
+  <template v-if="isNew || stock">
+    <div class="page-heading">
       <div>
         <p class="eyebrow">
           {{ isNew ? "NEW CATALOG ITEM" : "CATALOG DETAIL" }}
@@ -126,12 +123,7 @@ async function remove() {
           商品マスターから選び、このイベントでの販売価格を設定します。
         </p>
       </div>
-      <button
-        v-if="!isNew"
-        class="button secondary"
-        :disabled="pending"
-        @click="edit ? (edit = false) : startEdit()"
-      >
+      <button v-if="!isNew" class="button secondary" :disabled="pending" @click="edit ? (edit = false) : startEdit()">
         {{ edit ? "編集をキャンセル" : "説明を編集" }}
       </button>
     </div>
@@ -140,56 +132,30 @@ async function remove() {
     </p>
     <form v-if="edit" class="panel form-panel" @submit.prevent="save">
       <fieldset :disabled="pending">
-        <template v-if="isNew"
-          ><label class="field"
-            >カテゴリで絞り込み<select v-model="category">
+        <template v-if="isNew"><label class="field">カテゴリで絞り込み<select v-model="category">
               <option value="">すべてのカテゴリ</option>
               <option v-for="value in categories" :key="value">
                 {{ value }}
               </option>
-            </select></label
-          ><label class="field"
-            >商品<select v-model="form.item_id" required>
+            </select></label><label class="field">商品<select v-model="form.item_id" required>
               <option value="">商品を選択</option>
               <option v-for="item in filtered" :key="item.id" :value="item.id">
                 {{ item.name }} / {{ item.category }}
               </option>
-            </select></label
-          ><img
-            v-if="selectedItem?.image_url"
-            :src="imageUrl(selectedItem.image_url)"
-            :alt="selectedItem.name"
-            class="image-preview" /><RouterLink
-            v-if="!itemsLoading && !items?.length"
-            to="/sales/items/new"
-            class="text-link"
-            >先に商品マスターを登録 →</RouterLink
-          ><label class="field"
-            >販売価格（円）<input
-              v-model.number="form.price"
-              type="number"
-              required
-              min="0"
-              step="1"
-              inputmode="numeric" /></label></template
-        ><label class="field"
-          >販売時の説明<textarea
-            v-model="form.description"
-            rows="3"
-            placeholder="レジにも表示される補足情報"
-          />
+            </select></label><img v-if="selectedItem?.image_url" :src="imageUrl(selectedItem.image_url)"
+            :alt="selectedItem.name" class="image-preview" />
+          <RouterLink v-if="!itemsLoading && !items?.length" to="/sales/items/new" class="text-link">
+            先に商品マスターを登録 →</RouterLink><label class="field">販売価格（円）<input v-model.number="form.price" type="number"
+              required min="0" step="1" inputmode="numeric" /></label>
+        </template><label class="field">販売時の説明<textarea v-model="form.description" rows="3"
+            placeholder="レジにも表示される補足情報" />
         </label>
         <p v-if="saveError" class="error" role="alert">{{ saveError }}</p>
         <div class="actions">
-          <button
-            class="button"
-            type="submit"
-            :disabled="isNew && !currentFestivalId"
-          >
-            {{ pending ? "保存中…" : isNew ? "登録する" : "保存する" }}</button
-          ><RouterLink v-if="isNew" to="/sales/stocks" class="button secondary"
-            >キャンセル</RouterLink
-          ><button v-else class="button danger" type="button" @click="remove">
+          <button class="button" type="submit" :disabled="isNew && !currentFestivalId">
+            {{ pending ? "保存中…" : isNew ? "登録する" : "保存する" }}</button>
+          <RouterLink v-if="isNew" to="/sales/stocks" class="button secondary">キャンセル</RouterLink><button v-else
+            class="button danger" type="button" @click="remove">
             販売登録を削除
           </button>
         </div>
@@ -197,12 +163,8 @@ async function remove() {
     </form>
     <div v-else-if="stock" class="detail-grid">
       <section class="panel">
-        <img
-          v-if="stock.item.image_url"
-          :src="imageUrl(stock.item.image_url)"
-          :alt="stock.item.name"
-          class="detail-image"
-        />
+        <img v-if="stock.item.image_url" :src="imageUrl(stock.item.image_url)" :alt="stock.item.name"
+          class="detail-image" />
       </section>
       <section class="panel">
         <span class="badge">{{ stock.item.category }}</span>
@@ -210,9 +172,7 @@ async function remove() {
           {{ stock.price.toLocaleString() }}<small> 円</small>
         </p>
         <p class="description">{{ stock.description || "説明なし" }}</p>
-        <RouterLink :to="`/sales/items/${stock.item.id}`" class="text-link"
-          >商品マスターを開く →</RouterLink
-        >
+        <RouterLink :to="`/sales/items/${stock.item.id}`" class="text-link">商品マスターを開く →</RouterLink>
         <p class="muted small">
           販売価格は登録時の価格です。変更する場合は新しい販売登録を作成してください。
         </p>

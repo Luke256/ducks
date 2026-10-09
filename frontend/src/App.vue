@@ -41,19 +41,12 @@ onMounted(loadFestivals);
 <template>
   <a class="skip-link" href="#main">本文へ移動</a>
   <aside class="sidebar">
-    <RouterLink to="/event" class="brand"
-      ><img src="/duck.svg" alt="" />Ducks</RouterLink
-    >
+    <RouterLink to="/event" class="brand"><img src="/duck.svg" alt="" />Ducks</RouterLink>
     <nav aria-label="メインメニュー">
-      <RouterLink
-        v-for="item in nav"
-        :key="item.href"
-        :to="item.href"
-        :class="{ active: route.path.startsWith(item.href) }"
-        ><span class="nav-number" aria-hidden="true">{{ item.icon }}</span
-        >{{ item.label
-        }}<span class="nav-arrow" aria-hidden="true">↗</span></RouterLink
-      >
+      <RouterLink v-for="item in nav" :key="item.href" :to="item.href"
+        :class="{ active: route.path.startsWith(item.href) }"><span class="nav-number" aria-hidden="true">{{ item.icon
+          }}</span>{{ item.label
+          }}<span class="nav-arrow" aria-hidden="true">↗</span></RouterLink>
     </nav>
     <div class="sidebar-footer">
       traP 工大祭<br /><span>運営管理ツール</span>
@@ -70,20 +63,12 @@ onMounted(loadFestivals);
               ? "来場者数"
               : "イベント管理"
       }}</span>
-      <label v-if="needsFestival" class="festival-picker"
-        >対象イベント
-        <select
-          v-model="currentFestivalId"
-          :disabled="festivalsLoading || festivalSelectionLocked"
-        >
+      <label v-if="needsFestival" class="festival-picker">対象イベント
+        <select v-model="currentFestivalId" :disabled="festivalsLoading || festivalSelectionLocked">
           <option value="">
             {{ festivalsLoading ? "読み込み中…" : "イベントを選択" }}
           </option>
-          <option
-            v-for="festival in festivals"
-            :key="festival.id"
-            :value="festival.id"
-          >
+          <option v-for="festival in festivals" :key="festival.id" :value="festival.id">
             {{ festival.name }}
           </option>
         </select>
@@ -98,30 +83,16 @@ onMounted(loadFestivals);
         </button>
       </div>
       <nav v-if="isSales" class="tabs" aria-label="物販メニュー">
-        <RouterLink
-          v-for="tab in tabs"
-          :key="tab.href"
-          :to="tab.href"
-          :class="{ active: route.path.startsWith(tab.href) }"
-          >{{ tab.label }}</RouterLink
-        >
+        <RouterLink v-for="tab in tabs" :key="tab.href" :to="tab.href"
+          :class="{ active: route.path.startsWith(tab.href) }">{{ tab.label }}</RouterLink>
       </nav>
       <RouterView :key="route.path" />
     </main>
   </div>
   <div class="notifications" aria-live="polite" aria-atomic="false">
-    <div
-      v-for="notice in notices"
-      :key="notice.id"
-      :class="['notice', notice.type]"
-      :role="notice.type === 'error' ? 'alert' : 'status'"
-    >
-      <span>{{ notice.message }}</span
-      ><button
-        type="button"
-        aria-label="通知を閉じる"
-        @click="dismissNotice(notice.id)"
-      >
+    <div v-for="notice in notices" :key="notice.id" :class="['notice', notice.type]"
+      :role="notice.type === 'error' ? 'alert' : 'status'">
+      <span>{{ notice.message }}</span><button type="button" aria-label="通知を閉じる" @click="dismissNotice(notice.id)">
         ×
       </button>
     </div>

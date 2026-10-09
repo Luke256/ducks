@@ -98,45 +98,26 @@ async function remove() {
 }
 </script>
 <template>
-  <RouterLink to="/sales/items" class="back-link">← 商品マスター</RouterLink
-  ><ResourceState :loading="loading" :error="error" @retry="reload()" />
-  <template v-if="isNew || item"
-    ><div class="page-heading">
+  <RouterLink to="/sales/items" class="back-link">← 商品マスター</RouterLink>
+  <ResourceState :loading="loading" :error="error" @retry="reload()" />
+  <template v-if="isNew || item">
+    <div class="page-heading">
       <div>
         <p class="eyebrow">{{ isNew ? "NEW ITEM" : "ITEM DETAIL" }}</p>
         <h1>{{ isNew ? "商品を登録" : item?.name }}</h1>
       </div>
-      <button
-        v-if="!isNew"
-        class="button secondary"
-        :disabled="pending"
-        @click="edit ? (edit = false) : startEdit()"
-      >
+      <button v-if="!isNew" class="button secondary" :disabled="pending" @click="edit ? (edit = false) : startEdit()">
         {{ edit ? "編集をキャンセル" : "編集する" }}
       </button>
     </div>
     <form v-if="edit" class="panel form-panel" @submit.prevent="save">
       <fieldset :disabled="pending">
-        <label class="field"
-          >商品名<input v-model="form.name" required maxlength="100" /></label
-        ><label class="field"
-          >カテゴリ<input
-            v-model="form.category"
-            required
-            maxlength="100"
-            placeholder="例：sound" /></label
-        ><label class="field"
-          >説明<textarea v-model="form.description" rows="4" /></label
-        ><ImageField
-          label="商品画像"
-          :required="isNew"
-          @change="image = $event"
-        /><img
-          v-if="!image && item?.image_url"
-          :src="imageUrl(item.image_url)"
-          :alt="item.name"
-          class="image-preview"
-        />
+        <label class="field">商品名<input v-model="form.name" required maxlength="100" /></label><label
+          class="field">カテゴリ<input v-model="form.category" required maxlength="100"
+            placeholder="例：sound" /></label><label class="field">説明<textarea v-model="form.description"
+            rows="4" /></label>
+        <ImageField label="商品画像" :required="isNew" @change="image = $event" /><img v-if="!image && item?.image_url"
+          :src="imageUrl(item.image_url)" :alt="item.name" class="image-preview" />
         <p v-if="!isNew" class="small muted">
           新しい画像を選ぶと差し替えます。選ばなければ現在の画像を保持します。
           この商品の画像はすべてのイベントで共通です。
@@ -147,10 +128,9 @@ async function remove() {
         </p>
         <div class="actions">
           <button class="button" type="submit">
-            {{ pending ? "保存中…" : isNew ? "登録する" : "保存する" }}</button
-          ><RouterLink v-if="isNew" to="/sales/items" class="button secondary"
-            >キャンセル</RouterLink
-          ><button v-else class="button danger" type="button" @click="remove">
+            {{ pending ? "保存中…" : isNew ? "登録する" : "保存する" }}</button>
+          <RouterLink v-if="isNew" to="/sales/items" class="button secondary">キャンセル</RouterLink><button v-else
+            class="button danger" type="button" @click="remove">
             商品を削除
           </button>
         </div>
@@ -158,17 +138,9 @@ async function remove() {
     </form>
     <div v-else-if="item" class="detail-grid">
       <section class="panel">
-        <a
-          v-if="item.image_url"
-          :href="imageUrl(item.image_url)"
-          target="_blank"
-          rel="noopener"
-          :aria-label="`${item.name}の写真を拡大`"
-          ><img
-            :src="imageUrl(item.image_url)"
-            :alt="item.name"
-            class="detail-image"
-        /></a>
+        <a v-if="item.image_url" :href="imageUrl(item.image_url)" target="_blank" rel="noopener"
+          :aria-label="`${item.name}の写真を拡大`"><img :src="imageUrl(item.image_url)" :alt="item.name"
+            class="detail-image" /></a>
       </section>
       <section class="panel">
         <h2>登録情報</h2>
@@ -178,9 +150,7 @@ async function remove() {
           <dt>説明</dt>
           <dd class="description">{{ item.description || "説明なし" }}</dd>
         </dl>
-        <RouterLink to="/sales/stocks/new" class="button secondary"
-          >イベントの販売商品に追加</RouterLink
-        >
+        <RouterLink to="/sales/stocks/new" class="button secondary">イベントの販売商品に追加</RouterLink>
       </section>
     </div>
   </template>

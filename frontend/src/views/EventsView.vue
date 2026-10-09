@@ -43,28 +43,15 @@ async function create() {
       <h1>イベント管理</h1>
       <p class="muted">準備から当日の運営まで、イベントごとにまとめて管理。</p>
     </div>
-    <button
-      class="button"
-      :aria-expanded="formOpen"
-      @click="formOpen = !formOpen"
-    >
+    <button class="button" :aria-expanded="formOpen" @click="formOpen = !formOpen">
       {{ formOpen ? "閉じる" : "＋ イベントを作成" }}
     </button>
   </div>
   <form v-if="formOpen" class="panel form-panel" @submit.prevent="create">
     <h2>新しいイベント</h2>
     <fieldset :disabled="pending">
-      <label class="field"
-        >イベント名<input
-          v-model="form.name"
-          required
-          placeholder="例：工大祭 2026" /></label
-      ><label class="field"
-        >概要<textarea
-          v-model="form.description"
-          rows="3"
-          placeholder="開催内容や運営メモ"
-        />
+      <label class="field">イベント名<input v-model="form.name" required placeholder="例：工大祭 2026" /></label><label
+        class="field">概要<textarea v-model="form.description" rows="3" placeholder="開催内容や運営メモ" />
       </label>
       <p v-if="error" class="error" role="alert">{{ error }}</p>
       <button class="button" type="submit">
@@ -73,34 +60,18 @@ async function create() {
     </fieldset>
   </form>
   <div class="toolbar">
-    <label class="search-field"
-      >イベント検索<input
-        v-model="search"
-        type="search"
-        placeholder="名前・概要で検索" /></label
-    ><span class="muted">{{ filtered.length }} 件</span
-    ><button
-      class="button secondary"
-      :disabled="festivalsLoading"
-      @click="loadFestivals"
-    >
+    <label class="search-field">イベント検索<input v-model="search" type="search" placeholder="名前・概要で検索" /></label><span
+      class="muted">{{ filtered.length }} 件</span><button class="button secondary" :disabled="festivalsLoading"
+      @click="loadFestivals">
       更新
     </button>
   </div>
-  <ResourceState
-    :loading="festivalsLoading"
-    :error="festivalsError"
-    :empty="!filtered.length"
-    empty-text="イベントがありません。新しいイベントを作成してください。"
-    @retry="loadFestivals"
-  />
+  <ResourceState :loading="festivalsLoading" :error="festivalsError" :empty="!filtered.length"
+    empty-text="イベントがありません。新しいイベントを作成してください。" @retry="loadFestivals" />
   <div v-if="filtered.length" class="event-grid">
     <article v-for="event in filtered" :key="event.id" class="panel event-card">
       <div class="card-top">
-        <span class="badge">EVENT</span
-        ><span v-if="currentFestivalId === event.id" class="badge selected"
-          >選択中</span
-        >
+        <span class="badge">EVENT</span><span v-if="currentFestivalId === event.id" class="badge selected">選択中</span>
       </div>
       <h2>
         <RouterLink :to="`/event/${event.id}`">{{ event.name }}</RouterLink>
@@ -109,21 +80,14 @@ async function create() {
         {{ event.description || "概要は登録されていません。" }}
       </p>
       <div class="actions">
-        <button
-          type="button"
-          class="button secondary"
-          :disabled="
-            festivalsLoading ||
-            festivalSelectionLocked ||
-            currentFestivalId === event.id
-          "
-          @click="currentFestivalId = event.id"
-        >
+        <button type="button" class="button secondary" :disabled="festivalsLoading ||
+          festivalSelectionLocked ||
+          currentFestivalId === event.id
+          " @click="currentFestivalId = event.id">
           {{ currentFestivalId === event.id ? "選択中" : "このイベントを選択" }}
         </button>
-        <RouterLink :to="`/event/${event.id}`" class="text-link"
-          >詳細・運営ツールを開く <span aria-hidden="true">→</span></RouterLink
-        >
+        <RouterLink :to="`/event/${event.id}`" class="text-link">詳細・運営ツールを開く <span aria-hidden="true">→</span>
+        </RouterLink>
       </div>
     </article>
   </div>

@@ -43,44 +43,28 @@ const filtered = computed(() =>
       <h1>販売商品</h1>
       <p class="muted">このイベントで販売する商品と価格を管理します。</p>
     </div>
-    <RouterLink to="/sales/stocks/new" class="button"
-      >＋ 販売商品を登録</RouterLink
-    >
+    <RouterLink to="/sales/stocks/new" class="button">＋ 販売商品を登録</RouterLink>
   </div>
   <p v-if="!currentFestivalId" class="state">
     上の「対象イベント」からイベントを選択してください。
   </p>
-  <template v-else
-    ><div class="toolbar">
-      <label class="search-field"
-        >販売商品検索<input
-          v-model="search"
-          type="search"
-          placeholder="名前・説明で検索" /></label
-      ><label class="filter-field"
-        >カテゴリ<select v-model="stockFilterCategory">
+  <template v-else>
+    <div class="toolbar">
+      <label class="search-field">販売商品検索<input v-model="search" type="search" placeholder="名前・説明で検索" /></label><label
+        class="filter-field">カテゴリ<select v-model="stockFilterCategory">
           <option value="">すべてのカテゴリ</option>
-          <option
-            v-if="
-              stockFilterCategory && !categories.includes(stockFilterCategory)
-            "
-            :value="stockFilterCategory"
-          >
+          <option v-if="
+            stockFilterCategory && !categories.includes(stockFilterCategory)
+          " :value="stockFilterCategory">
             {{ stockFilterCategory }}
           </option>
           <option v-for="value in categories" :key="value">{{ value }}</option>
-        </select></label
-      ><button class="button secondary" :disabled="loading" @click="reload()">
+        </select></label><button class="button secondary" :disabled="loading" @click="reload()">
         更新
       </button>
     </div>
-    <ResourceState
-      :loading="loading"
-      :error="error"
-      :empty="!filtered.length"
-      empty-text="条件に一致する販売商品がありません。"
-      @retry="reload()"
-    />
+    <ResourceState :loading="loading" :error="error" :empty="!filtered.length" empty-text="条件に一致する販売商品がありません。"
+      @retry="reload()" />
     <div v-if="filtered.length" class="panel table-scroll">
       <table>
         <thead>
@@ -95,19 +79,11 @@ const filtered = computed(() =>
           <tr v-for="stock in filtered" :key="stock.id">
             <td>
               <div class="item-cell">
-                <img
-                  v-if="stock.item.image_url"
-                  :src="imageUrl(stock.item.image_url)"
-                  alt=""
-                  class="thumbnail"
-                  loading="lazy"
-                />
+                <img v-if="stock.item.image_url" :src="imageUrl(stock.item.image_url)" alt="" class="thumbnail"
+                  loading="lazy" />
                 <div>
-                  <RouterLink
-                    :to="`/sales/stocks/${stock.id}`"
-                    class="text-link"
-                    >{{ stock.item.name }}</RouterLink
-                  >
+                  <RouterLink :to="`/sales/stocks/${stock.id}`" class="text-link">{{ stock.item.name
+                  }}</RouterLink>
                   <p class="muted small">{{ stock.item.category }}</p>
                 </div>
               </div>
@@ -115,12 +91,8 @@ const filtered = computed(() =>
             <td class="description">{{ stock.description || "—" }}</td>
             <td class="numeric">{{ stock.price.toLocaleString() }} 円</td>
             <td>
-              <RouterLink
-                :to="`/sales/stocks/${stock.id}`"
-                class="text-link"
-                :aria-label="`${stock.item.name}の販売詳細`"
-                >詳細 →</RouterLink
-              >
+              <RouterLink :to="`/sales/stocks/${stock.id}`" class="text-link" :aria-label="`${stock.item.name}の販売詳細`">詳細
+                →</RouterLink>
             </td>
           </tr>
         </tbody>

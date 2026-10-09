@@ -92,69 +92,42 @@ function amount(record: SaleRecord) {
       <h1>売上履歴</h1>
       <p class="muted">選択したイベントの売上を、新しい順に表示します。</p>
     </div>
-    <button
-      class="button secondary"
-      :disabled="pending"
-      :aria-pressed="edit"
-      @click="edit = !edit"
-    >
+    <button class="button secondary" :disabled="pending" :aria-pressed="edit" @click="edit = !edit">
       {{ edit ? "編集を終了" : "記録を編集" }}
     </button>
   </div>
   <p v-if="!currentFestivalId" class="state">
     上の「対象イベント」からイベントを選択してください。
   </p>
-  <template v-else
-    ><div v-if="records && stocks && !stocksError" class="summary-grid">
+  <template v-else>
+    <div v-if="records && stocks && !stocksError" class="summary-grid">
       <div class="panel summary">
-        <span>表示中の売上金額</span
-        ><strong>{{ total.toLocaleString() }}<small> 円</small></strong>
+        <span>表示中の売上金額</span><strong>{{ total.toLocaleString() }}<small> 円</small></strong>
       </div>
       <div class="panel summary">
-        <span>販売数</span
-        ><strong>{{ quantity.toLocaleString() }}<small> 点</small></strong>
+        <span>販売数</span><strong>{{ quantity.toLocaleString() }}<small> 点</small></strong>
       </div>
       <div class="panel summary">
-        <span>売上記録</span
-        ><strong
-          >{{ filtered.length.toLocaleString() }}<small> 件</small></strong
-        >
+        <span>売上記録</span><strong>{{ filtered.length.toLocaleString() }}<small> 件</small></strong>
       </div>
     </div>
     <div class="toolbar">
-      <label class="search-field"
-        >商品検索<input
-          v-model="search"
-          type="search"
-          placeholder="商品名で検索" /></label
-      ><label class="filter-field"
-        >カテゴリ<select v-model="stockFilterCategory">
+      <label class="search-field">商品検索<input v-model="search" type="search" placeholder="商品名で検索" /></label><label
+        class="filter-field">カテゴリ<select v-model="stockFilterCategory">
           <option value="">すべてのカテゴリ</option>
-          <option
-            v-if="
-              stockFilterCategory && !categories.includes(stockFilterCategory)
-            "
-            :value="stockFilterCategory"
-          >
+          <option v-if="
+            stockFilterCategory && !categories.includes(stockFilterCategory)
+          " :value="stockFilterCategory">
             {{ stockFilterCategory }}
           </option>
           <option v-for="value in categories" :key="value">{{ value }}</option>
-        </select></label
-      ><button
-        class="button secondary"
-        :disabled="loading || stocksLoading || pending"
-        @click="refresh"
-      >
+        </select></label><button class="button secondary" :disabled="loading || stocksLoading || pending"
+        @click="refresh">
         更新
       </button>
     </div>
-    <ResourceState
-      :loading="loading || stocksLoading"
-      :error="error || stocksError"
-      :empty="!filtered.length"
-      empty-text="条件に一致する売上記録がありません。"
-      @retry="refresh"
-    />
+    <ResourceState :loading="loading || stocksLoading" :error="error || stocksError" :empty="!filtered.length"
+      empty-text="条件に一致する売上記録がありません。" @retry="refresh" />
     <p v-if="unknown" class="state">
       販売商品が見つからない記録は「価格不明」と表示し、売上金額の合計から除いています。
     </p>
@@ -178,7 +151,7 @@ function amount(record: SaleRecord) {
             <td>
               <strong>{{
                 stockMap.get(record.stock_id)?.item.name || "商品不明"
-              }}</strong>
+                }}</strong>
               <p class="small muted">
                 {{ stockMap.get(record.stock_id)?.item.category || "—" }}
               </p>
@@ -191,12 +164,9 @@ function amount(record: SaleRecord) {
             <td class="numeric">{{ record.quantity }}</td>
             <td class="numeric">{{ amount(record) }}</td>
             <td v-if="edit">
-              <button
-                class="button danger compact"
-                :disabled="pending"
+              <button class="button danger compact" :disabled="pending"
                 :aria-label="`${new Date(record.created_at).toLocaleString('ja-JP')}の${stockMap.get(record.stock_id)?.item.name || '商品不明'}の記録を削除`"
-                @click="remove(record)"
-              >
+                @click="remove(record)">
                 削除
               </button>
             </td>

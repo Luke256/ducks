@@ -14,14 +14,7 @@ onBeforeUnmount(() => {
 });
 </script>
 <template>
-  <label class="field"
-    >{{ label
-    }}<input type="file" accept="image/*" :required="required" @change="choose"
-  /></label>
-  <img
-    v-if="preview"
-    :src="preview"
-    alt="選択した画像のプレビュー"
-    class="image-preview"
-  />
+  <label class="field">{{ label
+  }}<input type="file" accept="image/*" :required="required" @change="choose" /></label>
+  <img v-if="preview" :src="preview" alt="選択した画像のプレビュー" class="image-preview" />
 </template>

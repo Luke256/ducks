@@ -45,29 +45,16 @@ async function save() {
   </p>
   <form class="panel form-panel" @submit.prevent="save">
     <fieldset :disabled="pending">
-      <label class="field"
-        >ポスター名<input
-          v-model="form.name"
-          required
-          maxlength="64"
-          placeholder="例：42" /></label
-      ><label class="field"
-        >設置場所<textarea
-          v-model="form.description"
-          required
-          maxlength="1024"
-          rows="3"
-          placeholder="回収する人が場所を特定できるように記載"
-        /></label
-      ><ImageField label="設置場所の写真" required @change="image = $event" />
+      <label class="field">ポスター名<input v-model="form.name" required maxlength="64" placeholder="例：42" /></label><label
+        class="field">設置場所<textarea v-model="form.description" required maxlength="1024" rows="3"
+          placeholder="回収する人が場所を特定できるように記載" /></label>
+      <ImageField label="設置場所の写真" required @change="image = $event" />
       <p class="muted small">画像はアップロード前に圧縮されます。</p>
       <p v-if="error" class="error" role="alert">{{ error }}</p>
       <div class="actions">
         <button class="button" type="submit" :disabled="!currentFestivalId">
-          {{ pending ? "画像を圧縮・登録中…" : "登録する" }}</button
-        ><RouterLink to="/poster" class="button secondary"
-          >キャンセル</RouterLink
-        >
+          {{ pending ? "画像を圧縮・登録中…" : "登録する" }}</button>
+        <RouterLink to="/poster" class="button secondary">キャンセル</RouterLink>
       </div>
     </fieldset>
   </form>

@@ -65,12 +65,8 @@ function bucketLabel(start: string) {
       <h1>来場者数</h1>
       <p class="muted">選択したイベントの来場者数をカウントします。</p>
     </div>
-    <button
-      v-if="currentFestivalId"
-      class="button secondary"
-      :disabled="loading || pending"
-      @click="reload()"
-    >更新</button>
+    <button v-if="currentFestivalId" class="button secondary" :disabled="loading || pending"
+      @click="reload()">更新</button>
   </div>
   <p v-if="!currentFestivalId" class="state">
     上の「対象イベント」からイベントを選択してください。
@@ -101,7 +97,12 @@ function bucketLabel(start: string) {
     <p v-if="counts && !error && !history.length" class="state">まだ来場者数が記録されていません。</p>
     <div v-if="history.length && !error" class="panel table-scroll">
       <table>
-        <thead><tr><th>開始日時</th><th class="numeric">来場者数</th></tr></thead>
+        <thead>
+          <tr>
+            <th>開始日時</th>
+            <th class="numeric">来場者数</th>
+          </tr>
+        </thead>
         <tbody>
           <tr v-for="bucket in history" :key="bucket.bucket_start">
             <td class="nowrap">{{ bucketLabel(bucket.bucket_start) }}</td>

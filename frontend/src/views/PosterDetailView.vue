@@ -60,19 +60,15 @@ async function remove() {
 }
 </script>
 <template>
-  <RouterLink to="/poster" class="back-link">← ポスター一覧</RouterLink
-  ><ResourceState :loading="loading" :error="error" @retry="reload()" />
-  <template v-if="poster"
-    ><div class="page-heading">
+  <RouterLink to="/poster" class="back-link">← ポスター一覧</RouterLink>
+  <ResourceState :loading="loading" :error="error" @retry="reload()" />
+  <template v-if="poster">
+    <div class="page-heading">
       <div>
         <p class="eyebrow">POSTER DETAIL / {{ poster.festival.name }}</p>
         <h1>{{ poster.name }}</h1>
       </div>
-      <button
-        class="button secondary"
-        :disabled="pending"
-        @click="edit ? (edit = false) : startEdit()"
-      >
+      <button class="button secondary" :disabled="pending" @click="edit ? (edit = false) : startEdit()">
         {{ edit ? "編集をキャンセル" : "編集する" }}
       </button>
     </div>
@@ -80,51 +76,27 @@ async function remove() {
       <section class="panel">
         <h2>設置場所</h2>
         <p class="description">{{ poster.description }}</p>
-        <a
-          v-if="poster.image_url"
-          :href="imageUrl(poster.image_url)"
-          target="_blank"
-          rel="noopener"
-          aria-label="設置場所の写真を拡大"
-          ><img
-            :src="imageUrl(poster.image_url)"
-            :alt="`${poster.name}の設置場所`"
-            class="detail-image"
-        /></a>
+        <a v-if="poster.image_url" :href="imageUrl(poster.image_url)" target="_blank" rel="noopener"
+          aria-label="設置場所の写真を拡大"><img :src="imageUrl(poster.image_url)" :alt="`${poster.name}の設置場所`"
+            class="detail-image" /></a>
       </section>
       <section class="panel">
         <h2>回収状況</h2>
-        <PosterStatusPicker
-          :poster-id="poster.id"
-          :name="poster.name"
-          :status="poster.status"
-          :disabled="pending"
-          @updated="updateStatus"
-        />
+        <PosterStatusPicker :poster-id="poster.id" :name="poster.name" :status="poster.status" :disabled="pending"
+          @updated="updateStatus" />
         <p class="muted small">変更するとすぐに保存されます。</p>
       </section>
     </div>
     <form v-if="edit" class="panel form-panel" @submit.prevent="save">
       <h2>登録情報を編集</h2>
       <fieldset :disabled="pending">
-        <label class="field"
-          >ポスター名<input
-            v-model="form.name"
-            required
-            maxlength="64" /></label
-        ><label class="field"
-          >設置場所<textarea
-            v-model="form.description"
-            required
-            maxlength="1024"
-            rows="4"
-          />
+        <label class="field">ポスター名<input v-model="form.name" required maxlength="64" /></label><label
+          class="field">設置場所<textarea v-model="form.description" required maxlength="1024" rows="4" />
         </label>
         <p v-if="saveError" class="error" role="alert">{{ saveError }}</p>
         <div class="actions">
           <button class="button" type="submit">
-            {{ pending ? "保存中…" : "保存する" }}</button
-          ><button class="button danger" type="button" @click="remove">
+            {{ pending ? "保存中…" : "保存する" }}</button><button class="button danger" type="button" @click="remove">
             ポスターを削除
           </button>
         </div>
