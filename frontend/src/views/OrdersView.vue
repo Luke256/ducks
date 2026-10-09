@@ -5,6 +5,8 @@ import { useResource, listOf } from "@/composables/useResource";
 import { useMutation } from "@/composables/useMutation";
 import { api } from "@/lib/api";
 import { salesTotal } from "@/lib/sales";
+import { categoryTags } from "@/lib/categories";
+import CategoryTags from "@/components/CategoryTags.vue";
 import type { Stock } from "@/types/stock";
 import type { SaleRecord } from "@/types/saleRecord";
 import ResourceState from "@/components/ResourceState.vue";
@@ -39,7 +41,7 @@ const stockMap = computed(
   () => new Map((stocks.value || []).map((s) => [s.id, s])),
 );
 const categories = computed(() =>
-  [...new Set((stocks.value || []).map((s) => s.item.category))].sort(),
+  [...new Set((stocks.value || []).flatMap((s) => categoryTags(s.item.category)))].sort(),
 );
 const filtered = computed(() =>
   (records.value || [])
@@ -47,7 +49,7 @@ const filtered = computed(() =>
       const stock = stockMap.value.get(r.stock_id);
       return (
         (!stockFilterCategory.value ||
-          stock?.item.category === stockFilterCategory.value) &&
+          categoryTags(stock?.item.category || "").includes(stockFilterCategory.value)) &&
         (!search.value.trim() || stock?.item.name.includes(search.value.trim()))
       );
     })
@@ -153,7 +155,8 @@ function amount(record: SaleRecord) {
                 stockMap.get(record.stock_id)?.item.name || "商品不明"
                 }}</strong>
               <p class="small muted">
-                {{ stockMap.get(record.stock_id)?.item.category || "—" }}
+                <CategoryTags v-if="stockMap.has(record.stock_id)" :category="stockMap.get(record.stock_id)?.item.category || ''" />
+                <template v-else>—</template>
               </p>
             </td>
             <td class="numeric">

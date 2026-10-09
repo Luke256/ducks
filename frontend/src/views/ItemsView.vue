@@ -2,6 +2,8 @@
 import { computed, ref } from "vue";
 import { useResource, listOf } from "@/composables/useResource";
 import { imageUrl } from "@/lib/api";
+import { categoryTags } from "@/lib/categories";
+import CategoryTags from "@/components/CategoryTags.vue";
 import type { StockItem } from "@/types/stockItem";
 import ResourceState from "@/components/ResourceState.vue";
 const {
@@ -13,13 +15,13 @@ const {
 const search = ref("");
 const category = ref("");
 const categories = computed(() =>
-  [...new Set((items.value || []).map((i) => i.category))].sort(),
+  [...new Set((items.value || []).flatMap((i) => categoryTags(i.category)))].sort(),
 );
 const filtered = computed(() =>
   (items.value || [])
     .filter(
       (i) =>
-        (!category.value || i.category === category.value) &&
+        (!category.value || categoryTags(i.category).includes(category.value)) &&
         `${i.name} ${i.description}`.includes(search.value.trim()),
     )
     .sort(
@@ -55,7 +57,7 @@ const filtered = computed(() =>
     <RouterLink v-for="item in filtered" :key="item.id" :to="`/sales/items/${item.id}`" class="panel product-card"><img
         v-if="item.image_url" :src="imageUrl(item.image_url)" :alt="item.name" class="product-image" loading="lazy" />
       <div class="product-info">
-        <span class="badge">{{ item.category }}</span>
+        <CategoryTags :category="item.category" />
         <h2>{{ item.name }}</h2>
         <p class="description muted">{{ item.description || "説明なし" }}</p>
         <span class="text-link">詳細・編集 →</span>

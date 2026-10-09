@@ -151,6 +151,7 @@ beforeEach(() => {
     requests.length = 0;
     fail = "";
     stock.price = 500;
+    item.category = "グッズ";
     itemImageUrl = item.image_url;
     poster.name = "講義棟 01";
     poster.description = "正面入口";
@@ -481,6 +482,98 @@ describe("登録・編集", () => {
             expect(router.currentRoute.value.path).toBe(destination);
             wrapper.unmount();
         }
+    });
+});
+describe("カテゴリタグ", () => {
+    beforeEach(() => {
+        item.category = " グッズ /　音楽 / 限定 /音楽 ";
+        const otherItem = { ...item, id: "i2", name: "別商品", category: "グ" };
+        const otherStock = { ...stock, id: "s2", item: otherItem };
+        const taggedData: Record<string, unknown> = {
+            "/items": { items: [item, otherItem] },
+            "/festivals/f1/stocks": { stocks: [stock, otherStock] },
+            "/sales?festival_id=f1": { sales: [...records, { ...records[0], id: "r3", stock_id: "s2" }] },
+        };
+        vi.mocked(fetch).mockImplementation((input, options) => {
+            const path = String(input).slice(apiBase.length);
+            if ((!options?.method || options.method === "GET") && taggedData[path]) {
+                requests.push({ path, options: options || {} });
+                return Promise.resolve(Response.json(taggedData[path]));
+            }
+            return fixture(String(input), options);
+        });
+    });
+    it.each([
+        ["/sales/items", ".product-card"],
+        ["/sales/stocks", "tbody tr"],
+        ["/sales/orders", "tbody tr"],
+        ["/sales/cashier", ".cashier-product"],
+        ["/sales/stocks/new", "form select[required] option[value]"],
+    ])("%sで各タグを選択でき、部分一致するタグとは区別する", async (path, selector) => {
+        await open(path);
+        const filter = wrapper.find(path.endsWith("/new") ? "form select" : ".filter-field select");
+        expect(filter.findAll("option").map((option) => option.text())).toEqual([
+            "すべてのカテゴリ", "グ", "グッズ", "限定", "音楽",
+        ]);
+        for (const tag of ["グッズ", "音楽", "限定"]) {
+            await filter.setValue(tag);
+            const text = wrapper.findAll(selector).map((row) => row.text()).join(" ");
+            expect(text).toContain(item.name);
+            expect(text).not.toContain("別商品");
+        }
+        await filter.setValue("グ");
+        const text = wrapper.findAll(selector).map((row) => row.text()).join(" ");
+        expect(text).toContain("別商品");
+        expect(text).not.toContain(item.name);
+    });
+    it("販売商品の選択は一致する別タグへの切り替えで保持し、不一致なら解除する", async () => {
+        await open("/sales/stocks/new");
+        const filter = wrapper.find("form select");
+        const selected = wrapper.find("form select[required]");
+        await selected.setValue("i1");
+        await filter.setValue("音楽");
+        expect((selected.element as HTMLSelectElement).value).toBe("i1");
+        await filter.setValue("限定");
+        expect((selected.element as HTMLSelectElement).value).toBe("i1");
+        await filter.setValue("グ");
+        expect((selected.element as HTMLSelectElement).value).toBe("");
+    });
+    it.each(["/sales/items", "/sales/stocks", "/sales/orders", "/sales/items/i1", "/sales/stocks/s1"])("%sで個別のタグを表示し、最初のタグだけを強調する", async (path) => {
+        await open(path);
+        const badges = wrapper.find(".category-tags").findAll(".badge");
+        expect(badges.map((badge) => badge.text())).toEqual(["グッズ", "音楽", "限定"]);
+        expect(badges.map((badge) => badge.classes().includes("primary"))).toEqual([true, false, false]);
+        expect(badges[0].attributes("title")).toBe("主タグ");
+    });
+    it("レジは主タグで商品を一度だけ分類し、副タグの絞り込みでも所属と数量を保持する", async () => {
+        await open("/sales/cashier");
+        const cards = wrapper.findAll(".cashier-product").filter((card) => card.text().includes(item.name));
+        expect(cards).toHaveLength(1);
+        expect(wrapper.findAll(".category-section h2").map((heading) => heading.element.firstChild?.textContent?.trim())).toEqual(["グ", "グッズ"]);
+        await cards[0].trigger("click");
+        await wrapper.find(".filter-field select").setValue("音楽");
+        expect(wrapper.findAll(".category-section")).toHaveLength(1);
+        expect(wrapper.find(".category-section h2").element.firstChild?.textContent?.trim()).toBe("グッズ");
+        expect(wrapper.findAll(".cashier-product")).toHaveLength(1);
+        expect(wrapper.find(".quantity-badge").text()).toBe("1");
+        await wrapper.find(".cashier-product").trigger("click");
+        expect(wrapper.findAll(".receipt-line")).toHaveLength(1);
+        expect(wrapper.find(".quantity-badge").text()).toBe("2");
+        expect(wrapper.find(".receipt-total").text()).toContain("1,000 円");
+        await button("会計を確定する").trigger("click");
+        await flushPromises();
+        expect(JSON.parse(mutations("/sales")[0].options.body as string)).toEqual({ items: [{ stock_id: "s1", quantity: 2 }] });
+    });
+    it("区切り文字しかないカテゴリでは商品を登録しない", async () => {
+        await open("/sales/items/new");
+        const inputs = wrapper.findAll("form input:not([type=file])");
+        await inputs[0].setValue("新商品");
+        await inputs[1].setValue(" /　/ ");
+        await upload();
+        await wrapper.find("form").trigger("submit");
+        await flushPromises();
+        expect(mutations("/items")).toHaveLength(0);
+        expect(wrapper.find("form .error").text()).toContain("商品名とカテゴリを入力してください");
     });
 });
 describe("商品画像の変更", () => {

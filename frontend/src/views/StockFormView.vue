@@ -5,6 +5,8 @@ import { useResource, listOf } from "@/composables/useResource";
 import { useMutation } from "@/composables/useMutation";
 import { currentFestivalId } from "@/state";
 import { api, jsonBody, imageUrl } from "@/lib/api";
+import { categoryTags } from "@/lib/categories";
+import CategoryTags from "@/components/CategoryTags.vue";
 import type { Stock } from "@/types/stock";
 import type { StockItem } from "@/types/stockItem";
 import ResourceState from "@/components/ResourceState.vue";
@@ -32,11 +34,11 @@ const form = reactive({ item_id: "", description: "", price: 100 });
 const category = ref("");
 const edit = ref(isNew.value);
 const categories = computed(() =>
-  [...new Set((items.value || []).map((i) => i.category))].sort(),
+  [...new Set((items.value || []).flatMap((i) => categoryTags(i.category)))].sort(),
 );
 const filtered = computed(() =>
   (items.value || []).filter(
-    (i) => !category.value || i.category === category.value,
+    (i) => !category.value || categoryTags(i.category).includes(category.value),
   ),
 );
 const selectedItem = computed(() =>
@@ -47,7 +49,7 @@ watch(category, () => {
   if (
     selectedItem.value &&
     category.value &&
-    selectedItem.value.category !== category.value
+    !categoryTags(selectedItem.value.category).includes(category.value)
   )
     form.item_id = "";
 });
@@ -140,7 +142,7 @@ async function remove() {
             </select></label><label class="field">商品<select v-model="form.item_id" required>
               <option value="">商品を選択</option>
               <option v-for="item in filtered" :key="item.id" :value="item.id">
-                {{ item.name }} / {{ item.category }}
+                {{ item.name }} / {{ categoryTags(item.category).join(" / ") }}
               </option>
             </select></label><img v-if="selectedItem?.image_url" :src="imageUrl(selectedItem.image_url)"
             :alt="selectedItem.name" class="image-preview" />
@@ -167,7 +169,7 @@ async function remove() {
           class="detail-image" />
       </section>
       <section class="panel">
-        <span class="badge">{{ stock.item.category }}</span>
+        <CategoryTags :category="stock.item.category" />
         <p class="price-large">
           {{ stock.price.toLocaleString() }}<small> 円</small>
         </p>

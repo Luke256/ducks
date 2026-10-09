@@ -407,9 +407,16 @@ main {
     font-weight: 650;
 }
 
-.badge.selected {
+.badge.selected,
+.category-tags .badge.primary {
     background: #fff1b8;
     color: #705713;
+}
+
+.category-tags {
+    display: inline-flex;
+    flex-wrap: wrap;
+    gap: 6px;
 }
 
 .text-link {

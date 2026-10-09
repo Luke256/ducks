@@ -5,6 +5,8 @@ import { useResource } from "@/composables/useResource";
 import { useMutation } from "@/composables/useMutation";
 import { api, jsonBody, imageUrl } from "@/lib/api";
 import { resizeImage } from "@/utils/resizeImage";
+import { categoryTags } from "@/lib/categories";
+import CategoryTags from "@/components/CategoryTags.vue";
 import type { StockItem } from "@/types/stockItem";
 import ImageField from "@/components/ImageField.vue";
 import ResourceState from "@/components/ResourceState.vue";
@@ -46,7 +48,7 @@ function startEdit() {
 async function save() {
   await run(
     async () => {
-      if (!form.name.trim() || !form.category.trim())
+      if (!form.name.trim() || !categoryTags(form.category).length)
         throw new Error("商品名とカテゴリを入力してください。");
       if (isNew.value) {
         if (!image.value) throw new Error("商品画像を選択してください。");
@@ -114,7 +116,9 @@ async function remove() {
       <fieldset :disabled="pending">
         <label class="field">商品名<input v-model="form.name" required maxlength="100" /></label><label
           class="field">カテゴリ<input v-model="form.category" required maxlength="100"
-            placeholder="例：sound" /></label><label class="field">説明<textarea v-model="form.description"
+            placeholder="例：グッズ / 音楽 / 限定" /></label>
+        <p class="small muted">カテゴリはスラッシュ（/）で区切るとサブカテゴリを指定できます。</p>
+        <label class="field">説明<textarea v-model="form.description"
             rows="4" /></label>
         <h3>商品画像</h3>
         <ImageField :label="image || item?.image_url ? '画像を変更' : '画像を追加'" :existing="item?.image_url"
@@ -147,7 +151,7 @@ async function remove() {
         <h2>登録情報</h2>
         <dl>
           <dt>カテゴリ</dt>
-          <dd>{{ item.category }}</dd>
+          <dd><CategoryTags :category="item.category" /></dd>
           <dt>説明</dt>
           <dd class="description">{{ item.description || "説明なし" }}</dd>
         </dl>

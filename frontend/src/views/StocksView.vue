@@ -3,6 +3,8 @@ import { computed, ref } from "vue";
 import { currentFestivalId, stockFilterCategory } from "@/state";
 import { useResource, listOf } from "@/composables/useResource";
 import { imageUrl } from "@/lib/api";
+import { categoryTags } from "@/lib/categories";
+import CategoryTags from "@/components/CategoryTags.vue";
 import type { Stock } from "@/types/stock";
 import ResourceState from "@/components/ResourceState.vue";
 const {
@@ -19,14 +21,14 @@ const {
 );
 const search = ref("");
 const categories = computed(() =>
-  [...new Set((stocks.value || []).map((s) => s.item.category))].sort(),
+  [...new Set((stocks.value || []).flatMap((s) => categoryTags(s.item.category)))].sort(),
 );
 const filtered = computed(() =>
   (stocks.value || [])
     .filter(
       (s) =>
         (!stockFilterCategory.value ||
-          s.item.category === stockFilterCategory.value) &&
+          categoryTags(s.item.category).includes(stockFilterCategory.value)) &&
         `${s.item.name} ${s.description}`.includes(search.value.trim()),
     )
     .sort(
@@ -84,7 +86,7 @@ const filtered = computed(() =>
                 <div>
                   <RouterLink :to="`/sales/stocks/${stock.id}`" class="text-link">{{ stock.item.name
                   }}</RouterLink>
-                  <p class="muted small">{{ stock.item.category }}</p>
+                  <p><CategoryTags :category="stock.item.category" /></p>
                 </div>
               </div>
             </td>
