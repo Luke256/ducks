@@ -964,6 +964,11 @@ dd {
     font-size: 1.5rem;
 }
 
+.visitor-quick-add {
+    margin-top: 12px;
+    gap: 8px;
+}
+
 .notifications {
     position: fixed;
     right: 22px;

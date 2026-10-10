@@ -84,6 +84,10 @@ function bucketLabel(start: string) {
           <button class="button visitor-increment" type="button" @click="add(1)">＋1人</button>
           <button class="button secondary" type="button" @click="add(-1, true)">−1人（訂正）</button>
         </div>
+        <div class="actions visitor-quick-add">
+          <button v-for="count in [2, 3, 4, 5]" :key="count" class="button compact" type="button"
+            @click="add(count)">＋{{ count }}人</button>
+        </div>
         <p class="small muted">訂正は現在の10分間の人数から減らします。過去の時間帯は変更できません。</p>
         <label class="field">まとめて追加
           <input v-model="amount" type="number" min="1" step="1" required />
