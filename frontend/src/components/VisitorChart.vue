@@ -21,6 +21,9 @@ function minuteOfDay(start: number) {
 function timeLabel(minute: number) {
   return `${String(Math.floor(minute / 60)).padStart(2, "0")}:${String(minute % 60).padStart(2, "0")}`;
 }
+function timeRangeLabel(minute: number) {
+  return `${timeLabel(minute)}-${timeLabel(minute + 10)}`;
+}
 const minutes = computed(() => props.days.flatMap((day) => day.buckets.map((b) => minuteOfDay(b.start))));
 const first = computed(() => Math.min(...minutes.value));
 const last = computed(() => Math.max(...minutes.value));
@@ -79,7 +82,7 @@ function showTooltip(minute: number, event?: PointerEvent) {
   }
 }
 function hoverLabel(minute: number) {
-  return `${timeLabel(minute)} ${series.value.flatMap((day) => {
+  return `${timeRangeLabel(minute)} ${series.value.flatMap((day) => {
     const point = day.points.find((p) => p.minute === minute);
     return point ? [`${day.date}：${point.count.toLocaleString()} 人`] : [];
   }).join("、")}`;
@@ -126,7 +129,7 @@ function hoverLabel(minute: number) {
           :cx="point.x" :cy="point.y" r="4" :fill="point.color" class="visitor-chart-selected-point" />
         <g v-if="hovered && hoveredRows.length" class="visitor-chart-tooltip" role="tooltip" :transform="tooltipTransform">
           <rect :width="tooltipWidth" :height="tooltipHeight" rx="4" class="visitor-chart-tooltip-background" />
-          <text x="8" y="16">{{ timeLabel(hovered.minute) }}</text>
+          <text x="8" y="16">{{ timeRangeLabel(hovered.minute) }}</text>
           <g v-for="(row, i) in hoveredRows" :key="row.date">
             <rect x="8" :y="28 + i * 18" width="8" height="2" :fill="row.color" />
             <text x="22" :y="32 + i * 18">{{ row.date }}：{{ row.count.toLocaleString() }} 人</text>

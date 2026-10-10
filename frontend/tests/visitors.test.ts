@@ -86,7 +86,7 @@ describe("来場者数の日別グラフ", () => {
         const areas = wrapper.findAll(".visitor-chart-hover");
         await areas[1].trigger("pointerenter");
         const tooltip = wrapper.find('[role="tooltip"]');
-        expect(tooltip.text()).toContain("10:10");
+        expect(tooltip.text()).toContain("10:10-10:20");
         expect(tooltip.text()).toContain("2026/10/09：8 人");
         expect(tooltip.text()).toContain("2026/10/08：0 人");
         const markers = wrapper.findAll("circle");
@@ -211,6 +211,8 @@ describe("来場者数の日別グラフ", () => {
         expect(wrapper.find('[role="tooltip"]').exists()).toBe(false);
         await areas[0].trigger("pointerenter");
         expect(wrapper.find('[role="tooltip"]').text()).toContain("2026/10/08：1,234 人");
+        expect(wrapper.find('[role="tooltip"] > text').text()).toBe("10:00-10:10");
+        expect(areas[0].attributes("aria-label")).toContain("10:00-10:10");
         expect(wrapper.findAll("circle")).toHaveLength(1);
         expect(wrapper.find("circle").attributes("cx")).toBe("60");
         await areas[1].trigger("pointerenter");
@@ -222,6 +224,7 @@ describe("来場者数の日別グラフ", () => {
         expect(wrapper.find("circle").exists()).toBe(false);
         await areas[2].trigger("focus");
         expect(wrapper.find('[role="tooltip"]').text()).toContain("2026/10/08：8 人");
+        expect(wrapper.find('[role="tooltip"] > text').text()).toBe("10:20-10:30");
         expect(wrapper.find("circle").attributes("cx")).toBe("760");
         await areas[2].trigger("blur");
         expect(wrapper.find('[role="tooltip"]').exists()).toBe(false);
