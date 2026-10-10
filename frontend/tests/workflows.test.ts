@@ -31,6 +31,7 @@ const stock = {
     festival_id: "f1",
     price: 500,
     description: "限定商品",
+    for_sale: true,
     item,
 };
 const poster: Poster = {
@@ -61,6 +62,10 @@ function fixture(input: string, options: RequestInit = {}) {
         return Promise.resolve(new Response("test failure", { status: 500 }));
     if (path === "/posters/p1" && options.method === "PUT")
         Object.assign(poster, JSON.parse(options.body as string));
+    if (path === "/stocks/s1" && options.method === "PUT")
+        Object.assign(stock, JSON.parse(options.body as string));
+    if (path === "/festivals/f1/stocks" && options.method === "POST")
+        Object.assign(stock, JSON.parse(options.body as string));
     if (path === "/posters/p1/images" && options.method === "PATCH") {
         const body = options.body as FormData;
         const deleted = body.getAll("delete_image_ids");
@@ -109,6 +114,8 @@ function fixture(input: string, options: RequestInit = {}) {
         "/stocks/s1": { ...stock, item: { ...item, image_url: itemImageUrl } },
         "/festivals/f1/stocks": { stocks: [{ ...stock, item: { ...item, image_url: itemImageUrl } }] },
         "/festivals/f2/stocks": { stocks: [] },
+        "/festivals/f1/stocks?only_for_sale=true": { stocks: stock.for_sale ? [{ ...stock, item: { ...item, image_url: itemImageUrl } }] : [] },
+        "/festivals/f2/stocks?only_for_sale=true": { stocks: [] },
         "/festivals/f1/posters": { posters: [poster] },
         "/festivals/f2/posters": { posters: [] },
         "/posters/p1": poster,
@@ -151,6 +158,8 @@ beforeEach(() => {
     requests.length = 0;
     fail = "";
     stock.price = 500;
+    stock.description = "限定商品";
+    stock.for_sale = true;
     item.category = "グッズ";
     itemImageUrl = item.image_url;
     poster.name = "講義棟 01";
@@ -475,7 +484,7 @@ describe("登録・編集", () => {
             await flushPromises();
             expect(
                 JSON.parse(mutations("/festivals/f1/stocks")[0].options.body as string),
-            ).toEqual({ item_id: "i1", price, description: "補足" });
+            ).toEqual({ item_id: "i1", price, description: "補足", for_sale: true });
             expect(router.currentRoute.value.path).toBe("/sales/stocks/s1");
             expect(wrapper.find(".price-large").text()).toBe(`${price} 円`);
         },
@@ -490,6 +499,52 @@ describe("登録・編集", () => {
         await flushPromises();
         expect(mutations("/festivals/f1/stocks")).toHaveLength(0);
         expect(wrapper.find("form").text()).toContain("0円以上の整数");
+    });
+    it("販売商品を非表示で登録し、falseを真偽値で送信する", async () => {
+        await open("/sales/stocks/new");
+        const status = wrapper.find('input[type="checkbox"][name="for_sale"]');
+        expect((status.element as HTMLInputElement).checked).toBe(true);
+        await wrapper.find("form select[required]").setValue("i1");
+        await status.setValue(false);
+        await wrapper.find("form").trigger("submit");
+        await flushPromises();
+        expect(JSON.parse(mutations("/festivals/f1/stocks")[0].options.body as string)).toEqual({
+            item_id: "i1", price: 500, description: "", for_sale: false,
+        });
+        expect(wrapper.find(".detail-grid p > .badge").text()).toBe("レジ非表示");
+    });
+    it.each([true, false])("販売状態%sを保って説明を編集する", async (forSale) => {
+        stock.for_sale = forSale;
+        await open("/sales/stocks/s1");
+        await button("販売情報を編集").trigger("click");
+        expect((wrapper.find('input[name="for_sale"]').element as HTMLInputElement).checked).toBe(forSale);
+        await wrapper.find("textarea").setValue("更新した説明");
+        await wrapper.find("form").trigger("submit");
+        await flushPromises();
+        expect(JSON.parse(mutations("/stocks/s1")[0].options.body as string)).toEqual({
+            description: "更新した説明", for_sale: forSale,
+        });
+        expect(wrapper.find(".detail-grid p > .badge").exists()).toBe(!forSale);
+    });
+    it.each([true, false])("販売状態を%sへ変更し、保存後の詳細に反映する", async (forSale) => {
+        stock.for_sale = !forSale;
+        await open("/sales/stocks/s1");
+        await button("販売情報を編集").trigger("click");
+        await wrapper.find('input[name="for_sale"]').setValue(forSale);
+        await wrapper.find("form").trigger("submit");
+        await flushPromises();
+        expect(JSON.parse(mutations("/stocks/s1")[0].options.body as string).for_sale).toBe(forSale);
+        expect(wrapper.find(".detail-grid p > .badge").exists()).toBe(!forSale);
+    });
+    it("編集のキャンセル後に元の販売状態で編集を再開する", async () => {
+        stock.for_sale = false;
+        await open("/sales/stocks/s1");
+        await button("販売情報を編集").trigger("click");
+        await wrapper.find('input[name="for_sale"]').setValue(true);
+        await button("編集をキャンセル").trigger("click");
+        await button("販売情報を編集").trigger("click");
+        expect((wrapper.find('input[name="for_sale"]').element as HTMLInputElement).checked).toBe(false);
+        expect(mutations("/stocks/s1")).toHaveLength(0);
     });
     it("イベント・ポスター・商品・販売商品の削除を維持する", async () => {
         for (const [path, editLabel, deleteLabel, endpoint, destination] of [
@@ -516,7 +571,7 @@ describe("登録・編集", () => {
             ],
             [
                 "/sales/stocks/s1",
-                "説明を編集",
+                "販売情報を編集",
                 "販売登録を削除",
                 "/stocks/s1",
                 "/sales/stocks",
@@ -540,6 +595,7 @@ describe("カテゴリタグ", () => {
         const taggedData: Record<string, unknown> = {
             "/items": { items: [item, otherItem] },
             "/festivals/f1/stocks": { stocks: [stock, otherStock] },
+            "/festivals/f1/stocks?only_for_sale=true": { stocks: [stock, otherStock] },
             "/sales?festival_id=f1": { sales: [...records, { ...records[0], id: "r3", stock_id: "s2" }] },
         };
         vi.mocked(fetch).mockImplementation((input, options) => {
@@ -1090,6 +1146,41 @@ describe("ポスター回収", () => {
     });
 });
 describe("レジ・売上", () => {
+    it("レジは販売中だけを要求し、非表示の商品を表示しない", async () => {
+        stock.for_sale = false;
+        await open("/sales/cashier");
+        expect(requests.some((r) => r.path === "/festivals/f1/stocks?only_for_sale=true")).toBe(true);
+        expect(wrapper.find(".cashier-product").exists()).toBe(false);
+        expect(button("会計を確定する").attributes("disabled")).toBeDefined();
+    });
+    it("選択後に非表示になった商品は更新後に会計できず、明細から削除できる", async () => {
+        await open("/sales/cashier");
+        await wrapper.find(".cashier-product").trigger("click");
+        stock.for_sale = false;
+        await button("更新").trigger("click");
+        await flushPromises();
+        expect(wrapper.find(".cashier-product").exists()).toBe(false);
+        expect(wrapper.find(".receipt-line").text()).toContain("販売商品を再確認してください");
+        expect(wrapper.findAll(".quantity-control button")[1].attributes("disabled")).toBeDefined();
+        expect(button("会計を確定する").attributes("disabled")).toBeDefined();
+        expect(mutations("/sales")).toHaveLength(0);
+        await wrapper.find(".quantity-control button").trigger("click");
+        expect(wrapper.find(".receipt-line").exists()).toBe(false);
+    });
+    it("管理一覧と売上履歴は非表示の商品も取得し、過去の売上金額を維持する", async () => {
+        stock.for_sale = false;
+        await open("/sales/stocks");
+        expect(wrapper.findAll("tbody tr")).toHaveLength(1);
+        expect(wrapper.find("tbody tr").text()).toContain("レジ非表示");
+        expect(wrapper.find("tbody tr").text()).toContain(item.name);
+        await router.push("/sales/orders");
+        await flushPromises();
+        expect(wrapper.findAll("tbody tr")).toHaveLength(2);
+        expect(wrapper.find("tbody tr").text()).toContain(item.name);
+        expect(wrapper.find("tbody tr").text()).toContain("レジ非表示");
+        expect(wrapper.find(".summary strong").text()).toBe("1,500 円");
+        expect(requests.filter((r) => r.path.includes("/stocks")).every((r) => r.path === "/festivals/f1/stocks")).toBe(true);
+    });
     it.each([
         ["/sales/cashier", ".product-price"],
         ["/sales/stocks", "tbody tr td.numeric"],
@@ -1180,7 +1271,7 @@ describe("レジ・売上", () => {
         await wrapper.find(".festival-picker select").setValue("f2");
         await flushPromises();
         expect(wrapper.find(".receipt-line").exists()).toBe(false);
-        expect(requests.some((r) => r.path === "/festivals/f2/stocks")).toBe(true);
+        expect(requests.some((r) => r.path === "/festivals/f2/stocks?only_for_sale=true")).toBe(true);
         expect(button("会計を確定する").attributes("disabled")).toBeDefined();
     });
     it("売上をイベントで絞り込み、新しい順に表示し、削除後に合計を更新する", async () => {

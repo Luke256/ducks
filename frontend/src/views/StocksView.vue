@@ -87,6 +87,7 @@ const filtered = computed(() =>
                 <div>
                   <RouterLink :to="`/sales/stocks/${stock.id}`" class="text-link">{{ stock.item.name
                   }}</RouterLink>
+                  <span v-if="!stock.for_sale" class="badge">レジ非表示</span>
                   <p><CategoryTags :category="stock.item.category" /></p>
                 </div>
               </div>

@@ -96,6 +96,7 @@ describe("会計の検証", () => {
             festival_id: "f1",
             price: 500,
             description: "",
+            for_sale: true,
             item: {
                 id: "i1",
                 name: "商品",
@@ -122,6 +123,14 @@ describe("会計の検証", () => {
         expect(() => saleItems({ missing: 1 }, stocks, "f1")).toThrow("変更");
         for (const quantity of [0, -1, 1.5, NaN, Infinity])
             expect(() => saleItems({ s1: quantity }, stocks, "f1")).toThrow("数量");
+    });
+    it("非表示の商品を会計せず、過去の売上金額には含める", () => {
+        const hiddenStocks = stocks.map((stock) => ({ ...stock, for_sale: false }));
+        expect(() => saleItems({ s1: 1 }, hiddenStocks, "f1")).toThrow("変更");
+        expect(salesTotal(
+            [{ id: "r1", stock_id: "s1", quantity: 2, created_at: "" }],
+            hiddenStocks,
+        )).toBe(1000);
     });
 });
 

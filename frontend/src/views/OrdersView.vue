@@ -152,6 +152,7 @@ function amount(record: SaleRecord) {
               <strong>{{
                 stockMap.get(record.stock_id)?.item.name || "商品不明"
                 }}</strong>
+              <span v-if="stockMap.get(record.stock_id)?.for_sale === false" class="badge">レジ非表示</span>
               <p class="small muted">
                 <CategoryTags v-if="stockMap.has(record.stock_id)" :category="stockMap.get(record.stock_id)?.item.category || ''" />
                 <template v-else>—</template>

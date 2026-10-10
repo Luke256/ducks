@@ -31,7 +31,7 @@ const {
   () => (isNew.value ? "/items" : null),
   listOf<StockItem>("items"),
 );
-const form = reactive({ item_id: "", description: "", price: 500 });
+const form = reactive({ item_id: "", description: "", price: 500, for_sale: true });
 const category = ref("");
 const edit = ref(isNew.value);
 const categories = computed(() =>
@@ -57,12 +57,16 @@ watch(category, () => {
 watch(stock, (value) => {
   if (value) {
     currentFestivalId.value = value.festival_id;
-    if (!edit.value) form.description = value.description;
+    if (!edit.value) {
+      form.description = value.description;
+      form.for_sale = value.for_sale;
+    }
   }
 });
 function startEdit() {
   if (stock.value) {
     form.description = stock.value.description;
+    form.for_sale = stock.value.for_sale;
     edit.value = true;
   }
 }
@@ -89,7 +93,7 @@ async function save() {
       } else {
         await api(`/stocks/${route.params.stockId}`, {
           method: "PUT",
-          ...jsonBody({ description: form.description }),
+          ...jsonBody({ description: form.description, for_sale: form.for_sale }),
         });
         edit.value = false;
         await reload();
@@ -127,7 +131,7 @@ async function remove() {
         </p>
       </div>
       <button v-if="!isNew" class="button secondary" :disabled="pending" @click="edit ? (edit = false) : startEdit()">
-        {{ edit ? "編集をキャンセル" : "説明を編集" }}
+        {{ edit ? "編集をキャンセル" : "販売情報を編集" }}
       </button>
     </div>
     <p v-if="isNew && !currentFestivalId" class="state">
@@ -153,6 +157,10 @@ async function remove() {
         </template><label class="field">販売時の説明<textarea v-model="form.description" rows="3"
             placeholder="レジにも表示される補足情報" />
         </label>
+        <label class="field checkbox-field">
+          <input v-model="form.for_sale" type="checkbox" name="for_sale" />
+          レジに表示する
+        </label>
         <p v-if="saveError" class="error" role="alert">{{ saveError }}</p>
         <div class="actions">
           <button class="button" type="submit" :disabled="isNew && !currentFestivalId">
@@ -171,6 +179,7 @@ async function remove() {
       </section>
       <section class="panel">
         <CategoryTags :category="stock.item.category" />
+        <p v-if="!stock.for_sale"><span class="badge">レジ非表示</span></p>
         <p class="price-large" :style="{ color: priceColor(stock.price) }">
           {{ stock.price.toLocaleString() }}<small> 円</small>
         </p>
@@ -183,3 +192,19 @@ async function remove() {
     </div>
   </template>
 </template>
+<style scoped>
+.checkbox-field {
+  flex-direction: row;
+  align-items: center;
+  min-height: 44px;
+  cursor: pointer;
+}
+.checkbox-field input {
+  width: 20px;
+  height: 20px;
+  min-height: 0;
+  margin: 0;
+  padding: 0;
+  accent-color: #182b3b;
+}
+</style>
