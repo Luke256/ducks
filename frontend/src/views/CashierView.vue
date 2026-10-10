@@ -112,7 +112,7 @@ async function checkout() {
     );
     await api("/sales", { method: "POST", ...jsonBody({ items }) });
     clear();
-  }, "会計が完了しました。次のお客様の商品を選択してください。");
+  }, "会計が完了しました");
 }
 onBeforeRouteLeave(() =>
   pending.value
