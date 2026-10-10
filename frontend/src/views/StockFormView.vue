@@ -30,7 +30,7 @@ const {
   () => (isNew.value ? "/items" : null),
   listOf<StockItem>("items"),
 );
-const form = reactive({ item_id: "", description: "", price: 100 });
+const form = reactive({ item_id: "", description: "", price: 500 });
 const category = ref("");
 const edit = ref(isNew.value);
 const categories = computed(() =>
