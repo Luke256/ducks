@@ -208,6 +208,7 @@ func TestUpdateFestivalStock(t *testing.T) {
 			assert.Equal(t, 500, updatedStock.Price)
 			assert.Equal(t, "Updated Stock Description", updatedStock.Description)
 			assert.Equal(t, forSale, updatedStock.ForSale)
+			assert.NoError(t, repo.UpdateFestivalStock(fesStock.ID, updatedStock.Description, updatedStock.ForSale))
 		})
 	}
 

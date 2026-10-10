@@ -82,7 +82,9 @@ func (r *GormRepository) UpdateStockItem(id uuid.UUID, name string, description 
 		return model.StockItem{}, wrapGormError(err)
 	}
 	if rows == 0 {
-		return model.StockItem{}, repository.ErrNotFound
+		if err := r.db.Select("id").First(&model.StockItem{}, "id = ?", id).Error; err != nil {
+			return model.StockItem{}, wrapGormError(err)
+		}
 	}
 
 	return item, nil
@@ -100,6 +102,6 @@ func (r *GormRepository) DeleteStockItem(id uuid.UUID) error {
 	if rows == 0 {
 		return repository.ErrNotFound
 	}
-	
+
 	return nil
 }

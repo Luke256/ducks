@@ -299,6 +299,14 @@ func TestUpdateFestivalStock(t *testing.T) {
 			Object()
 
 		res.Value("description").IsEqual("Updated Stock Description")
+
+		e.PUT("/api/stocks/{festival_stock_id}", fesStock.ID).
+			WithJSON(map[string]any{
+				"for_sale":    true,
+				"description": "Updated Stock Description",
+			}).
+			Expect().
+			Status(204)
 	})
 
 	t.Run("Update Festival Stock Price - Not Found", func(t *testing.T) {

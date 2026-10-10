@@ -103,6 +103,14 @@ func TestEditFestival(t *testing.T) {
 		resp.Value("id").IsEqual(fest.ID.String())
 		resp.Value("name").IsEqual("New Name")
 		resp.Value("description").IsEqual("")
+
+		e.PUT(fmt.Sprintf("/api/festivals/%s", fest.ID.String())).
+			WithJSON(map[string]any{
+				"name":        "New Name",
+				"description": "",
+			}).
+			Expect().
+			Status(200)
 	})
 
 	t.Run("edit non-existing festival", func(t *testing.T) {

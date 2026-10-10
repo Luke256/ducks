@@ -84,6 +84,7 @@ func TestUpdateFestival(t *testing.T) {
 		assert.NoError(t, err)
 		assert.Equal(t, "New Fest", updatedFestival.Name)
 		assert.Equal(t, "New Description", updatedFestival.Description)
+		assert.NoError(t, repo.UpdateFestival(festival.ID, updatedFestival.Name, updatedFestival.Description))
 	})
 
 	t.Run("Update Non-Existent Festival", func(t *testing.T) {

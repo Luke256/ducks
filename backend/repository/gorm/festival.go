@@ -68,7 +68,7 @@ func (r *GormRepository) UpdateFestival(festivalID uuid.UUID, name string, descr
 	}
 
 	if rows == 0 {
-		return repository.ErrNotFound
+		return wrapGormError(r.db.Select("id").First(&model.Festival{}, "id = ?", festivalID).Error)
 	}
 
 	return nil
