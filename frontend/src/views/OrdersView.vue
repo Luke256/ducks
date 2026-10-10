@@ -107,10 +107,7 @@ function amount(record: SaleRecord) {
         <span>表示中の売上金額</span><strong>{{ total.toLocaleString() }}<small> 円</small></strong>
       </div>
       <div class="panel summary">
-        <span>販売数</span><strong>{{ quantity.toLocaleString() }}<small> 点</small></strong>
-      </div>
-      <div class="panel summary">
-        <span>売上記録</span><strong>{{ filtered.length.toLocaleString() }}<small> 件</small></strong>
+        <span>販売数</span><strong>{{ quantity.toLocaleString() }}<small>点 ({{ filtered.length.toLocaleString() }}件)</small></strong>
       </div>
     </div>
     <div class="toolbar">
@@ -187,3 +184,8 @@ function amount(record: SaleRecord) {
     </div>
   </template>
 </template>
+<style scoped>
+.summary-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+</style>
