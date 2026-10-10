@@ -9,6 +9,59 @@ function record(bucket_start: string, count: number) {
 }
 
 describe("来場者数の日別グラフ", () => {
+    it.each([
+        ["2026-10-10T10:25:00+09:00", "2026-10-10T10:00:00+09:00"],
+        ["2026-10-10T23:55:00+09:00", "2026-10-10T23:30:00+09:00"],
+    ])("%sでは現在の10分枠への区間だけを点線にし、終了すると実線に戻す", async (now, firstStart) => {
+        vi.useFakeTimers({ toFake: ["Date", "setTimeout", "clearTimeout"] });
+        vi.setSystemTime(new Date(now));
+        const start = Date.parse(firstStart);
+        const counts = [1, 2, 4].map((count, i) => record(new Date(start + i * 600000).toISOString(), count));
+        counts.push(...[5, 3, 2].map((count, i) => record(new Date(start - 86400000 + i * 600000).toISOString(), count)));
+        const days = dailyVisitorCounts(counts);
+        const wrapper = mount(VisitorChart, { props: { days } });
+        try {
+            const currentLines = wrapper.findAll(`polyline[data-date="${days[0].date}"]`);
+            expect(currentLines).toHaveLength(2);
+            expect(currentLines[0].attributes("points")).toBe("60,197.5 410,175");
+            expect(currentLines[0].attributes("stroke-dasharray")).toBeUndefined();
+            expect(currentLines[1].attributes("points")).toBe("410,175 760,130");
+            expect(currentLines[1].attributes("stroke-dasharray")).toBe("4 4");
+            expect(currentLines[1].attributes("stroke")).toBe(currentLines[0].attributes("stroke"));
+            const previousLines = wrapper.findAll(`polyline[data-date="${days[1].date}"]`);
+            expect(previousLines).toHaveLength(1);
+            expect(previousLines[0].attributes("stroke-dasharray")).toBeUndefined();
+            await vi.advanceTimersByTimeAsync(5 * 60000 - 1);
+            expect(wrapper.findAll(".visitor-chart-pending-line")).toHaveLength(1);
+            await vi.advanceTimersByTimeAsync(1);
+            expect(wrapper.find(".visitor-chart-pending-line").exists()).toBe(false);
+            expect(wrapper.find(`polyline[data-date="${days[0].date}"]`).attributes("points")).toBe("60,197.5 410,175 760,130");
+        } finally {
+            wrapper.unmount();
+            expect(vi.getTimerCount()).toBe(0);
+            vi.useRealTimers();
+        }
+    });
+
+    it("現在の1枠だけの日は未確定として扱い、人数が更新されても点線の判定を保つ", async () => {
+        vi.useFakeTimers({ toFake: ["Date", "setTimeout", "clearTimeout"] });
+        vi.setSystemTime(new Date("2026-10-10T10:25:00+09:00"));
+        const wrapper = mount(VisitorChart, { props: {
+            days: dailyVisitorCounts([record("2026-10-10T10:20:00+09:00", 1)]),
+        } });
+        try {
+            expect(wrapper.findAll("polyline")).toHaveLength(1);
+            expect(wrapper.find(".visitor-chart-pending-line").attributes("points")).toBe("410,175");
+            await wrapper.setProps({ days: dailyVisitorCounts([
+                record("2026-10-10T10:20:00+09:00", 3),
+            ]) });
+            expect(wrapper.find(".visitor-chart-pending-line").attributes("points")).toBe("410,85");
+        } finally {
+            wrapper.unmount();
+            vi.useRealTimers();
+        }
+    });
+
     it("異なる日を同じ時刻・人数の軸に重ね、各日の範囲を保って色を分ける", async () => {
         const wrapper = mount(VisitorChart, { props: {
             days: dailyVisitorCounts([

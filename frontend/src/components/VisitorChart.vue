@@ -1,8 +1,18 @@
 <script setup lang="ts">
-import { computed, ref } from "vue";
+import { computed, onScopeDispose, ref } from "vue";
 import type { VisitorDay } from "@/lib/visitors";
 
 const props = defineProps<{ days: VisitorDay[] }>();
+const bucketDuration = 10 * 60 * 1000;
+const currentBucketStart = ref(0);
+let boundaryTimer: ReturnType<typeof setTimeout>;
+function updateCurrentBucket() {
+  const now = Date.now();
+  currentBucketStart.value = Math.floor(now / bucketDuration) * bucketDuration;
+  boundaryTimer = setTimeout(updateCurrentBucket, bucketDuration - now % bucketDuration);
+}
+updateCurrentBucket();
+onScopeDispose(() => clearTimeout(boundaryTimer));
 const colors = ["#2864a6", "#c04a25", "#27804c", "#8248ad", "#987100", "#147b87"];
 function minuteOfDay(start: number) {
   const date = new Date(start);
@@ -22,6 +32,7 @@ function xPosition(minute: number) {
 }
 const series = computed(() => props.days.map((day, i) => ({
   date: day.date,
+  pending: day.buckets[day.buckets.length - 1].start === currentBucketStart.value,
   color: colors[i % colors.length],
   dash: i < colors.length ? undefined : `${8 - (Math.floor(i / colors.length) % 3) * 2} 4`,
   points: day.buckets.map((bucket) => ({
@@ -96,9 +107,14 @@ function hoverLabel(minute: number) {
         <g v-for="point in xTicks" :key="point.minute">
           <text :x="point.x" y="246" text-anchor="middle">{{ timeLabel(point.minute) }}</text>
         </g>
-        <polyline v-for="day in series" :key="day.date" :data-date="day.date"
-          :points="day.points.map((point) => `${point.x},${point.y}`).join(' ')"
-          :stroke="day.color" :stroke-dasharray="day.dash" class="visitor-chart-line" />
+        <g v-for="day in series" :key="day.date">
+          <polyline v-if="!day.pending || day.points.length > 1" :data-date="day.date"
+            :points="(day.pending ? day.points.slice(0, -1) : day.points).map((point) => `${point.x},${point.y}`).join(' ')"
+            :stroke="day.color" :stroke-dasharray="day.dash" class="visitor-chart-line" />
+          <polyline v-if="day.pending" :data-date="day.date"
+            :points="day.points.slice(-2).map((point) => `${point.x},${point.y}`).join(' ')"
+            :stroke="day.color" stroke-dasharray="4 4" class="visitor-chart-line visitor-chart-pending-line" />
+        </g>
         <rect v-for="(point, i) in times" :key="point.minute"
           :x="i === 0 ? 60 : (times[i - 1].x + point.x) / 2"
           :width="(i === times.length - 1 ? 760 : (point.x + times[i + 1].x) / 2) - (i === 0 ? 60 : (times[i - 1].x + point.x) / 2)"
