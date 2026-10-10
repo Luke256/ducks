@@ -11,7 +11,7 @@ import (
 	"github.com/google/uuid"
 )
 
-func (r *GormRepository) RegisterFestivalStock(festivalID, itemID uuid.UUID, price int, description string) (model.FestivalStock, error) {
+func (r *GormRepository) RegisterFestivalStock(festivalID, itemID uuid.UUID, price int, description string, forSale bool) (model.FestivalStock, error) {
 	fesStockID, err := uuid.NewV7()
 	if err != nil {
 		return model.FestivalStock{}, err
@@ -23,6 +23,7 @@ func (r *GormRepository) RegisterFestivalStock(festivalID, itemID uuid.UUID, pri
 		StockItemID: itemID,
 		Price:       price,
 		Description: description,
+		ForSale:     forSale,
 	}
 
 	ctx := context.Background()
@@ -50,10 +51,10 @@ func (r *GormRepository) GetFestivalStockByID(festivalStockID uuid.UUID) (model.
 	return stock, nil
 }
 
-func (r *GormRepository) QueryFestivalStocks(festivalID uuid.UUID, category string) ([]model.FestivalStock, error) {
+func (r *GormRepository) QueryFestivalStocks(festivalID uuid.UUID, category string, onlyForSale bool) ([]model.FestivalStock, error) {
 	ctx := context.Background()
 
-	stocks, err := gorm.G[model.FestivalStock](r.db).
+	query := gorm.G[model.FestivalStock](r.db).
 		Joins(clause.JoinTarget{Association: "StockItem"}, func(db gorm.JoinBuilder, joinTable clause.Table, curTable clause.Table) error {
 			db.Where(model.StockItem{Category: category})
 			return nil
@@ -61,8 +62,13 @@ func (r *GormRepository) QueryFestivalStocks(festivalID uuid.UUID, category stri
 		Joins(clause.JoinTarget{Association: "Festival"}, func(db gorm.JoinBuilder, joinTable clause.Table, curTable clause.Table) error {
 			db.Where(model.Festival{ID: festivalID})
 			return nil
-		}).
-		Find(ctx)
+		})
+
+	if onlyForSale {
+		query = query.Where(model.FestivalStock{ForSale: true})
+	}
+
+	stocks, err := query.Find(ctx)
 
 	if err != nil {
 		return nil, wrapGormError(err)
@@ -71,13 +77,13 @@ func (r *GormRepository) QueryFestivalStocks(festivalID uuid.UUID, category stri
 	return stocks, nil
 }
 
-func (r *GormRepository) UpdateFestivalStock(festivalStockID uuid.UUID, description string) error {
+func (r *GormRepository) UpdateFestivalStock(festivalStockID uuid.UUID, description string, forSale bool) error {
 	ctx := context.Background()
 
 	rows, err := gorm.G[model.FestivalStock](r.db).
 		Where(model.FestivalStock{ID: festivalStockID}, "ID").
-		Select("Description").
-		Updates(ctx, model.FestivalStock{Description: description})
+		Select("Description", "ForSale").
+		Updates(ctx, model.FestivalStock{Description: description, ForSale: forSale})
 	if err != nil {
 		return wrapGormError(err)
 	}

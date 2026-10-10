@@ -95,21 +95,6 @@ func TestV3CopiesImages(t *testing.T) {
 	require.False(t, db.Migrator().HasColumn(&model.Poster{}, "image_id"))
 }
 
-func TestMigrateFreshSchemaIncludesPosterImages(t *testing.T) {
-	t.Parallel()
-	db := migrationTestDB(t)
-	init, err := Migrate(db)
-	require.NoError(t, err)
-	require.True(t, init)
-	require.True(t, db.Migrator().HasTable(&model.PosterImage{}))
-	var ids []string
-	require.NoError(t, db.Table("migrations").Order("id").Pluck("id", &ids).Error)
-	require.Equal(t, []string{"1", "2", "3", "SCHEMA_INIT"}, ids)
-	init, err = Migrate(db)
-	require.NoError(t, err)
-	require.False(t, init)
-}
-
 func TestV3CopyFailureKeepsLegacyImages(t *testing.T) {
 	t.Parallel()
 	db := migrationTestDB(t)

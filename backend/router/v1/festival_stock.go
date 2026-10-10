@@ -5,7 +5,7 @@ import (
 	"github.com/Luke256/ducks/service/festival"
 	festivalstock "github.com/Luke256/ducks/service/festival_stock"
 	stockitem "github.com/Luke256/ducks/service/stock_item"
-	"github.com/go-ozzo/ozzo-validation/v4"
+	validation "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
 )
@@ -15,6 +15,7 @@ type RegisterFestivalStockRequest struct {
 	StockItemID string `json:"item_id"`
 	Price       *int   `json:"price"`
 	Description string `json:"description"`
+	ForSale     *bool  `json:"for_sale"`
 }
 
 func (r RegisterFestivalStockRequest) Validate() error {
@@ -22,12 +23,14 @@ func (r RegisterFestivalStockRequest) Validate() error {
 		validation.Field(&r.FestivalID, validation.Required),
 		validation.Field(&r.StockItemID, validation.Required),
 		validation.Field(&r.Price, validation.NotNil, validation.Min(0)),
+		validation.Field(&r.ForSale, validation.NotNil),
 	)
 }
 
 type QueryFestivalStocksRequest struct {
-	FestivalID string `param:"festival_id"`
-	Category   string `query:"category"`
+	FestivalID  string `param:"festival_id"`
+	Category    string `query:"category"`
+	OnlyForSale bool   `query:"only_for_sale"`
 }
 
 func (r QueryFestivalStocksRequest) Validate() error {
@@ -40,11 +43,13 @@ func (r QueryFestivalStocksRequest) Validate() error {
 type UpdateFestivalStockRequest struct {
 	ID          string `param:"id"`
 	Description string `json:"description"`
+	ForSale     *bool  `json:"for_sale"`
 }
 
 func (r UpdateFestivalStockRequest) Validate() error {
 	return validation.ValidateStruct(&r,
 		validation.Field(&r.ID, validation.Required),
+		validation.Field(&r.ForSale, validation.NotNil),
 	)
 }
 
@@ -67,7 +72,7 @@ func (h *Handler) RegisterFestivalStock(c echo.Context) error {
 		return herror.NotFound("Stock item not found")
 	}
 
-	festivalStock, err := h.festivalStockManager.Create(fesID, itemID, *req.Price, req.Description)
+	festivalStock, err := h.festivalStockManager.Create(fesID, itemID, *req.Price, req.Description, *req.ForSale)
 	if err != nil {
 		switch err {
 		case festival.ErrNotFound:
@@ -115,7 +120,7 @@ func (h *Handler) QueryFestivalStocks(c echo.Context) error {
 		return herror.NotFound("Festival not found")
 	}
 
-	festivalStocks, err := h.festivalStockManager.Query(fesID, req.Category)
+	festivalStocks, err := h.festivalStockManager.Query(fesID, req.Category, req.OnlyForSale)
 	if err != nil {
 		return herror.InternalServerError("Failed to query festival stocks")
 	}
@@ -139,7 +144,7 @@ func (h *Handler) UpdateFestivalStock(c echo.Context) error {
 		return herror.NotFound("Festival stock not found")
 	}
 
-	err = h.festivalStockManager.Update(id, req.Description)
+	err = h.festivalStockManager.Update(id, req.Description, *req.ForSale)
 	if err != nil {
 		switch err {
 		case festivalstock.ErrNotFound:

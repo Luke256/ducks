@@ -17,21 +17,22 @@ type Stock struct {
 	FestivalID  uuid.UUID           `json:"festival_id"`
 	Price       int                 `json:"price"`
 	Description string              `json:"description"`
+	ForSale     bool                `json:"for_sale"`
 }
 
 type Manager interface {
 	// Create イベントで販売するアイテムを登録します
-	Create(festivalID, itemID uuid.UUID, price int, description string) (Stock, error)
+	Create(festivalID, itemID uuid.UUID, price int, description string, forSale bool) (Stock, error)
 
 	// Get 指定されたIDのイベントで販売するアイテムを取得します
 	Get(id uuid.UUID) (Stock, error)
 
 	// Query イベントIDやカテゴリで販売するアイテムを検索します
 	// festivalID, categoryが空文字の場合、全てのカテゴリを対象とします
-	Query(festivalID uuid.UUID, category string) ([]Stock, error)
+	Query(festivalID uuid.UUID, category string, onlyForSale bool) ([]Stock, error)
 
 	// Update 指定されたIDのイベントで販売するアイテムの説明を更新します
-	Update(id uuid.UUID, description string) error
+	Update(id uuid.UUID, description string, forSale bool) error
 
 	// Delete 指定されたIDのイベントで販売するアイテムを削除します
 	Delete(id uuid.UUID) error

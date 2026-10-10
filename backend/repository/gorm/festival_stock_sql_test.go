@@ -28,7 +28,7 @@ func TestRegisterFestivalStockIncludesZeroPrice(t *testing.T) {
 	}))
 
 	repo := &GormRepository{db: db}
-	_, err = repo.RegisterFestivalStock(uuid.New(), uuid.New(), 0, "Free item")
+	_, err = repo.RegisterFestivalStock(uuid.New(), uuid.New(), 0, "Free item", true)
 	require.NoError(t, err)
 	require.Len(t, values.Values, 1)
 	for i, column := range values.Columns {

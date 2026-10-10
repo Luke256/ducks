@@ -20,6 +20,7 @@ func TestRegisterFestivalStock(t *testing.T) {
 			WithJSON(map[string]any{
 				"item_id":     stockItem.ID,
 				"price":       1500,
+				"for_sale":    true,
 				"description": "Stock Description",
 			}).
 			Expect().
@@ -36,7 +37,7 @@ func TestRegisterFestivalStock(t *testing.T) {
 		t.Parallel()
 		e := env.R(t)
 		res := e.POST("/api/festivals/{festival_id}/stocks", festival.ID).
-			WithJSON(map[string]any{"item_id": stockItem.ID, "price": 0}).
+			WithJSON(map[string]any{"item_id": stockItem.ID, "price": 0, "for_sale": true}).
 			Expect().Status(201).JSON().Object()
 
 		res.Value("price").IsEqual(0)
@@ -57,6 +58,7 @@ func TestRegisterFestivalStock(t *testing.T) {
 			payload: map[string]any{
 				"item_id":     stockItem.ID,
 				"price":       1500,
+				"for_sale":    true,
 				"description": "Stock Description",
 			},
 			expectCode: 404,
@@ -67,6 +69,7 @@ func TestRegisterFestivalStock(t *testing.T) {
 			payload: map[string]any{
 				"item_id":     stockItem.ID,
 				"price":       1500,
+				"for_sale":    true,
 				"description": "Stock Description",
 			},
 			expectCode: 404,
@@ -77,6 +80,7 @@ func TestRegisterFestivalStock(t *testing.T) {
 			payload: map[string]any{
 				"item_id":     stockItem.ID,
 				"price":       1500,
+				"for_sale":    true,
 				"description": "Stock Description",
 			},
 			expectCode: 404,
@@ -86,6 +90,7 @@ func TestRegisterFestivalStock(t *testing.T) {
 			festivalID: festival.ID.String(),
 			payload: map[string]any{
 				"price":       1500,
+				"for_sale":    true,
 				"description": "Stock Description",
 			},
 			expectCode: 400,
@@ -96,6 +101,7 @@ func TestRegisterFestivalStock(t *testing.T) {
 			payload: map[string]any{
 				"item_id":     "invalid-uuid",
 				"price":       1500,
+				"for_sale":    true,
 				"description": "Stock Description",
 			},
 			expectCode: 404,
@@ -106,6 +112,7 @@ func TestRegisterFestivalStock(t *testing.T) {
 			payload: map[string]any{
 				"item_id":     uuid.New().String(),
 				"price":       1500,
+				"for_sale":    true,
 				"description": "Stock Description",
 			},
 			expectCode: 404,
@@ -116,6 +123,7 @@ func TestRegisterFestivalStock(t *testing.T) {
 			payload: map[string]any{
 				"item_id":     uuid.Nil.String(),
 				"price":       1500,
+				"for_sale":    true,
 				"description": "Stock Description",
 			},
 			expectCode: 404,
@@ -125,6 +133,7 @@ func TestRegisterFestivalStock(t *testing.T) {
 			festivalID: festival.ID.String(),
 			payload: map[string]any{
 				"item_id":     stockItem.ID,
+				"for_sale":    true,
 				"description": "Stock Description",
 			},
 			expectCode: 400,
@@ -132,19 +141,19 @@ func TestRegisterFestivalStock(t *testing.T) {
 		{
 			name:       "Null Price",
 			festivalID: festival.ID.String(),
-			payload:    map[string]any{"item_id": stockItem.ID, "price": nil},
+			payload:    map[string]any{"item_id": stockItem.ID, "price": nil, "for_sale": true},
 			expectCode: 400,
 		},
 		{
 			name:       "Negative Price",
 			festivalID: festival.ID.String(),
-			payload:    map[string]any{"item_id": stockItem.ID, "price": -1},
+			payload:    map[string]any{"item_id": stockItem.ID, "price": -1, "for_sale": true},
 			expectCode: 400,
 		},
 		{
 			name:       "Fractional Price",
 			festivalID: festival.ID.String(),
-			payload:    map[string]any{"item_id": stockItem.ID, "price": 0.5},
+			payload:    map[string]any{"item_id": stockItem.ID, "price": 0.5, "for_sale": true},
 			expectCode: 400,
 		},
 		{
@@ -153,6 +162,7 @@ func TestRegisterFestivalStock(t *testing.T) {
 			payload: map[string]any{
 				"item_id":     stockItem.ID,
 				"price":       1500,
+				"for_sale":    true,
 				"description": "",
 			},
 			expectCode: 201,
@@ -276,6 +286,7 @@ func TestUpdateFestivalStock(t *testing.T) {
 		e := env.R(t)
 		e.PUT("/api/stocks/{festival_stock_id}", fesStock.ID).
 			WithJSON(map[string]any{
+				"for_sale":    true,
 				"description": "Updated Stock Description",
 			}).
 			Expect().
@@ -295,6 +306,7 @@ func TestUpdateFestivalStock(t *testing.T) {
 		e := env.R(t)
 		e.PUT("/api/stocks/{festival_stock_id}", uuid.New()).
 			WithJSON(map[string]any{
+				"for_sale":    true,
 				"description": "Updated Stock Description",
 			}).
 			Expect().
@@ -306,6 +318,7 @@ func TestUpdateFestivalStock(t *testing.T) {
 		e := env.R(t)
 		e.PUT("/api/stocks/{festival_stock_id}", "invalid-uuid").
 			WithJSON(map[string]any{
+				"for_sale":    true,
 				"description": "Updated Stock Description",
 			}).
 			Expect().
@@ -317,6 +330,7 @@ func TestUpdateFestivalStock(t *testing.T) {
 		e := env.R(t)
 		e.PUT("/api/stocks/{festival_stock_id}", uuid.Nil).
 			WithJSON(map[string]any{
+				"for_sale":    true,
 				"description": "Updated Stock Description",
 			}).
 			Expect().

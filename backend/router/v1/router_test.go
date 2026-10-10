@@ -206,7 +206,7 @@ func (e *env) mustCreateStockItem(t *testing.T, name string, description string,
 
 func (e *env) mustCreateFestivalStock(t *testing.T, festivalID, itemID uuid.UUID, price int, description string) festivalstock.Stock {
 	t.Helper()
-	stock, err := e.FSM.Create(festivalID, itemID, price, description)
+	stock, err := e.FSM.Create(festivalID, itemID, price, description, true)
 	if err != nil {
 		t.Fatalf("failed to create festival stock: %v", err)
 	}
