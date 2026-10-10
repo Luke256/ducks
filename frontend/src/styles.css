@@ -980,6 +980,86 @@ dd {
     gap: 8px;
 }
 
+.visitor-chart {
+    margin-bottom: 24px;
+}
+
+.visitor-chart-legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px 20px;
+    padding: 0;
+    margin: 0 0 16px;
+    list-style: none;
+    font-size: 0.75rem;
+}
+
+.visitor-chart-legend li {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.visitor-chart-scroll {
+    overflow-x: auto;
+}
+
+.visitor-chart-scroll svg {
+    display: block;
+    width: 100%;
+    min-width: 560px;
+    font-size: 12px;
+}
+
+.visitor-chart-scroll text {
+    fill: #52616e;
+}
+
+.visitor-chart-grid {
+    stroke: #d2d9df;
+}
+
+.visitor-chart-line {
+    fill: none;
+    stroke-width: 2;
+}
+
+.visitor-chart-hover {
+    fill: transparent;
+    pointer-events: all;
+}
+
+.visitor-chart-selected-point {
+    pointer-events: none;
+    stroke: white;
+    stroke-width: 2;
+}
+
+.visitor-chart-tooltip {
+    pointer-events: none;
+}
+
+.visitor-chart-tooltip-background {
+    fill: white;
+    fill-opacity: 0.75;
+    stroke: #c2cbd4;
+    stroke-opacity: 0.7;
+}
+
+.visitor-chart-tooltip text {
+    font-size: 11px;
+    fill: #182b3b;
+    stroke: white;
+    stroke-width: 2px;
+    stroke-linejoin: round;
+    paint-order: stroke fill;
+}
+
+.visitor-pagination {
+    justify-content: center;
+    margin-top: 16px;
+}
+
 .notifications {
     position: fixed;
     right: 22px;

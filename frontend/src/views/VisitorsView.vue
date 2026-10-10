@@ -6,6 +6,8 @@ import { useMutation } from "@/composables/useMutation";
 import { api, jsonBody } from "@/lib/api";
 import type { VisitorCount } from "@/types/visitorCount";
 import ResourceState from "@/components/ResourceState.vue";
+import VisitorChart from "@/components/VisitorChart.vue";
+import { dailyVisitorCounts } from "@/lib/visitors";
 
 const {
   data: counts,
@@ -27,7 +29,16 @@ const history = computed(() =>
     (a, b) => Date.parse(b.bucket_start) - Date.parse(a.bucket_start),
   ),
 );
+const days = computed(() => dailyVisitorCounts(counts.value || []));
+const pageSize = 12;
+const page = ref(1);
+const pageCount = computed(() => Math.max(1, Math.ceil(history.value.length / pageSize)));
+const pageHistory = computed(() => history.value.slice((page.value - 1) * pageSize, page.value * pageSize));
+watch(pageCount, (pages) => {
+  page.value = Math.min(page.value, pages);
+});
 watch(currentFestivalId, () => {
+  page.value = 1;
   amount.value = 1;
   saveError.value = "";
 });
@@ -99,21 +110,32 @@ function bucketLabel(start: string) {
     </form>
     <h2>10分ごとの来場者数</h2>
     <p v-if="counts && !error && !history.length" class="state">まだ来場者数が記録されていません。</p>
-    <div v-if="history.length && !error" class="panel table-scroll">
-      <table>
-        <thead>
-          <tr>
-            <th>開始日時</th>
-            <th class="numeric">来場者数</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-for="bucket in history" :key="bucket.bucket_start">
-            <td class="nowrap">{{ bucketLabel(bucket.bucket_start) }}</td>
-            <td class="numeric">{{ bucket.count.toLocaleString() }} 人</td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
+    <template v-if="history.length && !error">
+      <VisitorChart v-if="days.length" :days="days" />
+      <p v-if="!days.length" class="state">1人以上の記録がないため、グラフは表示されません。</p>
+      <h2>詳細</h2>
+      <div class="panel table-scroll">
+        <table>
+          <caption class="sr-only">10分ごとの来場者数の詳細（新しい順）</caption>
+          <thead>
+            <tr>
+              <th>開始日時</th>
+              <th class="numeric">来場者数</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="bucket in pageHistory" :key="bucket.bucket_start">
+              <td class="nowrap">{{ bucketLabel(bucket.bucket_start) }}</td>
+              <td class="numeric">{{ bucket.count.toLocaleString() }} 人</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <nav class="actions visitor-pagination" aria-label="来場者数の詳細ページ">
+        <button class="button secondary" :disabled="page === 1" @click="page--">前へ</button>
+        <span class="small" aria-live="polite">{{ page }} / {{ pageCount }} ページ（{{ (page - 1) * pageSize + 1 }}〜{{ Math.min(page * pageSize, history.length) }} / {{ history.length }}件）</span>
+        <button class="button secondary" :disabled="page === pageCount" @click="page++">次へ</button>
+      </nav>
+    </template>
   </template>
 </template>

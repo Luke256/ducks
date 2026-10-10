@@ -250,6 +250,54 @@ describe("イベント選択", () => {
 });
 
 describe("来場者数", () => {
+    it("複数日の来場者数を1つのグラフに重ねて表示する", async () => {
+        visitorCounts.push({ festival_id: "f1", bucket_start: "2026-10-09T10:10:00+09:00", count: 4 });
+        await open("/visitors");
+        expect(wrapper.findAll(".visitor-chart")).toHaveLength(1);
+        expect(wrapper.findAll(".visitor-chart polyline")).toHaveLength(2);
+        expect(wrapper.find(".visitor-chart-legend").text()).toContain("2026/10/09");
+        expect(wrapper.find(".visitor-chart-legend").text()).toContain("2026/10/08");
+        await wrapper.findAll(".visitor-chart-hover")[1].trigger("pointerenter");
+        expect(wrapper.find('[role="tooltip"]').text()).toContain("2026/10/09：4 人");
+        expect(wrapper.find('[role="tooltip"]').text()).toContain("2026/10/08：5 人");
+    });
+    it("詳細を12件ずつ切り替え、グラフは全件から作り、更新とイベント切り替えでページを補正する", async () => {
+        visitorCounts = Array.from({ length: 25 }, (_, i) => ({
+            festival_id: "f1",
+            bucket_start: new Date(Date.parse("2026-10-08T10:00:00+09:00") + i * 600000).toISOString(),
+            count: 1,
+        }));
+        await open("/visitors");
+        expect(wrapper.findAll("tbody tr")).toHaveLength(12);
+        expect(wrapper.find("tbody tr").text()).toContain("14:00");
+        expect(wrapper.find(".visitor-chart polyline").attributes("points")!.split(" ")).toHaveLength(25);
+        expect(button("前へ").attributes("disabled")).toBeDefined();
+        await button("次へ").trigger("click");
+        expect(wrapper.findAll("tbody tr")).toHaveLength(12);
+        expect(wrapper.find("tbody tr").text()).toContain("12:00");
+        await button("次へ").trigger("click");
+        expect(wrapper.findAll("tbody tr")).toHaveLength(1);
+        expect(wrapper.find("tbody tr").text()).toContain("10:00");
+        expect(button("次へ").attributes("disabled")).toBeDefined();
+        await button("前へ").trigger("click");
+        expect(wrapper.find(".visitor-pagination").text()).toContain("2 / 3");
+        visitorCounts = visitorCounts.slice(0, 1);
+        await button("更新").trigger("click");
+        await flushPromises();
+        expect(wrapper.find(".visitor-pagination").text()).toContain("1 / 1");
+        expect(wrapper.findAll("tbody tr")).toHaveLength(1);
+        await wrapper.find(".festival-picker select").setValue("f2");
+        await flushPromises();
+        expect(wrapper.find(".visitor-chart").exists()).toBe(false);
+        expect(wrapper.find(".visitor-pagination").exists()).toBe(false);
+    });
+    it("0人だけの日はグラフを表示せず、詳細には記録を残す", async () => {
+        visitorCounts.forEach((bucket) => { bucket.count = 0; });
+        await open("/visitors");
+        expect(wrapper.find("svg[role=img]").exists()).toBe(false);
+        expect(wrapper.findAll("tbody tr")).toHaveLength(2);
+        expect(wrapper.text()).toContain("1人以上の記録がないため");
+    });
     it("イベント詳細から対象イベントを選んでカウント画面を開く", async () => {
         currentFestivalId.value = "f2";
         await open("/event/f1");
