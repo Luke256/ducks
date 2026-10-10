@@ -5,6 +5,7 @@ import { useResource, listOf } from "@/composables/useResource";
 import { useMutation } from "@/composables/useMutation";
 import { api } from "@/lib/api";
 import { salesTotal } from "@/lib/sales";
+import { priceColor } from "@/lib/priceColors";
 import { categoryTags } from "@/lib/categories";
 import CategoryTags from "@/components/CategoryTags.vue";
 import type { Stock } from "@/types/stock";
@@ -151,12 +152,13 @@ function amount(record: SaleRecord) {
               <strong>{{
                 stockMap.get(record.stock_id)?.item.name || "商品不明"
                 }}</strong>
+              <span v-if="stockMap.get(record.stock_id)?.for_sale === false" class="badge">レジ非表示</span>
               <p class="small muted">
                 <CategoryTags v-if="stockMap.has(record.stock_id)" :category="stockMap.get(record.stock_id)?.item.category || ''" />
                 <template v-else>—</template>
               </p>
             </td>
-            <td class="numeric">
+            <td class="numeric" :style="{ color: priceColor(stockMap.get(record.stock_id)?.price) }">
               {{
                 stockMap.get(record.stock_id)?.price.toLocaleString() ?? "不明"
               }}

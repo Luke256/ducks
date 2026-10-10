@@ -3,6 +3,7 @@ import { computed, ref } from "vue";
 import { currentFestivalId, stockFilterCategory } from "@/state";
 import { useResource, listOf } from "@/composables/useResource";
 import { imageUrl } from "@/lib/api";
+import { priceColor } from "@/lib/priceColors";
 import { categoryTags } from "@/lib/categories";
 import CategoryTags from "@/components/CategoryTags.vue";
 import type { Stock } from "@/types/stock";
@@ -86,12 +87,13 @@ const filtered = computed(() =>
                 <div>
                   <RouterLink :to="`/sales/stocks/${stock.id}`" class="text-link">{{ stock.item.name
                   }}</RouterLink>
+                  <span v-if="!stock.for_sale" class="badge">レジ非表示</span>
                   <p><CategoryTags :category="stock.item.category" /></p>
                 </div>
               </div>
             </td>
             <td class="description">{{ stock.description || "—" }}</td>
-            <td class="numeric">{{ stock.price.toLocaleString() }} 円</td>
+            <td class="numeric" :style="{ color: priceColor(stock.price) }">{{ stock.price.toLocaleString() }} 円</td>
             <td>
               <RouterLink :to="`/sales/stocks/${stock.id}`" class="text-link" :aria-label="`${stock.item.name}の販売詳細`">詳細
                 →</RouterLink>

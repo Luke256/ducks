@@ -5,6 +5,7 @@ type Stock = {
     festival_id: string;
     price: number;
     description: string;
+    for_sale: boolean;
     item: StockItem;
 };
 

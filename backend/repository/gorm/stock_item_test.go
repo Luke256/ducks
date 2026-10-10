@@ -129,6 +129,9 @@ func TestUpdateStockItem(t *testing.T) {
 		assert.Equal(t, "New Description", updatedItem.Description)
 		assert.Equal(t, "NewCategory", updatedItem.Category)
 		assert.Equal(t, "new-img", updatedItem.ImageID)
+		unchangedItem, err := repo.UpdateStockItem(item.ID, updatedItem.Name, updatedItem.Description, updatedItem.Category, updatedItem.ImageID)
+		assert.NoError(t, err)
+		assert.Equal(t, updatedItem, unchangedItem)
 	})
 
 	t.Run("Update Non-Existent Stock Item", func(t *testing.T) {

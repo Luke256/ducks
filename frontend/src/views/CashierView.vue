@@ -6,6 +6,7 @@ import { useResource, listOf } from "@/composables/useResource";
 import { useMutation } from "@/composables/useMutation";
 import { api, jsonBody, imageUrl } from "@/lib/api";
 import { saleItems } from "@/lib/sales";
+import { priceColor } from "@/lib/priceColors";
 import { categoryTags } from "@/lib/categories";
 import type { Stock } from "@/types/stock";
 import ResourceState from "@/components/ResourceState.vue";
@@ -17,7 +18,7 @@ const {
 } = useResource(
   () =>
     currentFestivalId.value
-      ? `/festivals/${currentFestivalId.value}/stocks`
+      ? `/festivals/${currentFestivalId.value}/stocks?only_for_sale=true`
       : null,
   listOf<Stock>("stocks"),
 );
@@ -75,7 +76,7 @@ const ready = computed(
   () =>
     !!currentFestivalId.value &&
     lines.value.length > 0 &&
-    lines.value.every((l) => !!l.stock) &&
+    lines.value.every((l) => !!l.stock?.for_sale) &&
     validCash.value &&
     !loading.value &&
     !error.value &&
@@ -83,6 +84,7 @@ const ready = computed(
 );
 function adjust(id: string, delta: number) {
   if (pending.value || loading.value || error.value) return;
+  if (delta > 0 && !stocks.value?.some((stock) => stock.id === id && stock.for_sale)) return;
   const quantity = (cart.value[id] || 0) + delta;
   if (quantity > 0) cart.value = { ...cart.value, [id]: quantity };
   else {
@@ -159,7 +161,7 @@ onBeforeUnmount(() => {
           更新
         </button>
       </div>
-      <ResourceState :loading="loading" :error="error" :empty="!groups.length" empty-text="販売商品がありません。販売商品タブから登録してください。"
+      <ResourceState :loading="loading" :error="error" :empty="!groups.length" empty-text="販売中の商品がありません。販売商品タブで販売状態を確認してください。"
         @retry="reload()" />
       <template v-for="(sections, index) in [groups, subcategoryGroups]" :key="index">
         <section v-if="sections.length" :class="index ? 'subcategory-list' : 'main-category-list'">
@@ -177,7 +179,7 @@ onBeforeUnmount(() => {
                       cart[stock.id]
                     }}</span>
                 </div>
-                <strong>{{ stock.item.name }}</strong><span class="product-price">{{ stock.price.toLocaleString() }}
+                <strong>{{ stock.item.name }}</strong><span class="product-price" :style="{ color: priceColor(stock.price) }">{{ stock.price.toLocaleString() }}
                   円</span><span v-if="stock.description" class="muted small">{{
                     stock.description
                   }}</span>
@@ -186,7 +188,7 @@ onBeforeUnmount(() => {
           </section>
         </section>
       </template>
-      <RouterLink v-if="!loading && !error && !stocks?.length" to="/sales/stocks/new" class="button secondary">販売商品を登録
+      <RouterLink v-if="!loading && !error && !stocks?.length" to="/sales/stocks" class="button secondary">販売商品を管理
       </RouterLink>
     </section>
     <aside class="panel receipt" aria-label="会計明細">
@@ -206,7 +208,7 @@ onBeforeUnmount(() => {
             <button type="button" :aria-label="`${line.stock?.item.name}の数量を減らす`"
               :disabled="pending || loading || !!error" @click="adjust(line.id, -1)">
               −</button><span>{{ line.quantity }}</span><button type="button"
-              :aria-label="`${line.stock?.item.name}の数量を増やす`" :disabled="pending || loading || !!error"
+              :aria-label="`${line.stock?.item.name}の数量を増やす`" :disabled="pending || loading || !!error || !line.stock?.for_sale"
               @click="adjust(line.id, 1)">
               ＋
             </button>

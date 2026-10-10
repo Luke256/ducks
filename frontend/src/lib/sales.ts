@@ -7,7 +7,7 @@ export function saleItems(
 ) {
     const items = Object.entries(cart).map(([stock_id, quantity]) => {
         const stock = stocks.find((s) => s.id === stock_id);
-        if (!stock || stock.festival_id !== festivalId)
+        if (!stock || !stock.for_sale || stock.festival_id !== festivalId)
             throw new Error(
                 "販売商品が変更されています。一覧を更新して選び直してください。",
             );

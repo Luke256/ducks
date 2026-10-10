@@ -11,7 +11,7 @@ func TestCreateFestival(t *testing.T) {
 	e := env.R(t)
 
 	resp := e.POST("/api/festivals").
-		WithJSON(map[string]interface{}{
+		WithJSON(map[string]any{
 			"name":        "Test Festival",
 			"description": "This is a test festival.",
 		}).
@@ -92,7 +92,7 @@ func TestEditFestival(t *testing.T) {
 		t.Parallel()
 		e := env.R(t)
 		resp := e.PUT(fmt.Sprintf("/api/festivals/%s", fest.ID.String())).
-			WithJSON(map[string]interface{}{
+			WithJSON(map[string]any{
 				"name":        "New Name",
 				"description": "",
 			}).
@@ -103,6 +103,14 @@ func TestEditFestival(t *testing.T) {
 		resp.Value("id").IsEqual(fest.ID.String())
 		resp.Value("name").IsEqual("New Name")
 		resp.Value("description").IsEqual("")
+
+		e.PUT(fmt.Sprintf("/api/festivals/%s", fest.ID.String())).
+			WithJSON(map[string]any{
+				"name":        "New Name",
+				"description": "",
+			}).
+			Expect().
+			Status(200)
 	})
 
 	t.Run("edit non-existing festival", func(t *testing.T) {

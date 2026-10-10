@@ -227,13 +227,11 @@ func TestConcurrentPosterImageChangesRespectLimit(t *testing.T) {
 	errors := make(chan error, 2)
 	start := make(chan struct{})
 	for range 2 {
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
+		wg.Go(func() {
 			<-start
 			_, err := repo.UpdatePosterImages(poster.ID, []string{uuid.NewString()}, nil)
 			errors <- err
-		}()
+		})
 	}
 	close(start)
 	wg.Wait()

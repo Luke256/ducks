@@ -119,8 +119,7 @@ func posterMultipart(c echo.Context) (*multipart.Form, error) {
 	c.Request().Body = http.MaxBytesReader(c.Response(), c.Request().Body, maxBytes)
 	form, err := c.MultipartForm()
 	if err != nil {
-		var tooLarge *http.MaxBytesError
-		if errors.As(err, &tooLarge) {
+		if _, ok := errors.AsType[*http.MaxBytesError](err); ok {
 			return nil, echo.NewHTTPError(413, "Upload exceeds request size limit")
 		}
 		return nil, echo.NewHTTPError(400, "Invalid multipart request")

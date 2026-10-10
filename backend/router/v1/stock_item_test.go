@@ -191,6 +191,15 @@ func TestEditStockItem(t *testing.T) {
 		res.Value("name").IsEqual("Updated Name")
 		res.Value("description").IsEqual("Updated Description")
 		res.Value("category").IsEqual("Updated Category")
+
+		e.PUT("/api/items/{id}", item.ID.String()).
+			WithJSON(map[string]any{
+				"name":        "Updated Name",
+				"description": "Updated Description",
+				"category":    "Updated Category",
+			}).
+			Expect().
+			Status(204)
 	})
 
 	t.Run("EditStockItem Not Found", func(t *testing.T) {
