@@ -545,24 +545,45 @@ describe("カテゴリタグ", () => {
         expect(badges.map((badge) => badge.classes().includes("primary"))).toEqual([true, false, false]);
         expect(badges[0].attributes("title")).toBe("主タグ");
     });
-    it("レジは主タグで商品を一度だけ分類し、副タグの絞り込みでも所属と数量を保持する", async () => {
+    it("レジはメイン一覧の下にサブカテゴリ別一覧を表示し、数量を共有して一度だけ会計する", async () => {
         await open("/sales/cashier");
-        const cards = wrapper.findAll(".cashier-product").filter((card) => card.text().includes(item.name));
+        const cards = wrapper.findAll(".main-category-list .cashier-product").filter((card) => card.text().includes(item.name));
         expect(cards).toHaveLength(1);
-        expect(wrapper.findAll(".category-section h2").map((heading) => heading.element.firstChild?.textContent?.trim())).toEqual(["グ", "グッズ"]);
+        expect(wrapper.findAll(".main-category-list .category-heading").map((heading) => heading.element.firstChild?.textContent?.trim())).toEqual(["グ", "グッズ"]);
+        const lists = wrapper.findAll(".main-category-list, .subcategory-list");
+        expect(lists.map((list) => list.classes()[0])).toEqual(["main-category-list", "subcategory-list"]);
+        expect(wrapper.find(".subcategory-list").text()).not.toContain("サブカテゴリ");
+        expect(wrapper.findAll(".subcategory-list .category-heading").map((heading) => heading.element.firstChild?.textContent?.trim())).toEqual(["音楽", "限定"]);
+        expect(wrapper.findAll(".subcategory-list .cashier-product")).toHaveLength(2);
+        expect(wrapper.find(".subcategory-list").text()).not.toContain("別商品");
         await cards[0].trigger("click");
         await wrapper.find(".filter-field select").setValue("音楽");
-        expect(wrapper.findAll(".category-section")).toHaveLength(1);
-        expect(wrapper.find(".category-section h2").element.firstChild?.textContent?.trim()).toBe("グッズ");
-        expect(wrapper.findAll(".cashier-product")).toHaveLength(1);
-        expect(wrapper.find(".quantity-badge").text()).toBe("1");
-        await wrapper.find(".cashier-product").trigger("click");
+        expect(wrapper.findAll(".main-category-list .category-section")).toHaveLength(1);
+        expect(wrapper.find(".main-category-list .category-heading").element.firstChild?.textContent?.trim()).toBe("グッズ");
+        expect(wrapper.findAll(".cashier-product")).toHaveLength(3);
+        expect(wrapper.findAll(".quantity-badge").map((badge) => badge.text())).toEqual(["1", "1", "1"]);
+        await wrapper.find(".subcategory-list .cashier-product").trigger("click");
         expect(wrapper.findAll(".receipt-line")).toHaveLength(1);
-        expect(wrapper.find(".quantity-badge").text()).toBe("2");
+        expect(wrapper.findAll(".quantity-badge").map((badge) => badge.text())).toEqual(["2", "2", "2"]);
         expect(wrapper.find(".receipt-total").text()).toContain("1,000 円");
         await button("会計を確定する").trigger("click");
         await flushPromises();
         expect(JSON.parse(mutations("/sales")[0].options.body as string)).toEqual({ items: [{ stock_id: "s1", quantity: 2 }] });
+    });
+    it("レジの検索とカテゴリ絞り込みは両一覧に反映され、該当するサブカテゴリがなければ区切りを表示しない", async () => {
+        await open("/sales/cashier");
+        const search = wrapper.find('input[type="search"]');
+        await search.setValue("限定商品");
+        expect(wrapper.findAll(".subcategory-list .cashier-product")).toHaveLength(2);
+        await search.setValue("別商品");
+        expect(wrapper.findAll(".main-category-list .cashier-product")).toHaveLength(1);
+        expect(wrapper.find(".subcategory-list").exists()).toBe(false);
+        await search.setValue("");
+        await wrapper.find(".filter-field select").setValue("グ");
+        expect(wrapper.find(".subcategory-list").exists()).toBe(false);
+        await search.setValue("該当なし");
+        expect(wrapper.findAll(".cashier-product")).toHaveLength(0);
+        expect(wrapper.find(".main-category-list").exists()).toBe(false);
     });
     it("区切り文字しかないカテゴリでは商品を登録しない", async () => {
         await open("/sales/items/new");

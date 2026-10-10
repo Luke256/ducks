@@ -29,7 +29,9 @@ const { pending, error: saleError, run } = useMutation();
 const categories = computed(() =>
   [...new Set((stocks.value || []).flatMap((s) => categoryTags(s.item.category)))].sort(),
 );
-const groups = computed(() => {
+const groups = computed(() => groupStocks(false));
+const subcategoryGroups = computed(() => groupStocks(true));
+function groupStocks(subcategories: boolean) {
   const result: Record<string, Stock[]> = Object.create(null);
   for (const stock of stocks.value || []) {
     const tags = categoryTags(stock.item.category);
@@ -38,7 +40,8 @@ const groups = computed(() => {
       !`${stock.item.name} ${stock.description}`.includes(search.value.trim())
     )
       continue;
-    (result[tags[0] || "未分類"] ||= []).push(stock);
+    for (const name of subcategories ? tags.slice(1) : [tags[0] || "未分類"])
+      (result[name] ||= []).push(stock);
   }
   return Object.entries(result)
     .sort(([a], [b]) => a.localeCompare(b, "ja"))
@@ -49,7 +52,7 @@ const groups = computed(() => {
           products.sort((a, b) => a.item.name.localeCompare(b.item.name, "ja")),
         ] as const,
     );
-});
+}
 const lines = computed(() =>
   Object.entries(cart.value).map(([id, quantity]) => ({
     id,
@@ -158,27 +161,31 @@ onBeforeUnmount(() => {
       </div>
       <ResourceState :loading="loading" :error="error" :empty="!groups.length" empty-text="販売商品がありません。販売商品タブから登録してください。"
         @retry="reload()" />
-      <section v-for="[name, products] in groups" :key="name" class="category-section">
-        <h2>
-          {{ name }}<span class="muted small"> {{ products.length }} 商品</span>
-        </h2>
-        <div class="cashier-products">
-          <button v-for="stock in products" :key="stock.id" type="button"
-            :class="['panel cashier-product', { selected: cart[stock.id] }]" :disabled="pending || loading || !!error"
-            :aria-label="`${stock.item.name}を1点追加、${stock.price}円`" @click="adjust(stock.id, 1)">
-            <div class="product-photo">
-              <img v-if="stock.item.image_url" :src="imageUrl(stock.item.image_url)" alt="" loading="lazy" /><span
-                v-if="cart[stock.id]" class="quantity-badge">{{
-                  cart[stock.id]
-                }}</span>
+      <template v-for="(sections, index) in [groups, subcategoryGroups]" :key="index">
+        <section v-if="sections.length" :class="index ? 'subcategory-list' : 'main-category-list'">
+          <section v-for="[name, products] in sections" :key="name" class="category-section">
+            <h2 class="category-heading">
+              {{ name }}<span class="muted small"> {{ products.length }} 商品</span>
+            </h2>
+            <div class="cashier-products">
+              <button v-for="stock in products" :key="stock.id" type="button"
+                :class="['panel cashier-product', { selected: cart[stock.id] }]" :disabled="pending || loading || !!error"
+                :aria-label="`${stock.item.name}を1点追加、${stock.price}円`" @click="adjust(stock.id, 1)">
+                <div class="product-photo">
+                  <img v-if="stock.item.image_url" :src="imageUrl(stock.item.image_url)" alt="" loading="lazy" /><span
+                    v-if="cart[stock.id]" class="quantity-badge">{{
+                      cart[stock.id]
+                    }}</span>
+                </div>
+                <strong>{{ stock.item.name }}</strong><span class="product-price">{{ stock.price.toLocaleString() }}
+                  円</span><span v-if="stock.description" class="muted small">{{
+                    stock.description
+                  }}</span>
+              </button>
             </div>
-            <strong>{{ stock.item.name }}</strong><span class="product-price">{{ stock.price.toLocaleString() }}
-              円</span><span v-if="stock.description" class="muted small">{{
-                stock.description
-              }}</span>
-          </button>
-        </div>
-      </section>
+          </section>
+        </section>
+      </template>
       <RouterLink v-if="!loading && !error && !stocks?.length" to="/sales/stocks/new" class="button secondary">販売商品を登録
       </RouterLink>
     </section>

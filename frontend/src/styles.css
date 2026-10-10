@@ -777,12 +777,23 @@ dd {
     margin-bottom: 28px;
 }
 
-.category-section h2 {
+.subcategory-list {
+    margin-top: 40px;
+    padding-top: 24px;
+    border-top: 1px solid #dfe5eb;
+}
+
+.category-heading {
+    margin-bottom: 16px;
     padding-bottom: 12px;
     border-bottom: 1px solid #dfe5eb;
 }
 
-.category-section h2>span {
+.subcategory-list .category-heading {
+    font-size: 1rem;
+}
+
+.category-heading>span {
     margin-inline-start: 8px;
 }
 
