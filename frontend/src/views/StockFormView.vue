@@ -5,6 +5,7 @@ import { useResource, listOf } from "@/composables/useResource";
 import { useMutation } from "@/composables/useMutation";
 import { currentFestivalId } from "@/state";
 import { api, jsonBody, imageUrl } from "@/lib/api";
+import { priceColor } from "@/lib/priceColors";
 import { categoryTags } from "@/lib/categories";
 import CategoryTags from "@/components/CategoryTags.vue";
 import type { Stock } from "@/types/stock";
@@ -170,7 +171,7 @@ async function remove() {
       </section>
       <section class="panel">
         <CategoryTags :category="stock.item.category" />
-        <p class="price-large">
+        <p class="price-large" :style="{ color: priceColor(stock.price) }">
           {{ stock.price.toLocaleString() }}<small> 円</small>
         </p>
         <p class="description">{{ stock.description || "説明なし" }}</p>

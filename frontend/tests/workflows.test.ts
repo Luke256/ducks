@@ -1090,6 +1090,16 @@ describe("ポスター回収", () => {
     });
 });
 describe("レジ・売上", () => {
+    it.each([
+        ["/sales/cashier", ".product-price"],
+        ["/sales/stocks", "tbody tr td.numeric"],
+        ["/sales/stocks/s1", ".price-large"],
+        ["/sales/orders", "tbody tr td.numeric"],
+    ])("%sの単価に価格帯の色を反映する", async (path, selector) => {
+        await open(path);
+        expect((wrapper.find(selector).element as HTMLElement).style.color).toBe("rgb(148, 98, 0)");
+    });
+
     it("0円の商品を表示して会計し、売上履歴にも0円で表示する", async () => {
         stock.price = 0;
         await open("/sales/cashier");

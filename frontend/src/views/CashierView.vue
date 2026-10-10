@@ -6,6 +6,7 @@ import { useResource, listOf } from "@/composables/useResource";
 import { useMutation } from "@/composables/useMutation";
 import { api, jsonBody, imageUrl } from "@/lib/api";
 import { saleItems } from "@/lib/sales";
+import { priceColor } from "@/lib/priceColors";
 import { categoryTags } from "@/lib/categories";
 import type { Stock } from "@/types/stock";
 import ResourceState from "@/components/ResourceState.vue";
@@ -177,7 +178,7 @@ onBeforeUnmount(() => {
                       cart[stock.id]
                     }}</span>
                 </div>
-                <strong>{{ stock.item.name }}</strong><span class="product-price">{{ stock.price.toLocaleString() }}
+                <strong>{{ stock.item.name }}</strong><span class="product-price" :style="{ color: priceColor(stock.price) }">{{ stock.price.toLocaleString() }}
                   円</span><span v-if="stock.description" class="muted small">{{
                     stock.description
                   }}</span>
