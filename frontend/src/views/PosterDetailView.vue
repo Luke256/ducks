@@ -10,6 +10,7 @@ import { maxPosterImages, PosterStatusLabels, type Poster, type PosterImage, typ
 import { resizeImage } from "@/utils/resizeImage";
 import ImagesField from "@/components/ImagesField.vue";
 import PosterStatusPicker from "@/components/PosterStatusPicker.vue";
+import PosterPhoto from "@/components/PosterPhoto.vue";
 import ResourceState from "@/components/ResourceState.vue";
 const route = useRoute();
 const router = useRouter();
@@ -132,8 +133,8 @@ async function remove() {
         <p class="description">{{ poster.description }}</p>
         <div v-if="poster.image.length" class="poster-images">
           <a v-for="(image, index) in poster.image" :key="image.id" :href="imageUrl(image.url)" target="_blank" rel="noopener"
-            :aria-label="`設置場所の写真${index + 1}を拡大`"><img :src="imageUrl(image.url)"
-              :alt="`${poster.name}の設置場所（写真${index + 1}）`" class="detail-image" loading="lazy" /></a>
+            :aria-label="`設置場所の写真${index + 1}を拡大`"><PosterPhoto :src="imageUrl(image.url)"
+              :alt="`${poster.name}の設置場所（写真${index + 1}）`" class="detail-image" /></a>
         </div>
       </section>
       <section class="panel">
@@ -174,7 +175,14 @@ async function remove() {
       <span v-if="loading">最新情報を取得中…</span>
     </p>
     <div class="detail-grid">
-      <section class="panel"><h2>設置場所</h2><p class="description">{{ savedLocation.description }}</p></section>
+      <section class="panel">
+        <h2>設置場所</h2><p class="description">{{ savedLocation.description }}</p>
+        <div v-if="savedLocation.image?.length" class="poster-images">
+          <a v-for="(image, index) in savedLocation.image" :key="image.id" :href="imageUrl(image.url)" target="_blank" rel="noopener"
+            :aria-label="`設置場所の写真${index + 1}を拡大`"><PosterPhoto :src="imageUrl(image.url)"
+              :alt="`${savedLocation.name}の設置場所（写真${index + 1}）`" class="detail-image" /></a>
+        </div>
+      </section>
       <section class="panel"><h2>回収状況</h2><p>{{ savedLocation.status ? PosterStatusLabels[savedLocation.status] : '未取得' }}</p></section>
     </div>
     <p class="small muted">

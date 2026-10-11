@@ -1139,7 +1139,8 @@ describe("保存済みのポスターの場所", () => {
         expect(wrapper.text()).toContain("端末に保存された情報を表示");
         expect(wrapper.find(".status-select").exists()).toBe(false);
         expect(wrapper.find("tbody tr").text()).toContain("未回収");
-        expect(wrapper.find(".thumbnail").exists()).toBe(false);
+        expect(wrapper.find(".thumbnail").attributes("src")).toBe(imageUrl(poster.image[0].url));
+        expect(wrapper.find(".thumbnail").attributes("loading")).toBe("lazy");
         await wrapper.find('input[type="search"]').setValue("見つからない場所");
         expect(wrapper.find("tbody tr").exists()).toBe(false);
         await wrapper.find('input[type="search"]').setValue("正面入口");
@@ -1153,8 +1154,38 @@ describe("保存済みのポスターの場所", () => {
         expect(wrapper.find("h1").text()).toBe(poster.name);
         expect(wrapper.find(".description").text()).toBe("正面入口");
         expect(wrapper.text()).toContain("保存日時");
+        expect(wrapper.findAll(".detail-image").map((img) => img.attributes("src"))).toEqual(poster.image.map((image) => imageUrl(image.url)));
+        expect(wrapper.findAll(".detail-image").every((img) => img.attributes("loading") === "lazy")).toBe(true);
         expect(wrapper.find(".status-select").exists()).toBe(false);
         expect(wrapper.find("form").exists()).toBe(false);
+    });
+    it("保存済み一覧・詳細はオンライン時と同じ画像URLを使い、画像失敗でも場所を読める", async () => {
+        await open("/poster");
+        const thumbnail = wrapper.find(".thumbnail").attributes("src");
+        await router.push("/poster/detail/p1");
+        await flushPromises();
+        const urls = wrapper.findAll(".detail-image").map((img) => img.attributes("src"));
+        vi.mocked(fetch).mockRejectedValue(new TypeError("offline"));
+        await router.push("/poster");
+        await flushPromises();
+        expect(wrapper.find(".thumbnail").attributes("src")).toBe(thumbnail);
+        await wrapper.find(".thumbnail").trigger("error");
+        expect(wrapper.find(".thumbnail").isVisible()).toBe(false);
+        expect(wrapper.find("tbody tr").text()).toContain("正面入口");
+        await router.push("/poster/detail/p1");
+        await flushPromises();
+        expect(wrapper.findAll(".detail-image").map((img) => img.attributes("src"))).toEqual(urls);
+        await wrapper.find(".detail-image").trigger("error");
+        expect(wrapper.find(".detail-image").isVisible()).toBe(false);
+        expect(wrapper.find(".description").text()).toBe("正面入口");
+        expect(wrapper.find(".status-select").exists()).toBe(false);
+        vi.mocked(fetch).mockImplementation((input, options) => fixture(String(input), options));
+        poster.image[0] = { id: "image3", url: "/api/v1/images/image3" };
+        await button("再読み込み").trigger("click");
+        await flushPromises();
+        expect(wrapper.find(".detail-image").attributes("src")).toBe(imageUrl(poster.image[0].url));
+        expect(wrapper.find(".detail-image").isVisible()).toBe(true);
+        expect(savedPosterLocations.value?.posters[0].image).toEqual(poster.image);
     });
     it("通信できなくても最後のイベントを選び、一覧と詳細を行き来できる", async () => {
         savePosterLocations(event, [poster]);

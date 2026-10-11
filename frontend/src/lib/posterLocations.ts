@@ -1,20 +1,33 @@
 import { ref, shallowRef } from "vue";
-import type { Poster, PosterStatus } from "@/types/poster";
+import { maxPosterImages, type Poster, type PosterImage, type PosterStatus } from "@/types/poster";
 
-export type PosterLocation = Pick<Poster, "id" | "name" | "description"> & Partial<Pick<Poster, "status">>;
+export type PosterLocation = Pick<Poster, "id" | "name" | "description"> & Partial<Pick<Poster, "status" | "image">>;
 type SavedLocations = {
     festival: { id: string; name: string };
     savedAt: number;
     posters: PosterLocation[];
 };
 export const posterLocationsKey = "ducks.poster-locations.v1";
-// shortcut: 文字情報と回収状況だけを保存する。圏外でのページ再起動が必要なら画面自体の保存も追加する。
+// shortcut: 画像本体はブラウザ標準キャッシュに任せる。保持容量の制御が必要なら独自の画像保存を追加する。
 
 function isStatus(value: unknown): value is PosterStatus {
     return value === "uncollected" || value === "collected" || value === "lost";
 }
-function location({ id, name, description, status }: PosterLocation): PosterLocation {
-    return { id, name, description, ...(isStatus(status) ? { status } : {}) };
+function isImage(value: unknown): value is PosterImage {
+    if (!value || typeof value !== "object" || !("id" in value) || typeof value.id !== "string" ||
+        !("url" in value) || typeof value.url !== "string" || !value.url) return false;
+    try {
+        return ["http:", "https:"].includes(new URL(value.url, window.location.origin).protocol);
+    } catch {
+        return false;
+    }
+}
+function location({ id, name, description, status, image }: PosterLocation): PosterLocation {
+    return {
+        id, name, description,
+        ...(isStatus(status) ? { status } : {}),
+        ...(Array.isArray(image) ? { image: image.slice(0, maxPosterImages).filter(isImage).map(({ id, url }) => ({ id, url })) } : {}),
+    };
 }
 
 function isLocation(value: unknown): value is PosterLocation {
@@ -62,10 +75,11 @@ export function updateSavedPosterLocation(poster: PosterLocation & Pick<Poster, 
     const saved = savedPosterLocations.value;
     if (!saved || saved.festival.id !== poster.festival.id) return;
     const previous = saved.posters.find((item) => item.id === poster.id);
-    const status = poster.status ?? previous?.status;
-    if (previous?.name === poster.name && previous.description === poster.description && previous.status === status && saved.festival.name === poster.festival.name) return;
+    const next = location({ ...poster, status: poster.status ?? previous?.status, image: poster.image ?? previous?.image });
+    if (previous?.name === next.name && previous.description === next.description && previous.status === next.status &&
+        JSON.stringify(previous.image) === JSON.stringify(next.image) && saved.festival.name === poster.festival.name) return;
     savePosterLocations({ id: saved.festival.id, name: poster.festival.name }, [
         ...saved.posters.filter((item) => item.id !== poster.id),
-        { ...poster, status },
+        next,
     ]);
 }

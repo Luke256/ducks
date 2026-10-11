@@ -10,6 +10,7 @@ import {
   type PosterStatus,
 } from "@/types/poster";
 import PosterStatusPicker from "@/components/PosterStatusPicker.vue";
+import PosterPhoto from "@/components/PosterPhoto.vue";
 import ResourceState from "@/components/ResourceState.vue";
 if (!currentFestivalId.value && savedPosterLocations.value)
   currentFestivalId.value = savedPosterLocations.value.festival.id;
@@ -36,7 +37,7 @@ const {
 const saved = computed(() => savedPosterLocations.value?.festival.id === currentFestivalId.value
   ? savedPosterLocations.value : null);
 const showingSaved = computed(() => !posters.value && !!saved.value);
-const displayPosters = computed<(PosterLocation & Partial<Pick<Poster, "status" | "image">>)[]>(
+const displayPosters = computed<PosterLocation[]>(
   () => posters.value ?? saved.value?.posters ?? [],
 );
 const hasStatuses = computed(() => displayPosters.value.some((poster) => !!poster.status));
@@ -119,8 +120,7 @@ function updateStatus(id: string, next: PosterStatus) {
           <tr v-for="poster in filtered" :key="poster.id">
             <td>
               <div class="item-cell">
-                <img v-if="poster.image?.[0]" :src="imageUrl(poster.image[0].url)" alt="" class="thumbnail"
-                  loading="lazy" />
+                <PosterPhoto v-if="poster.image?.[0]" :src="imageUrl(poster.image[0].url)" alt="" class="thumbnail" />
                 <div>
                   <RouterLink :to="`/poster/detail/${poster.id}`" class="text-link">{{ poster.name }}</RouterLink>
                   <p class="muted description">{{ poster.description }}</p>
