@@ -5,7 +5,8 @@ import { useResource } from "@/composables/useResource";
 import { useMutation } from "@/composables/useMutation";
 import { api, jsonBody, imageUrl } from "@/lib/api";
 import { currentFestivalId } from "@/state";
-import { maxPosterImages, type Poster, type PosterImage, type PosterStatus } from "@/types/poster";
+import { savedPosterLocations, updateSavedPosterLocation, posterLocationsError } from "@/lib/posterLocations";
+import { maxPosterImages, PosterStatusLabels, type Poster, type PosterImage, type PosterStatus } from "@/types/poster";
 import { resizeImage } from "@/utils/resizeImage";
 import ImagesField from "@/components/ImagesField.vue";
 import PosterStatusPicker from "@/components/PosterStatusPicker.vue";
@@ -17,7 +18,13 @@ const {
   error,
   loading,
   reload,
-} = useResource<Poster>(() => `/posters/${route.params.posterId}`);
+  cancel,
+} = useResource<Poster>(() => `/posters/${route.params.posterId}`, (body) => {
+  const result = body as Poster;
+  updateSavedPosterLocation(result);
+  return result;
+});
+const savedLocation = computed(() => savedPosterLocations.value?.posters.find((item) => item.id === route.params.posterId));
 const edit = ref(false);
 const form = reactive({ name: "", description: "" });
 const images = shallowRef<File[]>([]);
@@ -48,6 +55,7 @@ function cancelEdit() {
 }
 watch(() => route.params.posterId, cancelEdit);
 function updateStatus(status: PosterStatus) {
+  cancel();
   if (poster.value) poster.value = { ...poster.value, status };
 }
 async function save() {
@@ -106,7 +114,8 @@ async function remove() {
 </script>
 <template>
   <RouterLink to="/poster" class="back-link">← ポスター一覧</RouterLink>
-  <ResourceState :loading="loading" :error="error" @retry="reload()" />
+  <ResourceState :loading="loading && !savedLocation" :error="error" @retry="reload()" />
+  <p v-if="posterLocationsError" class="state error" role="alert">{{ posterLocationsError }}</p>
   <template v-if="poster">
     <div class="page-heading">
       <div>
@@ -155,5 +164,21 @@ async function remove() {
         </div>
       </fieldset>
     </form>
+  </template>
+  <template v-else-if="savedLocation && savedPosterLocations">
+    <div class="page-heading">
+      <div><p class="eyebrow">POSTER DETAIL / {{ savedPosterLocations.festival.name }}</p><h1>{{ savedLocation.name }}</h1></div>
+    </div>
+    <p class="small muted" role="status">
+      端末に保存された情報を表示中です。
+      <span v-if="loading">最新情報を取得中…</span>
+    </p>
+    <div class="detail-grid">
+      <section class="panel"><h2>設置場所</h2><p class="description">{{ savedLocation.description }}</p></section>
+      <section class="panel"><h2>回収状況</h2><p>{{ savedLocation.status ? PosterStatusLabels[savedLocation.status] : '未取得' }}</p></section>
+    </div>
+    <p class="small muted">
+      保存日時：{{ new Date(savedPosterLocations.savedAt).toLocaleString('ja-JP') }}
+    </p>
   </template>
 </template>

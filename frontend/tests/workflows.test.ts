@@ -14,6 +14,7 @@ import {
 import { resizeImage } from "@/utils/resizeImage";
 import type { VisitorCount } from "@/types/visitorCount";
 import type { Poster } from "@/types/poster";
+import { posterLocationsKey, savedPosterLocations, posterLocationsError, savePosterLocations } from "@/lib/posterLocations";
 vi.mock("@/utils/resizeImage", () => ({
     resizeImage: vi.fn(async (file: File) => file),
 }));
@@ -62,6 +63,8 @@ function fixture(input: string, options: RequestInit = {}) {
         return Promise.resolve(new Response("test failure", { status: 500 }));
     if (path === "/posters/p1" && options.method === "PUT")
         Object.assign(poster, JSON.parse(options.body as string));
+    if (path === "/posters/p1/status" && options.method === "PATCH")
+        poster.status = JSON.parse(options.body as string).status;
     if (path === "/stocks/s1" && options.method === "PUT")
         Object.assign(stock, JSON.parse(options.body as string));
     if (path === "/festivals/f1/stocks" && options.method === "POST")
@@ -155,6 +158,9 @@ async function upload(files = [new File(["image"], "photo.png", { type: "image/p
     return files[0];
 }
 beforeEach(() => {
+    localStorage.removeItem(posterLocationsKey);
+    savedPosterLocations.value = null;
+    posterLocationsError.value = "";
     requests.length = 0;
     fail = "";
     stock.price = 500;
@@ -164,6 +170,7 @@ beforeEach(() => {
     itemImageUrl = item.image_url;
     poster.name = "講義棟 01";
     poster.description = "正面入口";
+    poster.status = "uncollected";
     poster.image = [
         { id: "image1", url: "/api/v1/images/image1" },
         { id: "image2", url: "/api/v1/images/image2" },
@@ -1122,7 +1129,224 @@ describe("ポスター画像", () => {
     });
 });
 
+describe("保存済みのポスターの場所", () => {
+    it("通信が応答しなくても保存済みの一覧・検索を即座に使える", async () => {
+        savePosterLocations(event, [poster]);
+        vi.mocked(fetch).mockImplementation((input, options) => String(input).endsWith("/posters")
+            ? new Promise<Response>(() => {}) : fixture(String(input), options));
+        await open("/poster");
+        expect(wrapper.find("tbody tr").text()).toContain("正面入口");
+        expect(wrapper.text()).toContain("端末に保存された情報を表示");
+        expect(wrapper.find(".status-select").exists()).toBe(false);
+        expect(wrapper.find("tbody tr").text()).toContain("未回収");
+        expect(wrapper.find(".thumbnail").exists()).toBe(false);
+        await wrapper.find('input[type="search"]').setValue("見つからない場所");
+        expect(wrapper.find("tbody tr").exists()).toBe(false);
+        await wrapper.find('input[type="search"]').setValue("正面入口");
+        expect(wrapper.find("tbody tr").exists()).toBe(true);
+    });
+    it("通信が応答しなくても保存済みの詳細を表示する", async () => {
+        savePosterLocations(event, [poster]);
+        vi.mocked(fetch).mockImplementation((input, options) => String(input).endsWith("/posters/p1")
+            ? new Promise<Response>(() => {}) : fixture(String(input), options));
+        await open("/poster/detail/p1");
+        expect(wrapper.find("h1").text()).toBe(poster.name);
+        expect(wrapper.find(".description").text()).toBe("正面入口");
+        expect(wrapper.text()).toContain("保存日時");
+        expect(wrapper.find(".status-select").exists()).toBe(false);
+        expect(wrapper.find("form").exists()).toBe(false);
+    });
+    it("通信できなくても最後のイベントを選び、一覧と詳細を行き来できる", async () => {
+        savePosterLocations(event, [poster]);
+        currentFestivalId.value = "";
+        vi.mocked(fetch).mockRejectedValue(new TypeError("offline"));
+        await open("/poster");
+        expect(currentFestivalId.value).toBe("f1");
+        expect(wrapper.find('.festival-picker option[value="f1"]').text()).toBe(event.name);
+        expect(wrapper.find("tbody tr").text()).toContain("正面入口");
+        await router.push("/poster/detail/p1");
+        await flushPromises();
+        expect(wrapper.find("h1").text()).toBe(poster.name);
+        expect(wrapper.find(".description").text()).toBe("正面入口");
+        await router.push("/poster");
+        await flushPromises();
+        expect(wrapper.find("tbody tr").text()).toContain("正面入口");
+    });
+    it("別イベントの取得失敗では保存を維持し、選択したイベントに混ぜない", async () => {
+        await open("/poster");
+        fail = "/festivals/f2/posters";
+        await wrapper.find(".festival-picker select").setValue("f2");
+        await flushPromises();
+        expect(savedPosterLocations.value?.festival.id).toBe("f1");
+        expect(wrapper.find("tbody tr").exists()).toBe(false);
+        expect(wrapper.text()).toContain(`保存済みの「${event.name}」の場所を見る`);
+        await button(`保存済みの「${event.name}」の場所を見る`).trigger("click");
+        await flushPromises();
+        expect(currentFestivalId.value).toBe("f1");
+        expect(wrapper.find("tbody tr").text()).toContain("正面入口");
+    });
+    it("新しいイベントを取得できたら古いイベントの保存を置き換える", async () => {
+        await open("/poster");
+        await wrapper.find(".festival-picker select").setValue("f2");
+        await flushPromises();
+        expect(savedPosterLocations.value?.festival).toEqual({ id: "f2", name: "別イベント" });
+        expect(savedPosterLocations.value?.posters).toEqual([]);
+        fail = "/posters/p1";
+        await router.push("/poster/detail/p1");
+        await flushPromises();
+        expect(wrapper.find("h1").exists()).toBe(false);
+        expect(wrapper.find(".description").exists()).toBe(false);
+    });
+    it("切り替え前の遅い応答で新しいイベントの保存を上書きしない", async () => {
+        let finishOld!: (response: Response) => void;
+        vi.mocked(fetch).mockImplementation((input, options) => String(input).endsWith("/festivals/f1/posters")
+            ? new Promise<Response>((resolve) => { finishOld = resolve; }) : fixture(String(input), options));
+        await open("/poster");
+        await wrapper.find(".festival-picker select").setValue("f2");
+        await flushPromises();
+        finishOld(Response.json({ posters: [poster] }));
+        await flushPromises();
+        expect(savedPosterLocations.value?.festival.id).toBe("f2");
+        expect(savedPosterLocations.value?.posters).toEqual([]);
+    });
+    it("再取得できたら最新情報と回収状況・写真を表示する", async () => {
+        savePosterLocations(event, [poster]);
+        fail = "/posters/p1";
+        await open("/poster/detail/p1");
+        expect(wrapper.find(".status-select").exists()).toBe(false);
+        fail = "";
+        poster.description = "北門";
+        await button("再読み込み").trigger("click");
+        await flushPromises();
+        expect(wrapper.find(".description").text()).toBe("北門");
+        expect(wrapper.find(".status-select").exists()).toBe(true);
+        expect(wrapper.findAll(".detail-image")).toHaveLength(2);
+        expect(savedPosterLocations.value?.posters[0].description).toBe("北門");
+    });
+    it("場所の編集成功後も端末保存を維持し、再取得したサーバーの値だけを反映する", async () => {
+        await open("/poster");
+        await router.push("/poster/detail/p1");
+        await flushPromises();
+        const previous = localStorage.getItem(posterLocationsKey);
+        let finishGet!: (response: Response) => void;
+        vi.mocked(fetch).mockImplementation((input, options) => String(input).endsWith("/posters/p1") && !options?.method
+            ? new Promise<Response>((resolve) => { finishGet = resolve; }) : fixture(String(input), options));
+        await button("編集する").trigger("click");
+        await wrapper.find("form textarea").setValue("北門");
+        await wrapper.find("form").trigger("submit");
+        await flushPromises();
+        expect(mutations("/posters/p1")).toHaveLength(1);
+        expect(localStorage.getItem(posterLocationsKey)).toBe(previous);
+        finishGet(Response.json({ ...poster, description: "北門（サーバーの取得結果）" }));
+        await flushPromises();
+        expect(savedPosterLocations.value?.posters[0].description).toBe("北門（サーバーの取得結果）");
+    });
+    it("削除成功後も一覧の取得失敗では端末保存を維持し、次の一覧取得で削除を反映する", async () => {
+        await open("/poster");
+        await router.push("/poster/detail/p1");
+        await flushPromises();
+        const previous = localStorage.getItem(posterLocationsKey);
+        fail = "/festivals/f1/posters";
+        await button("編集する").trigger("click");
+        await button("ポスターを削除").trigger("click");
+        await flushPromises();
+        expect(mutations("/posters/p1")[0].options.method).toBe("DELETE");
+        expect(localStorage.getItem(posterLocationsKey)).toBe(previous);
+        expect(wrapper.find("tbody tr").text()).toContain("正面入口");
+        vi.mocked(fetch).mockImplementation((input, options) => String(input).endsWith("/festivals/f1/posters")
+            ? Promise.resolve(Response.json({ posters: [] })) : fixture(String(input), options));
+        await button("更新").trigger("click");
+        await flushPromises();
+        expect(savedPosterLocations.value?.posters).toEqual([]);
+    });
+    it("端末保存に失敗しても取得した一覧を表示し、失敗を知らせる", async () => {
+        vi.spyOn(Storage.prototype, "setItem").mockImplementation(() => { throw new Error("full"); });
+        await open("/poster");
+        expect(wrapper.find("tbody tr").text()).toContain("正面入口");
+        expect(wrapper.text()).toContain("場所情報を端末に保存できませんでした");
+        expect(savedPosterLocations.value).toBeNull();
+    });
+});
+
 describe("ポスター回収", () => {
+    it("状況変更だけではキャッシュを書き換えず、一覧の再取得後は圏外でも表示・絞り込みできる", async () => {
+        await open("/poster");
+        const previous = localStorage.getItem(posterLocationsKey);
+        await wrapper.find(".status-select").setValue("collected");
+        await flushPromises();
+        expect(localStorage.getItem(posterLocationsKey)).toBe(previous);
+        expect((wrapper.find(".status-select").element as HTMLSelectElement).value).toBe("collected");
+        await button("更新").trigger("click");
+        await flushPromises();
+        expect(savedPosterLocations.value?.posters[0].status).toBe("collected");
+        vi.mocked(fetch).mockRejectedValue(new TypeError("offline"));
+        await router.push("/poster/detail/p1");
+        await flushPromises();
+        expect(wrapper.text()).toContain("回収済み");
+        expect(wrapper.find(".status-select").exists()).toBe(false);
+        await router.push("/poster");
+        await flushPromises();
+        expect(wrapper.find("tbody tr").text()).toContain("回収済み");
+        await wrapper.find(".filter-field select").setValue("uncollected");
+        expect(wrapper.find("tbody tr").exists()).toBe(false);
+        await wrapper.find(".filter-field select").setValue("collected");
+        expect(wrapper.find("tbody tr").exists()).toBe(true);
+        expect(wrapper.findAll(".summary")[1].text()).toContain("1");
+    });
+    it("詳細での状況変更は端末保存を維持し、次の詳細取得で反映する", async () => {
+        await open("/poster");
+        await router.push("/poster/detail/p1");
+        await flushPromises();
+        const previous = localStorage.getItem(posterLocationsKey);
+        await wrapper.find(".status-select").setValue("lost");
+        await flushPromises();
+        expect(localStorage.getItem(posterLocationsKey)).toBe(previous);
+        vi.mocked(fetch).mockRejectedValue(new TypeError("offline"));
+        await router.push("/poster");
+        await flushPromises();
+        expect(wrapper.find("tbody tr").text()).toContain("未回収");
+        vi.mocked(fetch).mockImplementation((input, options) => fixture(String(input), options));
+        await router.push("/poster/detail/p1");
+        await flushPromises();
+        expect(savedPosterLocations.value?.posters[0].status).toBe("lost");
+    });
+    it("回収状況の送信失敗時は以前のキャッシュを維持する", async () => {
+        await open("/poster");
+        const previous = localStorage.getItem(posterLocationsKey);
+        fail = "/posters/p1/status";
+        await wrapper.find(".status-select").setValue("collected");
+        await flushPromises();
+        expect(savedPosterLocations.value?.posters[0].status).toBe("uncollected");
+        expect(localStorage.getItem(posterLocationsKey)).toBe(previous);
+    });
+    it("状況変更成功後の古い取得応答を無視し、キャッシュは次の取得まで維持する", async () => {
+        await open("/poster");
+        const previous = localStorage.getItem(posterLocationsKey);
+        const old = JSON.parse(JSON.stringify(poster));
+        let finishOld!: (response: Response) => void;
+        vi.mocked(fetch).mockImplementation((input, options) => String(input).endsWith("/festivals/f1/posters")
+            ? new Promise<Response>((resolve) => { finishOld = resolve; }) : fixture(String(input), options));
+        await button("更新").trigger("click");
+        await wrapper.find(".status-select").setValue("collected");
+        await flushPromises();
+        finishOld(Response.json({ posters: [old] }));
+        await flushPromises();
+        expect(localStorage.getItem(posterLocationsKey)).toBe(previous);
+        expect((wrapper.find(".status-select").element as HTMLSelectElement).value).toBe("collected");
+    });
+    it("送信中の行が検索で隠れても、保存成功だけではキャッシュを書き換えない", async () => {
+        await open("/poster");
+        const previous = localStorage.getItem(posterLocationsKey);
+        let finishSave!: (response: Response) => void;
+        vi.mocked(fetch).mockImplementation((input, options) => options?.method === "PATCH"
+            ? new Promise<Response>((resolve) => { finishSave = resolve; }) : fixture(String(input), options));
+        await wrapper.find(".status-select").setValue("collected");
+        await wrapper.find('input[type="search"]').setValue("別の場所");
+        expect(wrapper.find(".status-select").exists()).toBe(false);
+        finishSave(new Response(null, { status: 204 }));
+        await flushPromises();
+        expect(localStorage.getItem(posterLocationsKey)).toBe(previous);
+    });
     it("一覧から状況を変更して件数とフィルタを更新する", async () => {
         await open("/poster");
         const select = wrapper.find("select.status-select");

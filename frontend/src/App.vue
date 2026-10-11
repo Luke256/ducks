@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, onMounted } from "vue";
 import { useRoute } from "vue-router";
+import { savedPosterLocations } from "./lib/posterLocations";
 import {
   currentFestivalId,
   festivalSelectionLocked,
@@ -25,6 +26,12 @@ const tabs = [
   { href: "/sales/items", label: "商品マスター" },
 ];
 const isSales = computed(() => route.path.startsWith("/sales"));
+const isPoster = computed(() => route.path.startsWith("/poster"));
+const availableFestivals = computed(() => {
+  const saved = savedPosterLocations.value;
+  return isPoster.value && saved && !festivals.value.some((festival) => festival.id === saved.festival.id)
+    ? [...festivals.value, { ...saved.festival, description: "" }] : festivals.value;
+});
 const needsFestival = computed(() =>
   [
     "/poster",
@@ -64,11 +71,11 @@ onMounted(loadFestivals);
               : "イベント管理"
       }}</span>
       <label v-if="needsFestival" class="festival-picker">対象イベント
-        <select v-model="currentFestivalId" :disabled="festivalsLoading || festivalSelectionLocked">
+        <select v-model="currentFestivalId" :disabled="festivalSelectionLocked || (festivalsLoading && !(isPoster && savedPosterLocations))">
           <option value="">
-            {{ festivalsLoading ? "読み込み中…" : "イベントを選択" }}
+            {{ festivalsLoading && !availableFestivals.length ? "読み込み中…" : "イベントを選択" }}
           </option>
-          <option v-for="festival in festivals" :key="festival.id" :value="festival.id">
+          <option v-for="festival in availableFestivals" :key="festival.id" :value="festival.id">
             {{ festival.name }}
           </option>
         </select>

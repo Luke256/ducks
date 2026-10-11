@@ -13,8 +13,9 @@ const { pending, run } = useMutation();
 async function change(event: Event) {
   const target = event.target as HTMLSelectElement;
   const status = target.value as PosterStatus;
+  const id = props.posterId;
   const saved = await run(async () => {
-    await api(`/posters/${props.posterId}/status`, {
+    await api(`/posters/${id}/status`, {
       method: "PATCH",
       ...jsonBody({ status }),
     });

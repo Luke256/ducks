@@ -15,6 +15,10 @@ export function useResource<T>(
     const error = ref("");
     const loading = ref(false);
     let controller: AbortController | undefined;
+    function cancel() {
+        controller?.abort();
+        loading.value = false;
+    }
     async function reload(clear = false) {
         controller?.abort();
         const request = new AbortController();
@@ -50,7 +54,7 @@ export function useResource<T>(
         controller?.abort();
         window.removeEventListener("focus", refresh);
     });
-    return { data, error, loading, reload };
+    return { data, error, loading, reload, cancel };
 }
 export function listOf<T>(key: string) {
     return (body: unknown): T[] =>

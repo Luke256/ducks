@@ -1,4 +1,7 @@
 import { createRouter, createWebHistory } from "vue-router";
+// 場所の閲覧画面は、通信断後の画面移動でも追加のJS取得を必要としない。
+import PostersView from "./views/PostersView.vue";
+import PosterDetailView from "./views/PosterDetailView.vue";
 const router = createRouter({
     history: createWebHistory(),
     scrollBehavior: () => ({ top: 0 }),
@@ -16,7 +19,7 @@ const router = createRouter({
         },
         {
             path: "/poster",
-            component: () => import("./views/PostersView.vue"),
+            component: PostersView,
             meta: { title: "ポスター管理" },
         },
         {
@@ -26,7 +29,7 @@ const router = createRouter({
         },
         {
             path: "/poster/detail/:posterId",
-            component: () => import("./views/PosterDetailView.vue"),
+            component: PosterDetailView,
             meta: { title: "ポスター詳細" },
         },
         { path: "/sales", redirect: "/sales/cashier" },
