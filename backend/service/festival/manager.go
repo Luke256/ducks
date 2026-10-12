@@ -16,6 +16,7 @@ type Festival struct {
 	ID          uuid.UUID `json:"id"`
 	Name        string    `json:"name"`
 	Description string    `json:"description"`
+	Locked      bool      `json:"locked"`
 }
 
 type Manager interface {
@@ -30,6 +31,9 @@ type Manager interface {
 
 	// Edit 指定されたIDのイベント情報を更新します
 	Edit(id uuid.UUID, name, description string) error
+
+	// SetLocked イベントの変更禁止状態を設定・解除します
+	SetLocked(id uuid.UUID, locked bool) error
 
 	// Delete 指定されたIDのイベントを削除します
 	Delete(id uuid.UUID) error

@@ -54,6 +54,7 @@ func (r *Handler) Setup(g *echo.Group) {
 	festivals.GET("", r.ListFestivals)
 	festivals.GET("/:id", r.GetFestival)
 	festivals.PUT("/:id", r.EditFestival)
+	festivals.PATCH("/:id/lock", r.SetFestivalLocked)
 	festivals.DELETE("/:id", r.DeleteFestival)
 
 	// Posters

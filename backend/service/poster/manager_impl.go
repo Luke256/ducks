@@ -73,7 +73,7 @@ func (m *ManagerImpl) Create(name string, festivalID uuid.UUID, description stri
 		Description: poster.Description,
 		Images:      m.posterImages(poster.Images),
 		Status:      poster.Status,
-		Festival:    festival.Festival{ID: fes.ID, Name: fes.Name, Description: fes.Description},
+		Festival:    festival.Festival{ID: fes.ID, Name: fes.Name, Description: fes.Description, Locked: fes.Locked},
 	}, nil
 }
 
@@ -94,7 +94,7 @@ func (m *ManagerImpl) Get(id uuid.UUID) (Poster, error) {
 		Description: poster.Description,
 		Images:      m.posterImages(poster.Images),
 		Status:      poster.Status,
-		Festival:    festival.Festival{ID: poster.Festival.ID, Name: poster.Festival.Name, Description: poster.Festival.Description},
+		Festival:    festival.Festival{ID: poster.Festival.ID, Name: poster.Festival.Name, Description: poster.Festival.Description, Locked: poster.Festival.Locked},
 	}, nil
 }
 
@@ -117,7 +117,7 @@ func (m *ManagerImpl) GetByFestival(festivalID uuid.UUID) ([]Poster, error) {
 			Description: p.Description,
 			Images:      m.posterImages(p.Images),
 			Status:      p.Status,
-			Festival:    festival.Festival{ID: p.Festival.ID, Name: p.Festival.Name, Description: p.Festival.Description},
+			Festival:    festival.Festival{ID: p.Festival.ID, Name: p.Festival.Name, Description: p.Festival.Description, Locked: p.Festival.Locked},
 		}
 	}
 
@@ -141,7 +141,7 @@ func (m *ManagerImpl) GetByName(festivalID uuid.UUID, name string) (Poster, erro
 		Description: poster.Description,
 		Images:      m.posterImages(poster.Images),
 		Status:      poster.Status,
-		Festival:    festival.Festival{ID: poster.Festival.ID, Name: poster.Festival.Name, Description: poster.Festival.Description},
+		Festival:    festival.Festival{ID: poster.Festival.ID, Name: poster.Festival.Name, Description: poster.Festival.Description, Locked: poster.Festival.Locked},
 	}, nil
 }
 

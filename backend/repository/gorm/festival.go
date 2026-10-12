@@ -94,3 +94,17 @@ func (r *GormRepository) DeleteFestival(festivalID uuid.UUID) error {
 		return nil
 	})
 }
+
+func (r *GormRepository) SetFestivalLocked(festivalID uuid.UUID, locked bool) error {
+	// ロック解除もできるよう、通常の変更禁止判定は適用しない。
+	rows, err := gorm.G[model.Festival](r.db).
+		Where("id = ?", festivalID).
+		Update(context.Background(), "Locked", locked)
+	if err != nil {
+		return wrapGormError(err)
+	}
+	if rows == 0 {
+		return wrapGormError(r.db.Select("id").First(&model.Festival{}, "id = ?", festivalID).Error)
+	}
+	return nil
+}

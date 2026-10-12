@@ -18,6 +18,9 @@ type FestivalRepository interface {
 	// UpdateFestival イベント情報を更新します
 	UpdateFestival(festivalID uuid.UUID, name string, description string) error
 
+	// SetFestivalLocked イベントの変更禁止状態を設定・解除します
+	SetFestivalLocked(festivalID uuid.UUID, locked bool) error
+
 	// DeleteFestival イベントを削除します
 	DeleteFestival(festivalID uuid.UUID) error
 }

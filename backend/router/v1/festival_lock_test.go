@@ -5,7 +5,6 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/Luke256/ducks/model"
 	"github.com/Luke256/ducks/repository"
 	"github.com/stretchr/testify/require"
 )
@@ -21,7 +20,9 @@ func TestLockedFestivalMutationEndpoints(t *testing.T) {
 	env.mustIncrementVisitorCount(t, festival.ID, 5)
 	otherFestival := env.mustCreateFestival(t, "Open event", "description")
 	otherStock := env.mustCreateFestivalStock(t, otherFestival.ID, item.ID, 100, "description")
-	require.NoError(t, env.DB.Model(&model.Festival{}).Where("id = ?", festival.ID).Update("locked", true).Error)
+	env.R(t).PATCH("/api/festivals/" + festival.ID.String() + "/lock").
+		WithJSON(map[string]any{"locked": true}).Expect().Status(http.StatusOK).
+		JSON().Object().Value("locked").IsEqual(true)
 
 	festivalPath := "/api/festivals/" + festival.ID.String()
 	posterPath := "/api/posters/" + poster.ID.String()
@@ -80,10 +81,35 @@ func TestLockedFestivalMutationEndpoints(t *testing.T) {
 		t.Run("read "+path, func(t *testing.T) { env.R(t).GET(path).Expect().Status(http.StatusOK) })
 	}
 	env.R(t).GET("/api/sales").WithQuery("festival_id", festival.ID.String()).Expect().Status(http.StatusOK)
+	env.R(t).GET(posterPath).Expect().Status(http.StatusOK).
+		JSON().Object().Value("festival").Object().Value("locked").IsEqual(true)
 	sales, err := env.Repo.GetSaleRecordsByFestivalStockID(otherStock.ID)
 	require.NoError(t, err)
 	require.Empty(t, sales)
 
-	require.NoError(t, env.DB.Model(&model.Festival{}).Where("id = ?", festival.ID).Update("locked", false).Error)
+	env.R(t).PATCH(festivalPath + "/lock").WithJSON(map[string]any{"locked": false}).Expect().Status(http.StatusOK)
 	env.R(t).PUT(festivalPath).WithJSON(map[string]any{"name": "Unlocked event", "description": "updated"}).Expect().Status(http.StatusOK)
+}
+
+func TestSetFestivalLocked(t *testing.T) {
+	t.Parallel()
+	env := setup(t, common)
+	festival := env.mustCreateFestival(t, "Event lock", "description")
+	path := "/api/festivals/" + festival.ID.String() + "/lock"
+	for _, locked := range []bool{true, true, false, false} {
+		response := env.R(t).PATCH(path).
+			WithJSON(map[string]any{"locked": locked, "name": "ignored", "description": "ignored"}).
+			Expect().Status(http.StatusOK).JSON().Object()
+		response.Value("locked").IsEqual(locked)
+		response.Value("name").IsEqual(festival.Name)
+		response.Value("description").IsEqual(festival.Description)
+		env.R(t).GET("/api/festivals/" + festival.ID.String()).Expect().Status(http.StatusOK).
+			JSON().Object().Value("locked").IsEqual(locked)
+	}
+	for _, body := range []map[string]any{{}, {"locked": nil}, {"locked": "true"}, {"locked": 1}} {
+		env.R(t).PATCH(path).WithJSON(body).Expect().Status(http.StatusBadRequest)
+	}
+	for _, id := range []string{"invalid", "00000000-0000-0000-0000-000000000000"} {
+		env.R(t).PATCH("/api/festivals/" + id + "/lock").WithJSON(map[string]any{"locked": true}).Expect().Status(http.StatusNotFound)
+	}
 }

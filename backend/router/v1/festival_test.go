@@ -23,6 +23,7 @@ func TestCreateFestival(t *testing.T) {
 	resp.Value("id").NotNull()
 	resp.Value("name").IsEqual("Test Festival")
 	resp.Value("description").IsEqual("This is a test festival.")
+	resp.Value("locked").IsEqual(false)
 }
 
 func TestListFestivals(t *testing.T) {
@@ -47,11 +48,13 @@ func TestListFestivals(t *testing.T) {
 			"id":          fest1.ID.String(),
 			"name":        fest1.Name,
 			"description": fest1.Description,
+			"locked":      false,
 		},
 		map[string]any{
 			"id":          fest2.ID.String(),
 			"name":        fest2.Name,
 			"description": fest2.Description,
+			"locked":      false,
 		},
 	)
 }
