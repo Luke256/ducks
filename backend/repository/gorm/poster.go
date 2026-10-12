@@ -34,7 +34,7 @@ func (r *GormRepository) RegisterPoster(festivalID uuid.UUID, posterName, descri
 
 	ctx := context.Background()
 	// 関連画像はINSERTし、既存の画像IDを別のポスターへ付け替えない。
-	if err := r.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+	if err := r.mutateUnlockedFestivals(r.db.WithContext(ctx).Model(&model.Festival{}).Select("id").Where("id = ?", festivalID), func(tx *gorm.DB) error {
 		if err := tx.Omit("Images").Create(&poster).Error; err != nil {
 			return err
 		}
@@ -91,23 +91,25 @@ func (r *GormRepository) GetPosterByFestivalIDAndPosterName(festivalID uuid.UUID
 }
 
 func (r *GormRepository) UpdatePoster(posterID uuid.UUID, posterName, description string) error {
-	ctx := context.Background()
-	rows, err := gorm.G[model.Poster](r.db).
-		Where(&model.Poster{ID: posterID}, "ID").
-		Select("PosterName", "Description").
-		Updates(ctx, model.Poster{PosterName: posterName, Description: description})
-	if err != nil {
-		return wrapGormError(err)
-	}
-	if rows == 0 {
-		return wrapGormError(r.db.Select("id").First(&model.Poster{}, "id = ?", posterID).Error)
-	}
-	return nil
+	return r.mutateUnlockedFestivals(r.db.Model(&model.Poster{}).Select("festival_id").Where("id = ?", posterID), func(tx *gorm.DB) error {
+		ctx := context.Background()
+		rows, err := gorm.G[model.Poster](tx).
+			Where(&model.Poster{ID: posterID}, "ID").
+			Select("PosterName", "Description").
+			Updates(ctx, model.Poster{PosterName: posterName, Description: description})
+		if err != nil {
+			return wrapGormError(err)
+		}
+		if rows == 0 {
+			return wrapGormError(tx.Select("id").First(&model.Poster{}, "id = ?", posterID).Error)
+		}
+		return nil
+	})
 }
 
 func (r *GormRepository) UpdatePosterImages(posterID uuid.UUID, addIDs, deleteIDs []string) ([]model.PosterImage, error) {
 	images := make([]model.PosterImage, 0)
-	err := r.db.Transaction(func(tx *gorm.DB) error {
+	err := r.mutateUnlockedFestivals(r.db.Model(&model.Poster{}).Select("festival_id").Where("id = ?", posterID), func(tx *gorm.DB) error {
 		// 同じポスターの画像編集を直列化し、同時追加でも枚数上限を守る。
 		var poster model.Poster
 		if err := tx.Clauses(clause.Locking{Strength: "UPDATE"}).First(&poster, "id = ?", posterID).Error; err != nil {
@@ -153,30 +155,34 @@ func (r *GormRepository) UpdatePosterImages(posterID uuid.UUID, addIDs, deleteID
 }
 
 func (r *GormRepository) UpdatePosterStatus(posterID uuid.UUID, status string) error {
-	ctx := context.Background()
-	rows, err := gorm.G[model.Poster](r.db).
-		Where(&model.Poster{ID: posterID}, "ID").
-		Updates(ctx, model.Poster{Status: status})
-	if err != nil {
-		return wrapGormError(err)
-	}
-	if rows == 0 {
-		return wrapGormError(r.db.Select("id").First(&model.Poster{}, "id = ?", posterID).Error)
-	}
-	return nil
+	return r.mutateUnlockedFestivals(r.db.Model(&model.Poster{}).Select("festival_id").Where("id = ?", posterID), func(tx *gorm.DB) error {
+		ctx := context.Background()
+		rows, err := gorm.G[model.Poster](tx).
+			Where(&model.Poster{ID: posterID}, "ID").
+			Updates(ctx, model.Poster{Status: status})
+		if err != nil {
+			return wrapGormError(err)
+		}
+		if rows == 0 {
+			return wrapGormError(tx.Select("id").First(&model.Poster{}, "id = ?", posterID).Error)
+		}
+		return nil
+	})
 }
 
 func (r *GormRepository) DeletePoster(posterID uuid.UUID) error {
-	ctx := context.Background()
-	rows, err := gorm.G[model.Poster](r.db).
-		Where(&model.Poster{ID: posterID}, "ID").
-		Delete(ctx)
+	return r.mutateUnlockedFestivals(r.db.Model(&model.Poster{}).Select("festival_id").Where("id = ?", posterID), func(tx *gorm.DB) error {
+		ctx := context.Background()
+		rows, err := gorm.G[model.Poster](tx).
+			Where(&model.Poster{ID: posterID}, "ID").
+			Delete(ctx)
 
-	if err != nil {
-		return wrapGormError(err)
-	}
-	if rows == 0 {
-		return repository.ErrNotFound
-	}
-	return nil
+		if err != nil {
+			return wrapGormError(err)
+		}
+		if rows == 0 {
+			return repository.ErrNotFound
+		}
+		return nil
+	})
 }

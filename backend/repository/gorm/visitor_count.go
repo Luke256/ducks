@@ -22,17 +22,14 @@ func (r *GormRepository) ListVisitorCounts(ctx context.Context, festivalID uuid.
 }
 
 func (r *GormRepository) AddVisitorCount(ctx context.Context, festivalID uuid.UUID, timestamp time.Time, amount int) error {
-	fes, err := gorm.G[model.Festival](r.db).
-		Where(&model.Festival{ID: festivalID}, "ID").
-		First(ctx)
-	if err != nil {
-		return wrapGormError(err)
-	}
-
 	// 10分ごとのバケットに丸める
 	bucketStart := timestamp.UTC().Truncate(10 * time.Minute)
 
-	err = r.db.Transaction(func(tx *gorm.DB) error {
+	err := r.mutateUnlockedFestivals(r.db.WithContext(ctx).Model(&model.Festival{}).Select("id").Where("id = ?", festivalID), func(tx *gorm.DB) error {
+		var festival model.Festival
+		if err := tx.First(&festival, "id = ?", festivalID).Error; err != nil {
+			return err
+		}
 		count, err := gorm.G[model.VisitorCount](tx).
 			Where(&model.VisitorCount{FestivalID: festivalID, BucketStart: bucketStart}, "FestivalID", "BucketStart").
 			First(ctx)
@@ -50,7 +47,6 @@ func (r *GormRepository) AddVisitorCount(ctx context.Context, festivalID uuid.UU
 				FestivalID:  festivalID,
 				BucketStart: bucketStart,
 				Count:       uint(amount),
-				Festival:    fes,
 			}
 
 			if err := gorm.G[model.VisitorCount](tx).Create(ctx, &newCount); err != nil {

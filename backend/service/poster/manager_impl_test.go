@@ -30,7 +30,37 @@ func (r *imageRepository) GetPosterByFestivalIDAndPosterName(uuid.UUID, string) 
 }
 
 func (r *imageRepository) GetFestivalByID(id uuid.UUID) (model.Festival, error) {
-	return model.Festival{ID: id}, nil
+	festival := r.poster.Festival
+	festival.ID = id
+	return festival, nil
+}
+
+func TestLockedPosterPreservesImages(t *testing.T) {
+	t.Parallel()
+	for _, operation := range []string{"create", "update images", "delete"} {
+		t.Run(operation, func(t *testing.T) {
+			t.Parallel()
+			id := uuid.New()
+			repo := &imageRepository{poster: model.Poster{
+				ID: id, Festival: model.Festival{ID: uuid.New(), Locked: true},
+				Images: []model.PosterImage{{ID: "old", PosterID: id}},
+			}, deleteErr: repository.ErrEventLocked}
+			files := &imageStorage{files: map[string]bool{"old": true}}
+			manager := NewManagerImpl(repo, files)
+			var err error
+			switch operation {
+			case "create":
+				_, err = manager.Create("new", repo.poster.Festival.ID, "description", []*multipart.FileHeader{{Filename: "new"}})
+			case "update images":
+				_, err = manager.UpdateImages(id, []*multipart.FileHeader{{Filename: "new"}}, []string{"old"})
+			case "delete":
+				err = manager.Delete(id)
+			}
+			require.ErrorIs(t, err, repository.ErrEventLocked)
+			require.Equal(t, map[string]bool{"old": true}, files.files)
+			require.Zero(t, files.uploads)
+		})
+	}
 }
 
 func (r *imageRepository) RegisterPoster(festivalID uuid.UUID, name, description string, ids []string) (model.Poster, error) {

@@ -1,6 +1,9 @@
 package v1
 
 import (
+	"errors"
+
+	"github.com/Luke256/ducks/repository"
 	"github.com/Luke256/ducks/router/utils/herror"
 	"github.com/Luke256/ducks/service/festival"
 	"github.com/go-ozzo/ozzo-validation/v4"
@@ -96,6 +99,9 @@ func (h *Handler) EditFestival(c echo.Context) error {
 
 	err = h.festivalManager.Edit(id, req.Name, req.Description)
 	if err != nil {
+		if errors.Is(err, repository.ErrEventLocked) {
+			return echo.NewHTTPError(403, repository.ErrEventLocked.Error())
+		}
 		switch err {
 		case festival.ErrNotFound:
 			return herror.NotFound("festival not found")
@@ -122,6 +128,9 @@ func (h *Handler) DeleteFestival(c echo.Context) error {
 
 	err = h.festivalManager.Delete(id)
 	if err != nil {
+		if errors.Is(err, repository.ErrEventLocked) {
+			return echo.NewHTTPError(403, repository.ErrEventLocked.Error())
+		}
 		switch err {
 		case festival.ErrNotFound:
 			return herror.NotFound("festival not found")

@@ -93,6 +93,9 @@ func (h *Handler) RegisterPoster(c echo.Context) error {
 		form.File["image"],
 	)
 	if err != nil {
+		if errors.Is(err, repository.ErrEventLocked) {
+			return echo.NewHTTPError(403, repository.ErrEventLocked.Error())
+		}
 		switch err {
 		case poster.ErrNotFound:
 			return c.String(404, "Festival not found")
@@ -139,6 +142,9 @@ func (h *Handler) UpdatePosterImages(c echo.Context) error {
 	defer form.RemoveAll()
 	images, err := h.posterManager.UpdateImages(posterID, form.File["image"], form.Value["delete_image_ids"])
 	if err != nil {
+		if errors.Is(err, repository.ErrEventLocked) {
+			return echo.NewHTTPError(403, repository.ErrEventLocked.Error())
+		}
 		switch {
 		case errors.Is(err, poster.ErrNotFound):
 			return c.String(404, "Poster not found")
@@ -229,6 +235,9 @@ func (h *Handler) EditPoster(c echo.Context) error {
 
 	err = h.posterManager.Edit(posterID, req.PosterName, req.Description)
 	if err != nil {
+		if errors.Is(err, repository.ErrEventLocked) {
+			return echo.NewHTTPError(403, repository.ErrEventLocked.Error())
+		}
 		switch err {
 		case poster.ErrNotFound:
 			return c.String(404, "Poster not found")
@@ -259,6 +268,9 @@ func (h *Handler) UpdatePosterStatus(c echo.Context) error {
 
 	err = h.posterManager.ChangeStatus(posterID, req.Status)
 	if err != nil {
+		if errors.Is(err, repository.ErrEventLocked) {
+			return echo.NewHTTPError(403, repository.ErrEventLocked.Error())
+		}
 		switch err {
 		case poster.ErrNotFound:
 			return c.String(404, "Poster not found")
@@ -279,6 +291,9 @@ func (h *Handler) DeletePoster(c echo.Context) error {
 
 	err = h.posterManager.Delete(posterID)
 	if err != nil {
+		if errors.Is(err, repository.ErrEventLocked) {
+			return echo.NewHTTPError(403, repository.ErrEventLocked.Error())
+		}
 		switch err {
 		case poster.ErrNotFound:
 			return c.String(404, "Poster not found")

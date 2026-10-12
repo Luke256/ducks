@@ -142,11 +142,6 @@ func (m *ManagerImpl) Delete(id uuid.UUID) error {
 		}
 	}
 
-	err = m.storage.DeleteFile(item.ImageID)
-	if err != nil {
-		return fmt.Errorf("failed to delete image from storage: %w", err)
-	}
-
 	err = m.repo.DeleteStockItem(id)
 	if err != nil {
 		switch err {
@@ -155,6 +150,10 @@ func (m *ManagerImpl) Delete(id uuid.UUID) error {
 		default:
 			return fmt.Errorf("failed to delete stock item: %w", err)
 		}
+	}
+
+	if cleanupErr := m.storage.DeleteFile(item.ImageID); cleanupErr != nil {
+		slog.Warn("failed to delete stock item image", "image_id", item.ImageID, "error", cleanupErr)
 	}
 
 	return nil

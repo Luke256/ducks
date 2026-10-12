@@ -3,11 +3,13 @@ package festival
 import (
 	"errors"
 
+	"github.com/Luke256/ducks/repository"
 	"github.com/google/uuid"
 )
 
 var (
-	ErrNotFound	  = errors.New("not found")
+	ErrNotFound    = errors.New("not found")
+	ErrEventLocked = repository.ErrEventLocked
 )
 
 type Festival struct {

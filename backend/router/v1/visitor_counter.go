@@ -1,6 +1,7 @@
 package v1
 
 import (
+	"errors"
 	"log/slog"
 	"time"
 
@@ -66,6 +67,9 @@ func (h *Handler) AddVisitorCount(c echo.Context) error {
 
 	err = h.r.AddVisitorCount(c.Request().Context(), fesID, now, req.Amount)
 	if err != nil {
+		if errors.Is(err, repository.ErrEventLocked) {
+			return echo.NewHTTPError(403, repository.ErrEventLocked.Error())
+		}
 		slog.Error("Failed to add visitor count", "error", err)
 		switch err {
 		case repository.ErrNotFound:

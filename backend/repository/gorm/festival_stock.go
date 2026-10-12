@@ -28,7 +28,9 @@ func (r *GormRepository) RegisterFestivalStock(festivalID, itemID uuid.UUID, pri
 
 	ctx := context.Background()
 
-	if err := gorm.G[model.FestivalStock](r.db).Create(ctx, &stock); err != nil {
+	if err := r.mutateUnlockedFestivals(r.db.Model(&model.Festival{}).Select("id").Where("id = ?", festivalID), func(tx *gorm.DB) error {
+		return gorm.G[model.FestivalStock](tx).Create(ctx, &stock)
+	}); err != nil {
 		return model.FestivalStock{}, wrapGormError(err)
 	}
 
@@ -78,35 +80,39 @@ func (r *GormRepository) QueryFestivalStocks(festivalID uuid.UUID, category stri
 }
 
 func (r *GormRepository) UpdateFestivalStock(festivalStockID uuid.UUID, description string, forSale bool) error {
-	ctx := context.Background()
+	return r.mutateUnlockedFestivals(r.db.Model(&model.FestivalStock{}).Select("festival_id").Where("id = ?", festivalStockID), func(tx *gorm.DB) error {
+		ctx := context.Background()
 
-	rows, err := gorm.G[model.FestivalStock](r.db).
-		Where(model.FestivalStock{ID: festivalStockID}, "ID").
-		Select("Description", "ForSale").
-		Updates(ctx, model.FestivalStock{Description: description, ForSale: forSale})
-	if err != nil {
-		return wrapGormError(err)
-	}
-	if rows == 0 {
-		return wrapGormError(r.db.Select("id").First(&model.FestivalStock{}, "id = ?", festivalStockID).Error)
-	}
+		rows, err := gorm.G[model.FestivalStock](tx).
+			Where(model.FestivalStock{ID: festivalStockID}, "ID").
+			Select("Description", "ForSale").
+			Updates(ctx, model.FestivalStock{Description: description, ForSale: forSale})
+		if err != nil {
+			return wrapGormError(err)
+		}
+		if rows == 0 {
+			return wrapGormError(tx.Select("id").First(&model.FestivalStock{}, "id = ?", festivalStockID).Error)
+		}
 
-	return nil
+		return nil
+	})
 }
 
 func (r *GormRepository) DeleteFestivalStock(festivalStockID uuid.UUID) error {
-	ctx := context.Background()
+	return r.mutateUnlockedFestivals(r.db.Model(&model.FestivalStock{}).Select("festival_id").Where("id = ?", festivalStockID), func(tx *gorm.DB) error {
+		ctx := context.Background()
 
-	rows, err := gorm.G[model.FestivalStock](r.db).
-		Where(model.FestivalStock{ID: festivalStockID}, "ID").
-		Delete(ctx)
-	if err != nil {
-		return wrapGormError(err)
-	}
+		rows, err := gorm.G[model.FestivalStock](tx).
+			Where(model.FestivalStock{ID: festivalStockID}, "ID").
+			Delete(ctx)
+		if err != nil {
+			return wrapGormError(err)
+		}
 
-	if rows == 0 {
-		return repository.ErrNotFound
-	}
+		if rows == 0 {
+			return repository.ErrNotFound
+		}
 
-	return nil
+		return nil
+	})
 }
