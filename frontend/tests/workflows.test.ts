@@ -1299,6 +1299,131 @@ describe("保存済みのポスターの場所", () => {
     });
 });
 
+describe("ポスター詳細の前後移動", () => {
+    const secondPoster: Poster = { ...poster, id: "p2", name: "講義棟 02", description: "北門" };
+    const lastPoster: Poster = { ...poster, id: "p10", name: "講義棟 10", description: "南門" };
+    const posterList = [lastPoster, poster, secondPoster];
+    function navigationButton(direction: "previous" | "next") {
+        return wrapper.findAll(".poster-navigation button")[direction === "previous" ? 0 : 1];
+    }
+    beforeEach(() => {
+        vi.mocked(fetch).mockImplementation((input, options) => {
+            const path = String(input).slice(apiBase.length);
+            if (path === "/festivals/f1/posters") return Promise.resolve(Response.json({ posters: posterList }));
+            const detail = [secondPoster, lastPoster].find((p) => path === `/posters/${p.id}`);
+            return detail ? Promise.resolve(Response.json(detail)) : fixture(String(input), options);
+        });
+    });
+    it("一覧と同じ番号順に詳細を切り替え、先頭・末尾のボタンを無効にする", async () => {
+        await open("/poster");
+        expect(wrapper.findAll("tbody .item-cell .text-link").map((link) => link.text()))
+            .toEqual([poster.name, secondPoster.name, lastPoster.name]);
+        await router.push("/poster/detail/p1");
+        await flushPromises();
+        expect(navigationButton("previous").attributes("disabled")).toBeDefined();
+        expect(navigationButton("previous").text()).toBe("");
+        expect(navigationButton("next").text()).toContain(secondPoster.name);
+        await navigationButton("next").trigger("click");
+        await flushPromises();
+        expect(router.currentRoute.value.params.posterId).toBe("p2");
+        expect(wrapper.find("h1").text()).toBe(secondPoster.name);
+        expect(wrapper.find(".description").text()).toBe(secondPoster.description);
+        expect(navigationButton("previous").text()).toContain(poster.name);
+        expect(navigationButton("next").text()).toContain(lastPoster.name);
+        expect(navigationButton("previous").text()).toBe(poster.name);
+        expect(navigationButton("next").text()).toBe(lastPoster.name);
+        expect(navigationButton("previous").attributes("aria-label")).toBe(`前のポスター：${poster.name}`);
+        expect(navigationButton("next").attributes("aria-label")).toBe(`次のポスター：${lastPoster.name}`);
+        await navigationButton("next").trigger("click");
+        await flushPromises();
+        expect(wrapper.find("h1").text()).toBe(lastPoster.name);
+        expect(navigationButton("next").attributes("disabled")).toBeDefined();
+        expect(navigationButton("next").text()).toBe("");
+        await navigationButton("previous").trigger("click");
+        await flushPromises();
+        expect(wrapper.find("h1").text()).toBe(secondPoster.name);
+    });
+    it("詳細URLから直接開いても、表示中のポスターのイベント内を移動する", async () => {
+        currentFestivalId.value = "f2";
+        savePosterLocations({ id: "f2", name: "別イベント" }, [{ ...poster, id: "other" }]);
+        await open("/poster/detail/p2");
+        expect(navigationButton("previous").attributes("disabled")).toBeUndefined();
+        expect(navigationButton("next").attributes("disabled")).toBeUndefined();
+        await navigationButton("next").trigger("click");
+        await flushPromises();
+        expect(wrapper.find("h1").text()).toBe(lastPoster.name);
+        expect(savedPosterLocations.value?.festival.id).toBe("f2");
+    });
+    it("圏外でも保存済みのポスターの詳細を前後に切り替えられる", async () => {
+        savePosterLocations(event, posterList);
+        vi.mocked(fetch).mockRejectedValue(new TypeError("offline"));
+        await open("/poster/detail/p1");
+        expect(navigationButton("next").text()).toContain(secondPoster.name);
+        await navigationButton("next").trigger("click");
+        await flushPromises();
+        expect(wrapper.find("h1").text()).toBe(secondPoster.name);
+        expect(wrapper.find(".description").text()).toBe(secondPoster.description);
+        expect(wrapper.find(".status-select").exists()).toBe(false);
+        await navigationButton("previous").trigger("click");
+        await flushPromises();
+        expect(wrapper.find("h1").text()).toBe(poster.name);
+    });
+    it.each([
+        { label: "1枚だけ", posters: [poster] },
+        { label: "空の一覧", posters: [] },
+        { label: "表示中のポスターが一覧にない", posters: [secondPoster, lastPoster] },
+    ])("移動先がない場合は両方のボタンを無効にする ($label)", async ({ posters }) => {
+        vi.mocked(fetch).mockImplementation((input, options) => String(input).endsWith("/festivals/f1/posters")
+            ? Promise.resolve(Response.json({ posters })) : fixture(String(input), options));
+        await open("/poster/detail/p1");
+        expect(navigationButton("previous").attributes("disabled")).toBeDefined();
+        expect(navigationButton("next").attributes("disabled")).toBeDefined();
+    });
+    it("編集と回収状況の保存中は切り替えを無効にする", async () => {
+        await open("/poster/detail/p1");
+        await button("編集する").trigger("click");
+        expect(navigationButton("next").attributes("disabled")).toBeDefined();
+        await button("編集をキャンセル").trigger("click");
+        expect(navigationButton("next").attributes("disabled")).toBeUndefined();
+        let finish!: (response: Response) => void;
+        vi.mocked(fetch).mockImplementation((input, options) => String(input).endsWith("/posters/p1/status")
+            ? new Promise<Response>((resolve) => { finish = resolve; }) : fixture(String(input), options));
+        await wrapper.find(".status-select").setValue("collected");
+        expect(navigationButton("next").attributes("disabled")).toBeDefined();
+        finish(new Response(null, { status: 204 }));
+        await flushPromises();
+        expect(navigationButton("next").attributes("disabled")).toBeUndefined();
+    });
+    it("素早く切り替えても遅れて届いた前の詳細で上書きしない", async () => {
+        savePosterLocations(event, posterList);
+        await open("/poster/detail/p1");
+        const fetchDetail = vi.mocked(fetch).getMockImplementation()!;
+        let finish!: (response: Response) => void;
+        vi.mocked(fetch).mockImplementation((input, options) => String(input).endsWith("/posters/p2")
+            ? new Promise<Response>((resolve) => { finish = resolve; }) : fetchDetail(input, options));
+        await navigationButton("next").trigger("click");
+        await flushPromises();
+        await navigationButton("next").trigger("click");
+        await flushPromises();
+        finish(Response.json(secondPoster));
+        await flushPromises();
+        expect(router.currentRoute.value.params.posterId).toBe("p10");
+        expect(wrapper.find("h1").text()).toBe(lastPoster.name);
+    });
+    it("移動先の取得が失敗しても詳細を表示し、再取得後に切り替えられる", async () => {
+        const fetchPosters = vi.mocked(fetch).getMockImplementation()!;
+        vi.mocked(fetch).mockImplementation((input, options) => String(input).endsWith("/festivals/f1/posters")
+            ? Promise.resolve(new Response("test failure", { status: 500 })) : fetchPosters(input, options));
+        await open("/poster/detail/p1");
+        expect(wrapper.find("h1").text()).toBe(poster.name);
+        expect(navigationButton("next").attributes("disabled")).toBeDefined();
+        vi.mocked(fetch).mockImplementation(fetchPosters);
+        await button("再読み込み").trigger("click");
+        await flushPromises();
+        expect(navigationButton("next").attributes("disabled")).toBeUndefined();
+    });
+});
+
 describe("ポスター回収", () => {
     it("状況変更だけではキャッシュを書き換えず、一覧の再取得後は圏外でも表示・絞り込みできる", async () => {
         await open("/poster");

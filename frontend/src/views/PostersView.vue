@@ -12,6 +12,7 @@ import {
 import PosterStatusPicker from "@/components/PosterStatusPicker.vue";
 import PosterPhoto from "@/components/PosterPhoto.vue";
 import ResourceState from "@/components/ResourceState.vue";
+import { comparePosterNumbers } from "@/utils/posterOrder";
 if (!currentFestivalId.value && savedPosterLocations.value)
   currentFestivalId.value = savedPosterLocations.value.festival.id;
 const {
@@ -49,11 +50,7 @@ const filtered = computed(() =>
     (p) =>
       (!status.value || p.status === status.value) &&
       `${p.name} ${p.description}`.includes(search.value.trim()),
-    ).sort((a, b) => {
-      const aNum = parseInt(a.name.match(/\d+/)?.[0] || "0", 10);
-      const bNum = parseInt(b.name.match(/\d+/)?.[0] || "0", 10);
-      return aNum - bNum;
-    }),
+    ).sort(comparePosterNumbers),
 );
 function updateStatus(id: string, next: PosterStatus) {
   // 更新前に取得を始めた応答で、保存成功後の回収状況を戻さない。

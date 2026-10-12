@@ -1,13 +1,14 @@
 <script setup lang="ts">
 import { computed, reactive, ref, shallowRef, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
-import { useResource } from "@/composables/useResource";
+import { useResource, listOf } from "@/composables/useResource";
 import { useMutation } from "@/composables/useMutation";
 import { api, jsonBody, imageUrl } from "@/lib/api";
-import { currentFestivalId } from "@/state";
+import { currentFestivalId, pendingMutations } from "@/state";
 import { savedPosterLocations, updateSavedPosterLocation, posterLocationsError } from "@/lib/posterLocations";
 import { maxPosterImages, PosterStatusLabels, type Poster, type PosterImage, type PosterStatus } from "@/types/poster";
 import { resizeImage } from "@/utils/resizeImage";
+import { comparePosterNumbers } from "@/utils/posterOrder";
 import ImagesField from "@/components/ImagesField.vue";
 import PosterStatusPicker from "@/components/PosterStatusPicker.vue";
 import PosterPhoto from "@/components/PosterPhoto.vue";
@@ -26,6 +27,17 @@ const {
   return result;
 });
 const savedLocation = computed(() => savedPosterLocations.value?.posters.find((item) => item.id === route.params.posterId));
+const navigationFestivalId = ref(savedLocation.value ? savedPosterLocations.value?.festival.id || "" : "");
+const { data: festivalPosters, error: navigationError, reload: reloadNavigation } = useResource(
+  () => navigationFestivalId.value ? `/festivals/${navigationFestivalId.value}/posters` : null,
+  listOf<Poster>("posters"),
+);
+const navigationPosters = computed(() => [...(festivalPosters.value ??
+  (savedPosterLocations.value?.festival.id === navigationFestivalId.value ? savedPosterLocations.value.posters : []))]
+  .sort(comparePosterNumbers));
+const posterIndex = computed(() => navigationPosters.value.findIndex((item) => item.id === route.params.posterId));
+const previousPoster = computed(() => posterIndex.value > 0 ? navigationPosters.value[posterIndex.value - 1] : undefined);
+const nextPoster = computed(() => posterIndex.value >= 0 ? navigationPosters.value[posterIndex.value + 1] : undefined);
 const edit = ref(false);
 const form = reactive({ name: "", description: "" });
 const images = shallowRef<File[]>([]);
@@ -36,7 +48,10 @@ const imageCount = computed(() =>
 const metadataSaved = ref(false);
 const { pending, error: saveError, run } = useMutation();
 watch(poster, (value) => {
-  if (value) currentFestivalId.value = value.festival.id;
+  if (value) {
+    currentFestivalId.value = value.festival.id;
+    navigationFestivalId.value = value.festival.id;
+  }
 });
 function startEdit() {
   if (poster.value) {
@@ -115,7 +130,28 @@ async function remove() {
 </script>
 <template>
   <RouterLink to="/poster" class="back-link">← ポスター一覧</RouterLink>
+  <nav class="actions poster-navigation" aria-label="ポスターの切り替え">
+    <button type="button" class="button secondary" :disabled="!previousPoster || edit || pendingMutations > 0"
+      :aria-label="previousPoster ? `前のポスター：${previousPoster.name}` : '前のポスター'" :title="previousPoster?.name"
+      @click="previousPoster && router.push(`/poster/detail/${previousPoster.id}`)">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
+        stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
+        <path d="M15 18l-6-6 6-6" />
+      </svg>
+      <span v-if="previousPoster" class="small">{{ previousPoster.name }}</span>
+    </button>
+    <button type="button" class="button secondary" :disabled="!nextPoster || edit || pendingMutations > 0"
+      :aria-label="nextPoster ? `次のポスター：${nextPoster.name}` : '次のポスター'" :title="nextPoster?.name"
+      @click="nextPoster && router.push(`/poster/detail/${nextPoster.id}`)">
+      <span v-if="nextPoster" class="small">{{ nextPoster.name }}</span>
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
+        stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
+        <path d="M9 6l6 6-6 6" />
+      </svg>
+    </button>
+  </nav>
   <ResourceState :loading="loading && !savedLocation" :error="error" @retry="reload()" />
+  <ResourceState v-if="(poster || savedLocation) && !navigationPosters.length" :error="navigationError" @retry="reloadNavigation()" />
   <p v-if="posterLocationsError" class="state error" role="alert">{{ posterLocationsError }}</p>
   <template v-if="poster">
     <div class="page-heading">
@@ -190,3 +226,24 @@ async function remove() {
     </p>
   </template>
 </template>
+<style scoped>
+.poster-navigation {
+  width: 100%;
+  min-width: 0;
+  flex-wrap: nowrap;
+  justify-content: space-between;
+  margin-bottom: 28px;
+}
+.poster-navigation .button {
+  min-width: 0;
+  max-width: calc(50% - 6px);
+  text-align: center;
+}
+.poster-navigation .small {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.poster-navigation svg {
+  flex-shrink: 0;
+}
+</style>
