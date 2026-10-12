@@ -74,34 +74,43 @@ func (r *GormRepository) UpdateStockItem(id uuid.UUID, name string, description 
 		ImageID:     imageID,
 	}
 
-	rows, err := gorm.G[model.StockItem](r.db).
-		Where(item, "ID").
-		Select("Name", "Description", "Category", "ImageID").
-		Updates(ctx, item)
-	if err != nil {
-		return model.StockItem{}, wrapGormError(err)
-	}
-	if rows == 0 {
-		if err := r.db.Select("id").First(&model.StockItem{}, "id = ?", id).Error; err != nil {
-			return model.StockItem{}, wrapGormError(err)
+	err := r.mutateUnlockedFestivals(r.db.Model(&model.FestivalStock{}).Select("festival_id").Where("stock_item_id = ?", id), func(tx *gorm.DB) error {
+		rows, err := gorm.G[model.StockItem](tx).
+			Where(item, "ID").
+			Select("Name", "Description", "Category", "ImageID").
+			Updates(ctx, item)
+		if err != nil {
+			return err
 		}
+		if rows == 0 {
+			if err := tx.Select("id").First(&model.StockItem{}, "id = ?", id).Error; err != nil {
+				return err
+			}
+		}
+
+		return nil
+	})
+	if err != nil {
+		return model.StockItem{}, err
 	}
 
 	return item, nil
 }
 
 func (r *GormRepository) DeleteStockItem(id uuid.UUID) error {
-	ctx := context.Background()
+	return r.mutateUnlockedFestivals(r.db.Model(&model.FestivalStock{}).Select("festival_id").Where("stock_item_id = ?", id), func(tx *gorm.DB) error {
+		ctx := context.Background()
 
-	rows, err := gorm.G[model.StockItem](r.db).
-		Where(model.StockItem{ID: id}, "ID").
-		Delete(ctx)
-	if err != nil {
-		return wrapGormError(err)
-	}
-	if rows == 0 {
-		return repository.ErrNotFound
-	}
+		rows, err := gorm.G[model.StockItem](tx).
+			Where(model.StockItem{ID: id}, "ID").
+			Delete(ctx)
+		if err != nil {
+			return wrapGormError(err)
+		}
+		if rows == 0 {
+			return repository.ErrNotFound
+		}
 
-	return nil
+		return nil
+	})
 }

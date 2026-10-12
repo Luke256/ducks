@@ -31,15 +31,6 @@ func (m *ManagerImpl) Create(name string, festivalID uuid.UUID, description stri
 		return Poster{}, err
 	}
 
-	// duplicate check
-	_, err = m.repo.GetPosterByFestivalIDAndPosterName(festivalID, name)
-	if err == nil {
-		return Poster{}, ErrAlreadyExists
-	}
-	if err != repository.ErrNotFound {
-		return Poster{}, fmt.Errorf("failed to check duplicate poster: %w", err)
-	}
-
 	// festival existence check
 	fes, err := m.repo.GetFestivalByID(festivalID)
 	if err != nil {
@@ -47,6 +38,19 @@ func (m *ManagerImpl) Create(name string, festivalID uuid.UUID, description stri
 			return Poster{}, ErrNotFound
 		}
 		return Poster{}, fmt.Errorf("failed to check festival existence: %w", err)
+	}
+
+	if fes.Locked {
+		return Poster{}, repository.ErrEventLocked
+	}
+
+	// duplicate check
+	_, err = m.repo.GetPosterByFestivalIDAndPosterName(festivalID, name)
+	if err == nil {
+		return Poster{}, ErrAlreadyExists
+	}
+	if err != repository.ErrNotFound {
+		return Poster{}, fmt.Errorf("failed to check duplicate poster: %w", err)
 	}
 
 	imageIDs, err := m.uploadImages(images)
@@ -69,7 +73,7 @@ func (m *ManagerImpl) Create(name string, festivalID uuid.UUID, description stri
 		Description: poster.Description,
 		Images:      m.posterImages(poster.Images),
 		Status:      poster.Status,
-		Festival:    festival.Festival{ID: fes.ID, Name: fes.Name, Description: fes.Description},
+		Festival:    festival.Festival{ID: fes.ID, Name: fes.Name, Description: fes.Description, Locked: fes.Locked},
 	}, nil
 }
 
@@ -90,7 +94,7 @@ func (m *ManagerImpl) Get(id uuid.UUID) (Poster, error) {
 		Description: poster.Description,
 		Images:      m.posterImages(poster.Images),
 		Status:      poster.Status,
-		Festival:    festival.Festival{ID: poster.Festival.ID, Name: poster.Festival.Name, Description: poster.Festival.Description},
+		Festival:    festival.Festival{ID: poster.Festival.ID, Name: poster.Festival.Name, Description: poster.Festival.Description, Locked: poster.Festival.Locked},
 	}, nil
 }
 
@@ -113,7 +117,7 @@ func (m *ManagerImpl) GetByFestival(festivalID uuid.UUID) ([]Poster, error) {
 			Description: p.Description,
 			Images:      m.posterImages(p.Images),
 			Status:      p.Status,
-			Festival:    festival.Festival{ID: p.Festival.ID, Name: p.Festival.Name, Description: p.Festival.Description},
+			Festival:    festival.Festival{ID: p.Festival.ID, Name: p.Festival.Name, Description: p.Festival.Description, Locked: p.Festival.Locked},
 		}
 	}
 
@@ -137,7 +141,7 @@ func (m *ManagerImpl) GetByName(festivalID uuid.UUID, name string) (Poster, erro
 		Description: poster.Description,
 		Images:      m.posterImages(poster.Images),
 		Status:      poster.Status,
-		Festival:    festival.Festival{ID: poster.Festival.ID, Name: poster.Festival.Name, Description: poster.Festival.Description},
+		Festival:    festival.Festival{ID: poster.Festival.ID, Name: poster.Festival.Name, Description: poster.Festival.Description, Locked: poster.Festival.Locked},
 	}, nil
 }
 
@@ -180,6 +184,9 @@ func (m *ManagerImpl) UpdateImages(id uuid.UUID, images []*multipart.FileHeader,
 			return nil, ErrNotFound
 		}
 		return nil, fmt.Errorf("failed to get poster: %w", err)
+	}
+	if poster.Festival.Locked {
+		return nil, repository.ErrEventLocked
 	}
 	owned := make(map[string]bool, len(poster.Images))
 	for _, img := range poster.Images {

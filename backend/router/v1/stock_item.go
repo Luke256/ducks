@@ -1,6 +1,9 @@
 package v1
 
 import (
+	"errors"
+
+	"github.com/Luke256/ducks/repository"
 	"log/slog"
 
 	"github.com/Luke256/ducks/router/utils/herror"
@@ -96,6 +99,9 @@ func (h *Handler) EditStockItem(c echo.Context) error {
 
 	err = h.stockItemManager.Edit(id, req.Name, req.Description, req.Category)
 	if err != nil {
+		if errors.Is(err, repository.ErrEventLocked) {
+			return echo.NewHTTPError(403, repository.ErrEventLocked.Error())
+		}
 		switch err {
 		case stockitem.ErrNotFound:
 			return herror.NotFound("Stock item not found")
@@ -121,6 +127,9 @@ func (h *Handler) UpdateStockItemImage(c echo.Context) error {
 
 	err = h.stockItemManager.UpdateImage(id, image)
 	if err != nil {
+		if errors.Is(err, repository.ErrEventLocked) {
+			return echo.NewHTTPError(403, repository.ErrEventLocked.Error())
+		}
 		switch err {
 		case stockitem.ErrNotFound:
 			return herror.NotFound("Stock item not found")
@@ -141,6 +150,9 @@ func (h *Handler) DeleteStockItem(c echo.Context) error {
 
 	err = h.stockItemManager.Delete(id)
 	if err != nil {
+		if errors.Is(err, repository.ErrEventLocked) {
+			return echo.NewHTTPError(403, repository.ErrEventLocked.Error())
+		}
 		switch err {
 		case stockitem.ErrNotFound:
 			return herror.NotFound("Stock item not found")

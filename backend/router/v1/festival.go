@@ -1,6 +1,9 @@
 package v1
 
 import (
+	"errors"
+
+	"github.com/Luke256/ducks/repository"
 	"github.com/Luke256/ducks/router/utils/herror"
 	"github.com/Luke256/ducks/service/festival"
 	"github.com/go-ozzo/ozzo-validation/v4"
@@ -96,6 +99,9 @@ func (h *Handler) EditFestival(c echo.Context) error {
 
 	err = h.festivalManager.Edit(id, req.Name, req.Description)
 	if err != nil {
+		if errors.Is(err, repository.ErrEventLocked) {
+			return echo.NewHTTPError(403, repository.ErrEventLocked.Error())
+		}
 		switch err {
 		case festival.ErrNotFound:
 			return herror.NotFound("festival not found")
@@ -122,6 +128,9 @@ func (h *Handler) DeleteFestival(c echo.Context) error {
 
 	err = h.festivalManager.Delete(id)
 	if err != nil {
+		if errors.Is(err, repository.ErrEventLocked) {
+			return echo.NewHTTPError(403, repository.ErrEventLocked.Error())
+		}
 		switch err {
 		case festival.ErrNotFound:
 			return herror.NotFound("festival not found")
@@ -131,4 +140,31 @@ func (h *Handler) DeleteFestival(c echo.Context) error {
 	}
 
 	return c.NoContent(204)
+}
+
+func (h *Handler) SetFestivalLocked(c echo.Context) error {
+	id, err := uuid.Parse(c.Param("id"))
+	if err != nil {
+		return herror.NotFound("festival not found")
+	}
+	var req struct {
+		Locked *bool `json:"locked"`
+	}
+	if err := c.Bind(&req); err != nil {
+		return herror.BadRequest("invalid request body")
+	}
+	if err := validation.Validate(req.Locked, validation.NotNil); err != nil {
+		return herror.BadRequest("locked is required")
+	}
+	if err := h.festivalManager.SetLocked(id, *req.Locked); err != nil {
+		if errors.Is(err, festival.ErrNotFound) {
+			return herror.NotFound("festival not found")
+		}
+		return herror.InternalServerError("failed to set festival lock")
+	}
+	fest, err := h.festivalManager.Get(id)
+	if err != nil {
+		return herror.InternalServerError("failed to get festival after setting lock")
+	}
+	return c.JSON(200, fest)
 }

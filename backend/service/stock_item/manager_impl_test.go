@@ -16,10 +16,15 @@ type imageRepository struct {
 	repository.Repository
 	item      model.StockItem
 	updateErr error
+	deleteErr error
 }
 
 func (r *imageRepository) GetStockItemByID(uuid.UUID) (model.StockItem, error) {
 	return r.item, nil
+}
+
+func (r *imageRepository) DeleteStockItem(uuid.UUID) error {
+	return r.deleteErr
 }
 
 func (r *imageRepository) UpdateStockItem(id uuid.UUID, name, description, category, imageID string) (model.StockItem, error) {
@@ -80,6 +85,30 @@ func TestUpdateImagePreservesStoredImageOnFailure(t *testing.T) {
 			}
 			require.Equal(t, tc.wantImage, repo.item.ImageID)
 			require.Equal(t, tc.wantFiles, files.files)
+		})
+	}
+}
+
+func TestLockedItemPreservesImage(t *testing.T) {
+	t.Parallel()
+	for _, operation := range []string{"update image", "delete item"} {
+		t.Run(operation, func(t *testing.T) {
+			t.Parallel()
+			repo := &imageRepository{
+				item:      model.StockItem{ID: uuid.New(), ImageID: "old"},
+				updateErr: repository.ErrEventLocked, deleteErr: repository.ErrEventLocked,
+			}
+			files := &imageStorage{files: map[string]bool{"old": true}}
+			manager := NewManagerImpl(repo, files)
+			var err error
+			if operation == "update image" {
+				err = manager.UpdateImage(repo.item.ID, &multipart.FileHeader{})
+			} else {
+				err = manager.Delete(repo.item.ID)
+			}
+			require.ErrorIs(t, err, repository.ErrEventLocked)
+			require.Equal(t, map[string]bool{"old": true}, files.files)
+			require.Equal(t, "old", repo.item.ImageID)
 		})
 	}
 }

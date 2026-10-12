@@ -53,40 +53,58 @@ func (r *GormRepository) GetAllFestivals() ([]model.Festival, error) {
 }
 
 func (r *GormRepository) UpdateFestival(festivalID uuid.UUID, name string, description string) error {
-	ctx := context.Background()
+	return r.mutateUnlockedFestivals(r.db.Model(&model.Festival{}).Select("id").Where("id = ?", festivalID), func(tx *gorm.DB) error {
+		ctx := context.Background()
 
-	rows, err := gorm.G[model.Festival](r.db).
-		Where(&model.Festival{ID: festivalID}, "ID").
-		Select("Name", "Description").
-		Updates(ctx, model.Festival{
-			ID:          festivalID,
-			Name:        name,
-			Description: description,
-		})
-	if err != nil {
-		return wrapGormError(err)
-	}
+		rows, err := gorm.G[model.Festival](tx).
+			Where(&model.Festival{ID: festivalID}, "ID").
+			Select("Name", "Description").
+			Updates(ctx, model.Festival{
+				ID:          festivalID,
+				Name:        name,
+				Description: description,
+			})
+		if err != nil {
+			return wrapGormError(err)
+		}
 
-	if rows == 0 {
-		return wrapGormError(r.db.Select("id").First(&model.Festival{}, "id = ?", festivalID).Error)
-	}
+		if rows == 0 {
+			return wrapGormError(tx.Select("id").First(&model.Festival{}, "id = ?", festivalID).Error)
+		}
 
-	return nil
+		return nil
+	})
 }
 
 func (r *GormRepository) DeleteFestival(festivalID uuid.UUID) error {
-	ctx := context.Background()
+	return r.mutateUnlockedFestivals(r.db.Model(&model.Festival{}).Select("id").Where("id = ?", festivalID), func(tx *gorm.DB) error {
+		ctx := context.Background()
 
+		rows, err := gorm.G[model.Festival](tx).
+			Where(&model.Festival{ID: festivalID}, "ID").
+			Delete(ctx)
+		if err != nil {
+			return wrapGormError(err)
+		}
+
+		if rows == 0 {
+			return repository.ErrNotFound
+		}
+
+		return nil
+	})
+}
+
+func (r *GormRepository) SetFestivalLocked(festivalID uuid.UUID, locked bool) error {
+	// ロック解除もできるよう、通常の変更禁止判定は適用しない。
 	rows, err := gorm.G[model.Festival](r.db).
-		Where(&model.Festival{ID: festivalID}, "ID").
-		Delete(ctx)
+		Where("id = ?", festivalID).
+		Update(context.Background(), "Locked", locked)
 	if err != nil {
 		return wrapGormError(err)
 	}
-
 	if rows == 0 {
-		return repository.ErrNotFound
+		return wrapGormError(r.db.Select("id").First(&model.Festival{}, "id = ?", festivalID).Error)
 	}
-
 	return nil
 }

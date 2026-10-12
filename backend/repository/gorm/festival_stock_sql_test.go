@@ -12,8 +12,10 @@ import (
 
 func TestRegisterFestivalStockIncludesZeroPrice(t *testing.T) {
 	t.Parallel()
+	sqlDB, err := setup(t, common).db.DB()
+	require.NoError(t, err)
 	db, err := gorm.Open(mysql.New(mysql.Config{
-		DSN:                       "root@tcp(localhost:3307)/ducks",
+		Conn:                      sqlDB,
 		SkipInitializeWithVersion: true,
 	}), &gorm.Config{
 		DryRun:                 true,

@@ -13,6 +13,7 @@ import { api, jsonBody } from "@/lib/api";
 import type { Festival } from "@/types/festival";
 import { useMutation } from "@/composables/useMutation";
 import ResourceState from "@/components/ResourceState.vue";
+import EventLockBadge from "@/components/EventLockBadge.vue";
 const router = useRouter();
 const formOpen = ref(false);
 const search = ref("");
@@ -71,7 +72,11 @@ async function create() {
   <div v-if="filtered.length" class="event-grid">
     <article v-for="event in filtered" :key="event.id" class="panel event-card">
       <div class="card-top">
-        <span class="badge">EVENT</span><span v-if="currentFestivalId === event.id" class="badge selected">選択中</span>
+        <div class="card-labels">
+          <EventLockBadge v-if="event.locked" icon-only />
+          <span class="badge">EVENT</span>
+        </div>
+        <span v-if="currentFestivalId === event.id" class="badge selected">選択中</span>
       </div>
       <h2>
         <RouterLink :to="`/event/${event.id}`">{{ event.name }}</RouterLink>
@@ -92,3 +97,15 @@ async function create() {
     </article>
   </div>
 </template>
+
+<style scoped>
+.card-labels {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.card-labels .event-lock-badge {
+  color: #b32e2e;
+}
+</style>

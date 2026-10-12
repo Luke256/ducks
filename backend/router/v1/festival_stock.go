@@ -1,6 +1,9 @@
 package v1
 
 import (
+	"errors"
+
+	"github.com/Luke256/ducks/repository"
 	"github.com/Luke256/ducks/router/utils/herror"
 	"github.com/Luke256/ducks/service/festival"
 	festivalstock "github.com/Luke256/ducks/service/festival_stock"
@@ -74,6 +77,9 @@ func (h *Handler) RegisterFestivalStock(c echo.Context) error {
 
 	festivalStock, err := h.festivalStockManager.Create(fesID, itemID, *req.Price, req.Description, *req.ForSale)
 	if err != nil {
+		if errors.Is(err, repository.ErrEventLocked) {
+			return echo.NewHTTPError(403, repository.ErrEventLocked.Error())
+		}
 		switch err {
 		case festival.ErrNotFound:
 			return herror.NotFound("Festival not found")
@@ -146,6 +152,9 @@ func (h *Handler) UpdateFestivalStock(c echo.Context) error {
 
 	err = h.festivalStockManager.Update(id, req.Description, *req.ForSale)
 	if err != nil {
+		if errors.Is(err, repository.ErrEventLocked) {
+			return echo.NewHTTPError(403, repository.ErrEventLocked.Error())
+		}
 		switch err {
 		case festivalstock.ErrNotFound:
 			return herror.NotFound("Festival stock not found")
@@ -165,6 +174,9 @@ func (h *Handler) DeleteFestivalStock(c echo.Context) error {
 
 	err = h.festivalStockManager.Delete(id)
 	if err != nil {
+		if errors.Is(err, repository.ErrEventLocked) {
+			return echo.NewHTTPError(403, repository.ErrEventLocked.Error())
+		}
 		switch err {
 		case festivalstock.ErrNotFound:
 			return herror.NotFound("Festival stock not found")

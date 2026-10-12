@@ -15,13 +15,17 @@ func (r *GormRepository) CreateSaleRecords(saleData ...repository.SaleData) ([]m
 	ctx := context.Background()
 	saleRecords := make([]model.SaleRecord, len(saleData))
 
-	err := r.db.Transaction(func(tx *gorm.DB) error {
+	stockIDs := make([]uuid.UUID, len(saleData))
+	for i, data := range saleData {
+		stockIDs[i] = data.FestivalStockID
+	}
+	err := r.mutateUnlockedFestivals(r.db.Model(&model.FestivalStock{}).Select("festival_id").Where("id IN ?", stockIDs), func(tx *gorm.DB) error {
 		for i, data := range saleData {
 			id, err := uuid.NewV7()
 			if err != nil {
 				return err
 			}
-			
+
 			record := model.SaleRecord{
 				ID:              id,
 				FestivalStockID: data.FestivalStockID,
@@ -91,16 +95,18 @@ func (r *GormRepository) QuerySaleRecords(festivalID, stockItemID uuid.UUID) ([]
 }
 
 func (r *GormRepository) DeleteSaleRecord(saleRecordID uuid.UUID) error {
-	ctx := context.Background()
-	rows, err := gorm.G[model.SaleRecord](r.db).
-		Where(model.SaleRecord{ID: saleRecordID}, "ID").
-		Delete(ctx)
-	if err != nil {
-		return wrapGormError(err)
-	}
-	if rows == 0 {
-		return repository.ErrNotFound
-	}
+	return r.mutateUnlockedFestivals(r.db.Model(&model.FestivalStock{}).Select("festival_id").Where("id IN (?)", r.db.Model(&model.SaleRecord{}).Select("festival_stock_id").Where("id = ?", saleRecordID)), func(tx *gorm.DB) error {
+		ctx := context.Background()
+		rows, err := gorm.G[model.SaleRecord](tx).
+			Where(model.SaleRecord{ID: saleRecordID}, "ID").
+			Delete(ctx)
+		if err != nil {
+			return wrapGormError(err)
+		}
+		if rows == 0 {
+			return repository.ErrNotFound
+		}
 
-	return nil
+		return nil
+	})
 }

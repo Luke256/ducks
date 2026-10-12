@@ -27,6 +27,7 @@ func (f *ManagerImpl) Create(name, description string) (Festival, error) {
 		ID:          festival.ID,
 		Name:        festival.Name,
 		Description: festival.Description,
+		Locked:      festival.Locked,
 	}, nil
 }
 
@@ -45,6 +46,7 @@ func (f *ManagerImpl) Get(id uuid.UUID) (Festival, error) {
 		ID:          festival.ID,
 		Name:        festival.Name,
 		Description: festival.Description,
+		Locked:      festival.Locked,
 	}, nil
 }
 
@@ -61,6 +63,7 @@ func (f *ManagerImpl) List() ([]Festival, error) {
 			ID:          festival.ID,
 			Name:        festival.Name,
 			Description: festival.Description,
+			Locked:      festival.Locked,
 		}
 	}
 
@@ -93,5 +96,16 @@ func (f *ManagerImpl) Delete(id uuid.UUID) error {
 		}
 	}
 
+	return nil
+}
+
+func (f *ManagerImpl) SetLocked(id uuid.UUID, locked bool) error {
+	err := f.repo.SetFestivalLocked(id, locked)
+	if err == repository.ErrNotFound {
+		return ErrNotFound
+	}
+	if err != nil {
+		return fmt.Errorf("failed to set festival lock: %w", err)
+	}
 	return nil
 }

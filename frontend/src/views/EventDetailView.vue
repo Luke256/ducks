@@ -7,6 +7,7 @@ import { currentFestivalId, loadFestivals } from "@/state";
 import { api, jsonBody } from "@/lib/api";
 import type { Festival } from "@/types/festival";
 import ResourceState from "@/components/ResourceState.vue";
+import EventLockBadge from "@/components/EventLockBadge.vue";
 const route = useRoute();
 const router = useRouter();
 const {
@@ -19,10 +20,15 @@ const edit = ref(false);
 const form = reactive({ name: "", description: "" });
 const { pending, error: saveError, run } = useMutation();
 watch(event, (value) => {
-  if (value) document.title = `${value.name} | Ducks`;
+  if (!value) return;
+  document.title = `${value.name} | Ducks`;
+  if (value.locked) {
+    Object.assign(form, value);
+    edit.value = false;
+  }
 });
 function startEdit() {
-  if (event.value) {
+  if (event.value && !event.value.locked && !pending.value && !loading.value) {
     Object.assign(form, event.value);
     edit.value = true;
   }
@@ -37,6 +43,20 @@ async function save() {
     edit.value = false;
     await Promise.all([reload(), loadFestivals()]);
   }, "イベントを更新しました。");
+}
+async function toggleLock() {
+  if (!event.value || pending.value || loading.value) return;
+  const locked = !event.value.locked;
+  if (locked && !window.confirm(
+    `「${event.value.name}」をロックしますか？\nロック中はイベントと関連データを変更・削除できません。${edit.value ? "\n未保存の編集内容は破棄されます。" : ""}`,
+  )) return;
+  await run(async () => {
+    event.value = await api<Festival>(`/festivals/${route.params.eventId}/lock`, {
+      method: "PATCH",
+      ...jsonBody({ locked }),
+    });
+    await loadFestivals();
+  }, locked ? "イベントをロックしました。" : "イベントのロックを解除しました。");
 }
 async function remove() {
   if (
@@ -62,15 +82,21 @@ function selectEvent() {
     <div class="page-heading">
       <div>
         <p class="eyebrow">EVENT DETAIL</p>
-        <h1>{{ event.name }}</h1>
+        <h1>{{ event.name }} <EventLockBadge v-if="event.locked" /></h1>
         <p class="description muted">
           {{ event.description || "概要は登録されていません。" }}
         </p>
       </div>
-      <button class="button secondary" :disabled="pending" @click="edit ? (edit = false) : startEdit()">
-        {{ edit ? "編集をキャンセル" : "イベントを編集" }}
-      </button>
+      <div class="actions">
+        <button class="button secondary" :disabled="pending || loading || event.locked" @click="edit ? (edit = false) : startEdit()">
+          {{ edit ? "編集をキャンセル" : "イベントを編集" }}
+        </button>
+        <button class="button secondary" type="button" :disabled="pending || loading" @click="toggleLock">
+          {{ pending ? "処理中…" : event.locked ? "ロックを解除" : "イベントをロック" }}
+        </button>
+      </div>
     </div>
+    <p v-if="saveError" class="error" role="alert">{{ saveError }}</p>
     <div class="quick-links">
       <RouterLink to="/poster" class="panel" @click="selectEvent"><span class="eyebrow">POSTERS</span>
         <h2>ポスター管理 →</h2>
@@ -91,11 +117,10 @@ function selectEvent() {
     </div>
     <form v-if="edit" class="panel form-panel" @submit.prevent="save">
       <h2>イベントを編集</h2>
-      <fieldset :disabled="pending">
+      <fieldset :disabled="pending || loading || event.locked">
         <label class="field">イベント名<input v-model="form.name" required /></label><label class="field">概要<textarea
             v-model="form.description" rows="4" />
         </label>
-        <p v-if="saveError" class="error" role="alert">{{ saveError }}</p>
         <div class="actions">
           <button class="button" type="submit">
             {{ pending ? "保存中…" : "保存する" }}</button><button class="button danger" type="button" @click="remove">

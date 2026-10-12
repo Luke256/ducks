@@ -19,7 +19,7 @@ vi.mock("@/utils/resizeImage", () => ({
     resizeImage: vi.fn(async (file: File) => file),
 }));
 
-const event = { id: "f1", name: "工大祭 2026", description: "学園祭の運営" };
+const event = { id: "f1", name: "工大祭 2026", description: "学園祭の運営", locked: false };
 const item = {
     id: "i1",
     name: "アクリルキーホルダー",
@@ -61,6 +61,10 @@ function fixture(input: string, options: RequestInit = {}) {
     requests.push({ path, options });
     if (path === fail)
         return Promise.resolve(new Response("test failure", { status: 500 }));
+    if (path === "/festivals/f1/lock" && options.method === "PATCH") {
+        event.locked = JSON.parse(options.body as string).locked;
+        return Promise.resolve(Response.json(event));
+    }
     if (path === "/posters/p1" && options.method === "PUT")
         Object.assign(poster, JSON.parse(options.body as string));
     if (path === "/posters/p1/status" && options.method === "PATCH")
@@ -158,6 +162,7 @@ async function upload(files = [new File(["image"], "photo.png", { type: "image/p
     return files[0];
 }
 beforeEach(() => {
+    event.locked = false;
     localStorage.removeItem(posterLocationsKey);
     savedPosterLocations.value = null;
     posterLocationsError.value = "";
@@ -410,6 +415,97 @@ describe("来場者数", () => {
     });
 });
 describe("登録・編集", () => {
+    it("イベントをロック・解除し、ロック中は編集を開始できない", async () => {
+        await open("/event/f1");
+        expect(wrapper.find("form").exists()).toBe(false);
+        expect(button("イベントをロック").element.closest("form")).toBeNull();
+        await button("イベントをロック").trigger("click");
+        await flushPromises();
+        expect(window.confirm).toHaveBeenCalledOnce();
+        expect(window.confirm).toHaveBeenCalledWith(expect.stringContaining("ロックしますか？"));
+        expect(JSON.parse(mutations("/festivals/f1/lock")[0].options.body as string)).toEqual({ locked: true });
+        expect(wrapper.find("h1 .event-lock-badge").text()).toContain("ロック中");
+        expect(button("イベントを編集").attributes("disabled")).toBeDefined();
+        await button("イベントを編集").trigger("click");
+        expect(wrapper.find("form").exists()).toBe(false);
+        expect(button("ロックを解除").element.closest("fieldset")).toBeNull();
+        expect(button("ロックを解除").attributes("disabled")).toBeUndefined();
+        expect(festivals.value.find((f) => f.id === event.id)?.locked).toBe(true);
+        await button("ロックを解除").trigger("click");
+        await flushPromises();
+        expect(JSON.parse(mutations("/festivals/f1/lock")[1].options.body as string)).toEqual({ locked: false });
+        expect(wrapper.find(".event-lock-badge").exists()).toBe(false);
+        expect(button("イベントを編集").attributes("disabled")).toBeUndefined();
+        await button("イベントを編集").trigger("click");
+        expect(wrapper.find("form").exists()).toBe(true);
+    });
+    it("再取得でロックを検知したら編集中のフォームを閉じる", async () => {
+        await open("/event/f1");
+        await button("イベントを編集").trigger("click");
+        await wrapper.find("form input").setValue("未保存の名前");
+        event.locked = true;
+        window.dispatchEvent(new Event("focus"));
+        await flushPromises();
+        expect(wrapper.find("form").exists()).toBe(false);
+        expect(button("イベントを編集").attributes("disabled")).toBeDefined();
+        expect(button("ロックを解除").attributes("disabled")).toBeUndefined();
+        expect(mutations("/festivals/f1")).toHaveLength(0);
+    });
+    it.each([false, true])("編集状態=%s でも、ロック確認をキャンセルしたら変更しない", async (editing) => {
+        await open("/event/f1");
+        if (editing) {
+            await button("イベントを編集").trigger("click");
+            await wrapper.find("form input").setValue("未保存の名前");
+        }
+        vi.mocked(window.confirm).mockReturnValue(false);
+        await button("イベントをロック").trigger("click");
+        await flushPromises();
+        expect(window.confirm).toHaveBeenCalledOnce();
+        expect(window.confirm).toHaveBeenCalledWith(expect.stringContaining("ロックしますか？"));
+        expect(mutations("/festivals/f1/lock")).toHaveLength(0);
+        expect(wrapper.find(".event-lock-badge").exists()).toBe(false);
+        expect(wrapper.find("form").exists()).toBe(editing);
+        if (editing) {
+            expect(window.confirm).toHaveBeenCalledWith(expect.stringContaining("未保存の編集内容は破棄されます。"));
+            expect((wrapper.find("form input").element as HTMLInputElement).value).toBe("未保存の名前");
+        }
+    });
+    it("ロック済みイベントは一覧にアイコンを表示し、選択欄には名前だけを表示する", async () => {
+        event.locked = true;
+        await open("/event");
+        expect(wrapper.findAll(".event-lock-badge")).toHaveLength(1);
+        expect(wrapper.find(".event-lock-badge").text()).toBe("");
+        expect(wrapper.find(".event-lock-badge").attributes("aria-label")).toBe("ロック中");
+        wrapper.unmount();
+        await open("/visitors");
+        expect(wrapper.find('.festival-picker option[value="f1"]').text()).toBe(event.name);
+    });
+    it("編集中もロックでき、失敗時は入力を保ち、成功時は編集内容を破棄する", async () => {
+        await open("/event/f1");
+        await button("イベントを編集").trigger("click");
+        await wrapper.find("form input").setValue("未保存の名前");
+        await wrapper.find("form textarea").setValue("未保存の概要");
+        expect(button("イベントをロック").attributes("disabled")).toBeUndefined();
+        fail = "/festivals/f1/lock";
+        await button("イベントをロック").trigger("click");
+        await flushPromises();
+        expect(wrapper.find('.error[role="alert"]').text()).toContain("test failure");
+        expect(wrapper.find(".event-lock-badge").exists()).toBe(false);
+        expect(wrapper.find("fieldset").attributes("disabled")).toBeUndefined();
+        expect((wrapper.find("form input").element as HTMLInputElement).value).toBe("未保存の名前");
+        fail = "";
+        await button("イベントをロック").trigger("click");
+        await flushPromises();
+        expect(wrapper.find(".event-lock-badge").exists()).toBe(true);
+        expect(window.confirm).toHaveBeenLastCalledWith(expect.stringContaining("未保存の編集内容は破棄されます。"));
+        expect(wrapper.find("form").exists()).toBe(false);
+        expect(mutations("/festivals/f1")).toHaveLength(0);
+        await button("ロックを解除").trigger("click");
+        await flushPromises();
+        await button("イベントを編集").trigger("click");
+        expect((wrapper.find("form input").element as HTMLInputElement).value).toBe(event.name);
+        expect((wrapper.find("form textarea").element as HTMLTextAreaElement).value).toBe(event.description);
+    });
     it("イベントを作成して詳細を開き、対象イベントを共有する", async () => {
         await open("/event");
         await button("＋ イベントを作成").trigger("click");

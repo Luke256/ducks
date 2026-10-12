@@ -1,6 +1,9 @@
 package v1
 
 import (
+	"errors"
+
+	"github.com/Luke256/ducks/repository"
 	"log/slog"
 
 	"github.com/Luke256/ducks/router/utils/herror"
@@ -50,6 +53,9 @@ func (h *Handler) CreateSaleRecord(c echo.Context) error {
 
 	record, err := h.saleManager.Create(saleItems...)
 	if err != nil {
+		if errors.Is(err, repository.ErrEventLocked) {
+			return echo.NewHTTPError(403, repository.ErrEventLocked.Error())
+		}
 		switch err {
 		case festivalstock.ErrNotFound:
 			return herror.NotFound("Festival stock not found")
@@ -160,6 +166,9 @@ func (h *Handler) DeleteSaleRecord(c echo.Context) error {
 
 	err = h.saleManager.Delete(id)
 	if err != nil {
+		if errors.Is(err, repository.ErrEventLocked) {
+			return echo.NewHTTPError(403, repository.ErrEventLocked.Error())
+		}
 		switch err {
 		case sale.ErrNotFound:
 			return herror.NotFound("Sale record not found")
