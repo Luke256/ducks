@@ -266,6 +266,10 @@ main {
     color: #62717d;
 }
 
+.event-date {
+    font-size: 0.9em;
+}
+
 .description {
     white-space: pre-wrap;
     overflow-wrap: anywhere;

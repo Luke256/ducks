@@ -29,7 +29,9 @@ func TestLockedFestivalRejectsMutations(t *testing.T) {
 		name string
 		run  func() error
 	}{
-		{"edit event", func() error { return r.UpdateFestival(festival.ID, "changed", "changed") }},
+		{"edit event", func() error {
+			return r.UpdateFestival(festival.ID, "changed", "changed", festival.Date.AddDate(0, 0, 1))
+		}},
 		{"delete event", func() error { return r.DeleteFestival(festival.ID) }},
 		{"create poster", func() error {
 			_, err := r.RegisterPoster(festival.ID, "New poster", "changed", []string{uuid.NewString()})
@@ -97,7 +99,7 @@ func TestLockedFestivalRejectsMutations(t *testing.T) {
 	require.EqualValues(t, 5, counts[0].Count)
 
 	require.NoError(t, r.db.Model(&festival).Update("locked", false).Error)
-	require.NoError(t, r.UpdateFestival(festival.ID, "Unlocked event", "updated"))
+	require.NoError(t, r.UpdateFestival(festival.ID, "Unlocked event", "updated", festival.Date))
 	require.NoError(t, r.AddVisitorCount(t.Context(), festival.ID, now, 1))
 }
 
@@ -111,7 +113,7 @@ func TestMutationWaitsForConcurrentFestivalLock(t *testing.T) {
 	require.NoError(t, tx.Model(&model.Festival{}).Where("id = ?", festival.ID).Update("locked", true).Error)
 
 	done := make(chan error, 1)
-	go func() { done <- r.UpdateFestival(festival.ID, "changed", "changed") }()
+	go func() { done <- r.UpdateFestival(festival.ID, "changed", "changed", festival.Date.AddDate(0, 0, 1)) }()
 	select {
 	case err := <-done:
 		t.Fatalf("mutation completed before lock committed: %v", err)
@@ -127,4 +129,5 @@ func TestMutationWaitsForConcurrentFestivalLock(t *testing.T) {
 	got, err := r.GetFestivalByID(festival.ID)
 	require.NoError(t, err)
 	require.Equal(t, festival.Name, got.Name)
+	require.True(t, festival.Date.Equal(got.Date))
 }

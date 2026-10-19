@@ -14,10 +14,11 @@ import type { Festival } from "@/types/festival";
 import { useMutation } from "@/composables/useMutation";
 import ResourceState from "@/components/ResourceState.vue";
 import EventLockBadge from "@/components/EventLockBadge.vue";
+import { festivalDate, formatFestivalDate } from "@/utils/festivalDate";
 const router = useRouter();
 const formOpen = ref(false);
 const search = ref("");
-const form = reactive({ name: "", description: "" });
+const form = reactive({ name: "", description: "", date: "" });
 const filtered = computed(() =>
   festivals.value.filter((f) =>
     `${f.name} ${f.description}`.includes(search.value.trim()),
@@ -27,9 +28,10 @@ const { pending, error, run } = useMutation();
 async function create() {
   await run(async () => {
     if (!form.name.trim()) throw new Error("イベント名を入力してください。");
+    if (!form.date) throw new Error("開催日を入力してください。");
     const event = await api<Festival>("/festivals", {
       method: "POST",
-      ...jsonBody({ name: form.name.trim(), description: form.description }),
+      ...jsonBody({ name: form.name.trim(), description: form.description, date: form.date }),
     });
     currentFestivalId.value = event.id;
     await loadFestivals();
@@ -51,8 +53,9 @@ async function create() {
   <form v-if="formOpen" class="panel form-panel" @submit.prevent="create">
     <h2>新しいイベント</h2>
     <fieldset :disabled="pending">
-      <label class="field">イベント名<input v-model="form.name" required placeholder="例：工大祭26" /></label><label
-        class="field">概要<textarea v-model="form.description" rows="3" placeholder="開催内容や運営メモ" />
+      <label class="field">イベント名<input v-model="form.name" required placeholder="例：工大祭26" /></label>
+      <label class="field">開催日<input v-model="form.date" type="date" required min="1000-01-01" max="9999-12-31" /></label>
+      <label class="field">概要<textarea v-model="form.description" rows="3" placeholder="開催内容や運営メモ" />
       </label>
       <p v-if="error" class="error" role="alert">{{ error }}</p>
       <button class="button" type="submit">
@@ -81,6 +84,7 @@ async function create() {
       <h2>
         <RouterLink :to="`/event/${event.id}`">{{ event.name }}</RouterLink>
       </h2>
+      <p class="muted"><time v-if="festivalDate(event.date)" class="event-date" :datetime="festivalDate(event.date)">{{ formatFestivalDate(event.date) }}</time><span v-else class="event-date">未設定</span></p>
       <p class="description muted">
         {{ event.description || "概要は登録されていません。" }}
       </p>

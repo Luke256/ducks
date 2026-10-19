@@ -2,19 +2,26 @@ package gorm
 
 import (
 	"testing"
+	"time"
 
 	"github.com/Luke256/ducks/repository"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestRegisterFestival(t *testing.T) {
 	t.Parallel()
 	repo := setup(t, common)
 
-	id, err := repo.RegisterFestival("Test Fest", "A fun festival")
-	assert.NoError(t, err)
-	assert.NotEqual(t, "", id)
+	date := time.Date(2026, 10, 18, 0, 0, 0, 0, time.UTC)
+	festival, err := repo.RegisterFestival("Test Fest", "A fun festival", date)
+	require.NoError(t, err)
+	assert.NotEqual(t, uuid.Nil, festival.ID)
+	assert.True(t, festival.Date.Equal(date))
+	stored, err := repo.GetFestivalByID(festival.ID)
+	require.NoError(t, err)
+	assert.True(t, stored.Date.Equal(date))
 }
 
 func TestGetFestivalByID(t *testing.T) {
@@ -50,24 +57,25 @@ func TestGetAllFestivals(t *testing.T) {
 	t.Parallel()
 	repo := setup(t, s1)
 
-	festival1 := mustCreateFestival(t, repo, "Fest One", "First festival")
-	festival2 := mustCreateFestival(t, repo, "Fest Two", "Second festival")
+	date := time.Date(2026, 10, 18, 0, 0, 0, 0, time.UTC)
+	festival1, err := repo.RegisterFestival("Fest One", "First festival", date.AddDate(0, 0, 1))
+	require.NoError(t, err)
+	festival2, err := repo.RegisterFestival("Fest Two", "Second festival", date)
+	require.NoError(t, err)
+	festival3, err := repo.RegisterFestival("Fest Three", "Same date", festival1.Date)
+	require.NoError(t, err)
+	legacyID := uuid.New()
+	require.NoError(t, repo.db.Exec("INSERT INTO festivals (id, name, description) VALUES (?, ?, ?)", legacyID, "Legacy festival", "No date").Error)
 
 	festivals, err := repo.GetAllFestivals()
-	assert.NoError(t, err)
-	assert.GreaterOrEqual(t, len(festivals), 2)
-	foundFest1 := false
-	foundFest2 := false
+	require.NoError(t, err)
+	var ids []uuid.UUID
 	for _, fest := range festivals {
-		if fest.ID == festival1.ID {
-			foundFest1 = true
-		}
-		if fest.ID == festival2.ID {
-			foundFest2 = true
+		if fest.ID == festival1.ID || fest.ID == festival2.ID || fest.ID == festival3.ID || fest.ID == legacyID {
+			ids = append(ids, fest.ID)
 		}
 	}
-	assert.True(t, foundFest1, "Festival One not found in GetAllFestivals result")
-	assert.True(t, foundFest2, "Festival Two not found in GetAllFestivals result")
+	assert.Equal(t, []uuid.UUID{festival2.ID, festival1.ID, festival3.ID, legacyID}, ids)
 }
 
 func TestUpdateFestival(t *testing.T) {
@@ -78,19 +86,21 @@ func TestUpdateFestival(t *testing.T) {
 
 	t.Run("Update Festival", func(t *testing.T) {
 		t.Parallel()
-		err := repo.UpdateFestival(festival.ID, "New Fest", "New Description")
+		date := festival.Date.AddDate(0, 0, 1)
+		err := repo.UpdateFestival(festival.ID, "New Fest", "New Description", date)
 		assert.NoError(t, err)
 		updatedFestival, err := repo.GetFestivalByID(festival.ID)
 		assert.NoError(t, err)
 		assert.Equal(t, "New Fest", updatedFestival.Name)
 		assert.Equal(t, "New Description", updatedFestival.Description)
-		assert.NoError(t, repo.UpdateFestival(festival.ID, updatedFestival.Name, updatedFestival.Description))
+		assert.True(t, updatedFestival.Date.Equal(date))
+		assert.NoError(t, repo.UpdateFestival(festival.ID, updatedFestival.Name, updatedFestival.Description, date))
 	})
 
 	t.Run("Update Non-Existent Festival", func(t *testing.T) {
 		t.Parallel()
 		nonExistentID := uuid.New()
-		err := repo.UpdateFestival(nonExistentID, "Ghost Fest", "No Description")
+		err := repo.UpdateFestival(nonExistentID, "Ghost Fest", "No Description", festival.Date)
 		assert.Equal(t, repository.ErrNotFound, err)
 	})
 }

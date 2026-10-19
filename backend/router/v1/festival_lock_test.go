@@ -36,7 +36,7 @@ func TestLockedFestivalMutationEndpoints(t *testing.T) {
 		form               map[string]string
 		image              bool
 	}{
-		{name: "edit event", method: http.MethodPut, path: festivalPath, json: map[string]any{"name": "changed", "description": "changed"}},
+		{name: "edit event", method: http.MethodPut, path: festivalPath, json: map[string]any{"name": "changed", "description": "changed", "date": "2026-10-19"}},
 		{name: "delete event", method: http.MethodDelete, path: festivalPath},
 		{name: "create poster", method: http.MethodPost, path: "/api/posters", form: map[string]string{"festival_id": festival.ID.String(), "name": "New poster", "description": "changed"}, image: true},
 		{name: "edit poster", method: http.MethodPut, path: posterPath, json: map[string]any{"name": "changed", "description": "changed"}},
@@ -88,7 +88,7 @@ func TestLockedFestivalMutationEndpoints(t *testing.T) {
 	require.Empty(t, sales)
 
 	env.R(t).PATCH(festivalPath + "/lock").WithJSON(map[string]any{"locked": false}).Expect().Status(http.StatusOK)
-	env.R(t).PUT(festivalPath).WithJSON(map[string]any{"name": "Unlocked event", "description": "updated"}).Expect().Status(http.StatusOK)
+	env.R(t).PUT(festivalPath).WithJSON(map[string]any{"name": "Unlocked event", "description": "updated", "date": "2026-10-19"}).Expect().Status(http.StatusOK)
 }
 
 func TestSetFestivalLocked(t *testing.T) {

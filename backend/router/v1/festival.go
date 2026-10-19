@@ -2,6 +2,7 @@ package v1
 
 import (
 	"errors"
+	"time"
 
 	"github.com/Luke256/ducks/repository"
 	"github.com/Luke256/ducks/router/utils/herror"
@@ -14,12 +15,14 @@ import (
 type CreateFestivalRequest struct {
 	Name        string `json:"name"`
 	Description string `json:"description"`
+	Date        string `json:"date"`
 }
 
 func (r CreateFestivalRequest) Validate() error {
 	return validation.ValidateStruct(&r,
 		validation.Field(&r.Name, validation.Required),
 		validation.Field(&r.Description),
+		validation.Field(&r.Date, validation.Required, validation.Date(time.DateOnly).Min(time.Date(1000, 1, 1, 0, 0, 0, 0, time.UTC))),
 	)
 }
 
@@ -27,6 +30,7 @@ type EditFestivalRequest struct {
 	ID          string `param:"id"`
 	Name        string `json:"name"`
 	Description string `json:"description"`
+	Date        string `json:"date"`
 }
 
 func (r EditFestivalRequest) Validate() error {
@@ -34,6 +38,7 @@ func (r EditFestivalRequest) Validate() error {
 		validation.Field(&r.ID, validation.Required),
 		validation.Field(&r.Name, validation.Required),
 		validation.Field(&r.Description),
+		validation.Field(&r.Date, validation.Required, validation.Date(time.DateOnly).Min(time.Date(1000, 1, 1, 0, 0, 0, 0, time.UTC))),
 	)
 }
 
@@ -46,7 +51,11 @@ func (h *Handler) CreateFestival(c echo.Context) error {
 		return herror.BadRequest(err.Error())
 	}
 
-	festival, err := h.festivalManager.Create(req.Name, req.Description)
+	date, err := time.Parse(time.DateOnly, req.Date)
+	if err != nil {
+		return herror.BadRequest("invalid date")
+	}
+	festival, err := h.festivalManager.Create(req.Name, req.Description, date)
 	if err != nil {
 		return herror.InternalServerError("failed to create festival")
 	}
@@ -97,7 +106,11 @@ func (h *Handler) EditFestival(c echo.Context) error {
 		return herror.NotFound("festival not found")
 	}
 
-	err = h.festivalManager.Edit(id, req.Name, req.Description)
+	date, err := time.Parse(time.DateOnly, req.Date)
+	if err != nil {
+		return herror.BadRequest("invalid date")
+	}
+	err = h.festivalManager.Edit(id, req.Name, req.Description, date)
 	if err != nil {
 		if errors.Is(err, repository.ErrEventLocked) {
 			return echo.NewHTTPError(403, repository.ErrEventLocked.Error())

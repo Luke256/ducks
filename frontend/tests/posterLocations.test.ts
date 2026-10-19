@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { Poster } from "@/types/poster";
 
 let cache: typeof import("@/lib/posterLocations");
-const festival = { id: "f1", name: "工大祭", description: "保存不要", locked: false };
+const festival = { id: "f1", name: "工大祭", description: "保存不要", date: "2026-10-18T00:00:00Z", locked: false };
 const poster: Poster = {
     id: "p1", name: "01", description: "講義棟の入口", festival,
     status: "collected", image: [{ id: "image1", url: "/api/v1/images/image1" }],

@@ -2,6 +2,7 @@ package festival
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/Luke256/ducks/repository"
 	"github.com/google/uuid"
@@ -17,8 +18,8 @@ func NewManagerImpl(repo repository.FestivalRepository) *ManagerImpl {
 	}
 }
 
-func (f *ManagerImpl) Create(name, description string) (Festival, error) {
-	festival, err := f.repo.RegisterFestival(name, description)
+func (f *ManagerImpl) Create(name, description string, date time.Time) (Festival, error) {
+	festival, err := f.repo.RegisterFestival(name, description, date)
 	if err != nil {
 		return Festival{}, err
 	}
@@ -28,6 +29,7 @@ func (f *ManagerImpl) Create(name, description string) (Festival, error) {
 		Name:        festival.Name,
 		Description: festival.Description,
 		Locked:      festival.Locked,
+		Date:        festival.Date,
 	}, nil
 }
 
@@ -47,6 +49,7 @@ func (f *ManagerImpl) Get(id uuid.UUID) (Festival, error) {
 		Name:        festival.Name,
 		Description: festival.Description,
 		Locked:      festival.Locked,
+		Date:        festival.Date,
 	}, nil
 }
 
@@ -64,14 +67,15 @@ func (f *ManagerImpl) List() ([]Festival, error) {
 			Name:        festival.Name,
 			Description: festival.Description,
 			Locked:      festival.Locked,
+			Date:        festival.Date,
 		}
 	}
 
 	return result, nil
 }
 
-func (f *ManagerImpl) Edit(id uuid.UUID, name, description string) error {
-	err := f.repo.UpdateFestival(id, name, description)
+func (f *ManagerImpl) Edit(id uuid.UUID, name, description string, date time.Time) error {
+	err := f.repo.UpdateFestival(id, name, description, date)
 
 	if err != nil {
 		switch err {

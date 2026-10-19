@@ -1,6 +1,7 @@
 import { computed, ref, watch } from "vue";
 import type { Festival } from "@/types/festival";
 import { api } from "@/lib/api";
+import { festivalDate } from "@/utils/festivalDate";
 export function sessionRef(key: string, initial = "") {
     let saved = initial;
     try {
@@ -40,7 +41,9 @@ export async function loadFestivals() {
     try {
         const body = await api<{ festivals: Festival[] | null }>("/festivals");
         if (request !== festivalRequest) return;
-        festivals.value = body.festivals || [];
+        festivals.value = (body.festivals || []).sort((a, b) =>
+            festivalDate(b.date).localeCompare(festivalDate(a.date)) || b.id.localeCompare(a.id),
+        );
         if (
             currentFestivalId.value &&
             !festivals.value.some((f) => f.id === currentFestivalId.value)

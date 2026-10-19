@@ -8,6 +8,7 @@ import { api, jsonBody } from "@/lib/api";
 import type { Festival } from "@/types/festival";
 import ResourceState from "@/components/ResourceState.vue";
 import EventLockBadge from "@/components/EventLockBadge.vue";
+import { festivalDate, formatFestivalDate } from "@/utils/festivalDate";
 const route = useRoute();
 const router = useRouter();
 const {
@@ -17,28 +18,29 @@ const {
   reload,
 } = useResource<Festival>(() => `/festivals/${route.params.eventId}`);
 const edit = ref(false);
-const form = reactive({ name: "", description: "" });
+const form = reactive({ name: "", description: "", date: "" });
 const { pending, error: saveError, run } = useMutation();
 watch(event, (value) => {
   if (!value) return;
   document.title = `${value.name} | Ducks`;
   if (value.locked) {
-    Object.assign(form, value);
+    Object.assign(form, value, { date: festivalDate(value.date) });
     edit.value = false;
   }
 });
 function startEdit() {
   if (event.value && !event.value.locked && !pending.value && !loading.value) {
-    Object.assign(form, event.value);
+    Object.assign(form, event.value, { date: festivalDate(event.value.date) });
     edit.value = true;
   }
 }
 async function save() {
   await run(async () => {
     if (!form.name.trim()) throw new Error("イベント名を入力してください。");
+    if (!form.date) throw new Error("開催日を入力してください。");
     await api(`/festivals/${route.params.eventId}`, {
       method: "PUT",
-      ...jsonBody({ name: form.name.trim(), description: form.description }),
+      ...jsonBody({ name: form.name.trim(), description: form.description, date: form.date }),
     });
     edit.value = false;
     await Promise.all([reload(), loadFestivals()]);
@@ -83,6 +85,7 @@ function selectEvent() {
       <div>
         <p class="eyebrow">EVENT DETAIL</p>
         <h1>{{ event.name }} <EventLockBadge v-if="event.locked" /></h1>
+        <p class="muted"><time v-if="festivalDate(event.date)" class="event-date" :datetime="festivalDate(event.date)">{{ formatFestivalDate(event.date) }}</time><span v-else class="event-date">未設定</span></p>
         <p class="description muted">
           {{ event.description || "概要は登録されていません。" }}
         </p>
@@ -118,8 +121,9 @@ function selectEvent() {
     <form v-if="edit" class="panel form-panel" @submit.prevent="save">
       <h2>イベントを編集</h2>
       <fieldset :disabled="pending || loading || event.locked">
-        <label class="field">イベント名<input v-model="form.name" required /></label><label class="field">概要<textarea
-            v-model="form.description" rows="4" />
+        <label class="field">イベント名<input v-model="form.name" required /></label>
+        <label class="field">開催日<input v-model="form.date" type="date" required min="1000-01-01" max="9999-12-31" /></label>
+        <label class="field">概要<textarea v-model="form.description" rows="4" />
         </label>
         <div class="actions">
           <button class="button" type="submit">

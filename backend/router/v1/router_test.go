@@ -179,7 +179,7 @@ func setup(t *testing.T, dbKey string) *env {
 
 func (e *env) mustCreateFestival(t *testing.T, name string, description string) festival.Festival {
 	t.Helper()
-	festival, err := e.FM.Create(name, description)
+	festival, err := e.FM.Create(name, description, time.Date(2026, 10, 18, 0, 0, 0, 0, time.UTC))
 	if err != nil {
 		t.Fatalf("failed to create festival: %v", err)
 	}

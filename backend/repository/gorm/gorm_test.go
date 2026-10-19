@@ -108,7 +108,7 @@ func setup(t *testing.T, dbKey string) *GormRepository {
 func mustCreateFestival(t *testing.T, repo *GormRepository, name string, description string) model.Festival {
 	t.Helper()
 
-	festival, err := repo.RegisterFestival(name, description)
+	festival, err := repo.RegisterFestival(name, description, time.Date(2026, 10, 18, 0, 0, 0, 0, time.UTC))
 	if err != nil {
 		t.Fatalf("failed to register festival: %v", err)
 	}

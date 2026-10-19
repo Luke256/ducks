@@ -19,7 +19,7 @@ vi.mock("@/utils/resizeImage", () => ({
     resizeImage: vi.fn(async (file: File) => file),
 }));
 
-const event = { id: "f1", name: "工大祭 2026", description: "学園祭の運営", locked: false };
+const event = { id: "f1", name: "工大祭 2026", description: "学園祭の運営", date: "2026-10-18T00:00:00Z", locked: false };
 const item = {
     id: "i1",
     name: "アクリルキーホルダー",
@@ -61,6 +61,12 @@ function fixture(input: string, options: RequestInit = {}) {
     requests.push({ path, options });
     if (path === fail)
         return Promise.resolve(new Response("test failure", { status: 500 }));
+    if ((path === "/festivals" && options.method === "POST") ||
+        (path === "/festivals/f1" && options.method === "PUT")) {
+        const body = JSON.parse(options.body as string);
+        Object.assign(event, body, { date: `${body.date}T00:00:00Z` });
+        return Promise.resolve(Response.json(event, { status: options.method === "POST" ? 201 : 200 }));
+    }
     if (path === "/festivals/f1/lock" && options.method === "PATCH") {
         event.locked = JSON.parse(options.body as string).locked;
         return Promise.resolve(Response.json(event));
@@ -112,10 +118,10 @@ function fixture(input: string, options: RequestInit = {}) {
     }
     const data: Record<string, unknown> = {
         "/festivals": {
-            festivals: [event, { id: "f2", name: "別イベント", description: "" }],
+            festivals: [event, { id: "f2", name: "別イベント", description: "", date: "2025-10-18T00:00:00Z", locked: false }],
         },
         "/festivals/f1": event,
-        "/festivals/f2": { id: "f2", name: "別イベント", description: "" },
+        "/festivals/f2": { id: "f2", name: "別イベント", description: "", date: "2025-10-18T00:00:00Z", locked: false },
         "/items": { items: [{ ...item, image_url: itemImageUrl }] },
         "/items/i1": { ...item, image_url: itemImageUrl },
         "/stocks/s1": { ...stock, item: { ...item, image_url: itemImageUrl } },
@@ -162,6 +168,9 @@ async function upload(files = [new File(["image"], "photo.png", { type: "image/p
     return files[0];
 }
 beforeEach(() => {
+    event.name = "工大祭 2026";
+    event.description = "学園祭の運営";
+    event.date = "2026-10-18T00:00:00Z";
     event.locked = false;
     localStorage.removeItem(posterLocationsKey);
     savedPosterLocations.value = null;
@@ -228,6 +237,32 @@ describe("既存URLと画面", () => {
 });
 
 describe("イベント選択", () => {
+    it("開催日が新しい順に表示し、未設定は末尾に置き、検索しても順序を保つ", async () => {
+        const list = [
+            { ...event, id: "legacy-zero", name: "開催日なし", date: "0001-01-01T00:00:00Z" },
+            { ...event, name: "古いイベント", date: "2025-10-18T00:00:00Z" },
+            { ...event, id: "new-a", name: "最新イベントA", date: "2026-11-01T00:00:00Z" },
+            { ...event, id: "legacy-null", name: "開催日なし2", date: null },
+            { ...event, id: "new-b", name: "最新イベントB", date: "2026-11-01T00:00:00Z" },
+        ];
+        vi.mocked(fetch).mockImplementation((input, options) => String(input).endsWith("/festivals")
+            ? Promise.resolve(Response.json({ festivals: list })) : fixture(String(input), options));
+        await open("/event");
+        expect(wrapper.findAll(".event-card h2").map((heading) => heading.text())).toEqual([
+            "最新イベントB", "最新イベントA", "古いイベント", "開催日なし", "開催日なし2",
+        ]);
+        expect(wrapper.find(".event-card time").attributes("datetime")).toBe("2026-11-01");
+        expect(wrapper.find(".event-card time").text()).toBe("2026年11月1日");
+        expect(wrapper.findAll(".event-card")[3].text()).toContain("未設定");
+        expect(wrapper.text()).not.toContain("0001-01-01");
+        await wrapper.find('input[type="search"]').setValue("最新");
+        expect(wrapper.findAll(".event-card h2").map((heading) => heading.text())).toEqual(["最新イベントB", "最新イベントA"]);
+        await wrapper.find('.sidebar a[href="/visitors"]').trigger("click");
+        await flushPromises();
+        await vi.waitFor(() => expect(wrapper.findAll('.festival-picker option').slice(1).map((option) => option.text())).toEqual([
+            "最新イベントB", "最新イベントA", "古いイベント", "開催日なし", "開催日なし2",
+        ]));
+    });
     it("一覧で選択したイベントを保持し、運営画面に引き継ぐ", async () => {
         currentFestivalId.value = "";
         await open("/event");
@@ -485,6 +520,7 @@ describe("登録・編集", () => {
         await button("イベントを編集").trigger("click");
         await wrapper.find("form input").setValue("未保存の名前");
         await wrapper.find("form textarea").setValue("未保存の概要");
+        await wrapper.find('input[type="date"]').setValue("2026-10-20");
         expect(button("イベントをロック").attributes("disabled")).toBeUndefined();
         fail = "/festivals/f1/lock";
         await button("イベントをロック").trigger("click");
@@ -493,6 +529,7 @@ describe("登録・編集", () => {
         expect(wrapper.find(".event-lock-badge").exists()).toBe(false);
         expect(wrapper.find("fieldset").attributes("disabled")).toBeUndefined();
         expect((wrapper.find("form input").element as HTMLInputElement).value).toBe("未保存の名前");
+        expect((wrapper.find('input[type="date"]').element as HTMLInputElement).value).toBe("2026-10-20");
         fail = "";
         await button("イベントをロック").trigger("click");
         await flushPromises();
@@ -505,24 +542,54 @@ describe("登録・編集", () => {
         await button("イベントを編集").trigger("click");
         expect((wrapper.find("form input").element as HTMLInputElement).value).toBe(event.name);
         expect((wrapper.find("form textarea").element as HTMLTextAreaElement).value).toBe(event.description);
+        expect((wrapper.find('input[type="date"]').element as HTMLInputElement).value).toBe("2026-10-18");
     });
     it("イベントを作成して詳細を開き、対象イベントを共有する", async () => {
         await open("/event");
         await button("＋ イベントを作成").trigger("click");
         await wrapper.find("form input").setValue("新イベント");
         await wrapper.find("form textarea").setValue("説明");
+        await wrapper.find('input[type="date"]').setValue("2026-11-02");
         await wrapper.find("form").trigger("submit");
         await flushPromises();
         expect(
             JSON.parse(mutations("/festivals")[0].options.body as string),
-        ).toEqual({ name: "新イベント", description: "説明" });
+        ).toEqual({ name: "新イベント", description: "説明", date: "2026-11-02" });
         expect(router.currentRoute.value.path).toBe("/event/f1");
         expect(currentFestivalId.value).toBe("f1");
+        expect(wrapper.find("time").text()).toBe("2026年11月2日");
+    });
+    it.each(["/event", "/event/f1"])("%sで開催日が未入力なら送信しない", async (path) => {
+        await open(path);
+        await button(path === "/event" ? "＋ イベントを作成" : "イベントを編集").trigger("click");
+        await wrapper.find("form input").setValue("イベント");
+        const dateInput = wrapper.find('input[type="date"]');
+        expect(dateInput.attributes()).toMatchObject({ required: "", min: "1000-01-01", max: "9999-12-31" });
+        await dateInput.setValue("");
+        await wrapper.find("form").trigger("submit");
+        await flushPromises();
+        expect(mutations(path === "/event" ? "/festivals" : "/festivals/f1")).toHaveLength(0);
+        expect(wrapper.text()).toContain("開催日を入力してください。");
+    });
+    it("既存の開催日未設定イベントを表示して開催日を設定できる", async () => {
+        event.date = "0001-01-01T00:00:00Z";
+        await open("/event/f1");
+        expect(wrapper.text()).toContain("未設定");
+        expect(wrapper.text()).not.toContain("0001-01-01");
+        await button("イベントを編集").trigger("click");
+        expect((wrapper.find('input[type="date"]').element as HTMLInputElement).value).toBe("");
+        await wrapper.find('input[type="date"]').setValue("2026-10-18");
+        await wrapper.find("form").trigger("submit");
+        await flushPromises();
+        expect(wrapper.find("time").text()).toBe("2026年10月18日");
     });
     it("編集失敗時に入力を保持し、再試行できる", async () => {
         await open("/event/f1");
+        expect(wrapper.find("time").attributes("datetime")).toBe("2026-10-18");
         await button("イベントを編集").trigger("click");
+        expect((wrapper.find('input[type="date"]').element as HTMLInputElement).value).toBe("2026-10-18");
         await wrapper.find("form input").setValue("変更したイベント");
+        await wrapper.find('input[type="date"]').setValue("2026-10-19");
         fail = "/festivals/f1";
         await wrapper.find("form").trigger("submit");
         await flushPromises();
@@ -530,10 +597,15 @@ describe("登録・編集", () => {
             "変更したイベント",
         );
         expect(button("保存する").attributes("disabled")).toBeUndefined();
+        expect((wrapper.find('input[type="date"]').element as HTMLInputElement).value).toBe("2026-10-19");
         fail = "";
         await wrapper.find("form").trigger("submit");
         await flushPromises();
         expect(wrapper.find("form").exists()).toBe(false);
+        expect(JSON.parse(mutations("/festivals/f1")[1].options.body as string)).toEqual({
+            name: "変更したイベント", description: event.description, date: "2026-10-19",
+        });
+        expect(wrapper.find("time").text()).toBe("2026年10月19日");
     });
     it("写真を圧縮してポスターをmultipart形式で登録する", async () => {
         await open("/poster/new");
